@@ -14,7 +14,7 @@ const CONFIG = {
     HOTEL_PHONE: '054511628',
 
     // URL สำหรับสร้าง QR Code (ปล่อยค่า default ก็ได้)
-    BASE_URL: 'https://maeyompalece-sys.github.io/maeyom-palace/',
+    BASE_URL: 'https://maeyompalece-sys.github.io/maeyom-palace',
 
     // การตั้งค่าเสียง
     NOTIFICATION_SOUND_VOLUME: 1,
