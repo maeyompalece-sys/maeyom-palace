@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code - แม่ยม พาเลส</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Sarabun',sans-serif; background:#fff; color:#1a1a1a; }
+
+  /* Print layout: 1 card per page */
+  .print-page {
+    width:148mm; min-height:210mm; /* A5 */
+    margin:20px auto; padding:0;
+    border:1px solid #eee;
+    background:#fff;
+    display:flex; flex-direction:column;
+    page-break-after: always;
+  }
+
+  /* Header */
+  .card-header {
+    background:linear-gradient(160deg,#0F3B2E 0%,#1a5c47 100%);
+    padding:20px 20px 16px;
+    text-align:center;
+    color:#fff;
+  }
+  .hotel-name {
+    font-family:'Cormorant Garamond',serif;
+    font-size:22px; font-weight:700;
+    color:#C9A861; letter-spacing:1px;
+    margin-bottom:2px;
+  }
+  .hotel-sub { font-size:11px; color:rgba(255,255,255,.7); }
+  .table-badge {
+    display:inline-block; margin-top:10px;
+    background:rgba(201,168,97,.2); border:1.5px solid rgba(201,168,97,.5);
+    color:#C9A861; padding:4px 18px; border-radius:20px;
+    font-size:13px; font-weight:700; letter-spacing:1px;
+  }
+
+  /* QR area */
+  .qr-area {
+    background:#fafaf6;
+    padding:20px 20px 16px;
+    display:flex; flex-direction:column; align-items:center;
+    border-bottom:2px dashed #e5e0d5;
+  }
+  .qr-box {
+    width:160px; height:160px;
+    background:#fff; border-radius:12px;
+    border:2px solid #e5e0d5;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:10px; overflow:hidden;
+  }
+  .qr-box img { width:152px; height:152px; }
+  .scan-label { font-size:11px; color:#666; text-align:center; }
+  .scan-label strong { color:#0F3B2E; }
+
+  /* Instructions */
+  .instructions { padding:14px 18px; flex:1; }
+  .inst-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:14px; font-weight:700;
+    color:#0F3B2E; margin-bottom:10px;
+    text-align:center; letter-spacing:.5px;
+  }
+  .steps { list-style:none; }
+  .step-item {
+    display:flex; align-items:flex-start; gap:10px;
+    margin-bottom:8px; font-size:11px; line-height:1.5;
+  }
+  .step-num {
+    width:20px; height:20px; border-radius:50%;
+    background:#0F3B2E; color:#C9A861;
+    font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-top:1px;
+  }
+  .step-text-main { font-weight:600; color:#1a1a1a; }
+  .step-text-en { color:#666; font-size:10px; display:block; }
+  .step-text-zh { color:#888; font-size:10px; display:block; }
+
+  /* Divider */
+  .lang-divider {
+    border:none; border-top:1px dashed #e0dbd0;
+    margin:8px 0;
+  }
+
+  /* Icons row */
+  .icon-row {
+    display:flex; gap:12px; justify-content:center;
+    padding:10px 18px 14px;
+    background:#fafaf6;
+    border-top:1px solid #f0ebe0;
+  }
+  .icon-item { text-align:center; }
+  .icon-item .ico { font-size:20px; }
+  .icon-item .lbl { font-size:9px; color:#666; margin-top:2px; }
+
+  /* Footer */
+  .card-footer {
+    background:#0F3B2E; padding:10px 18px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .footer-wifi { font-size:10px; color:rgba(255,255,255,.7); }
+  .footer-phone { font-size:10px; color:#C9A861; font-weight:600; }
+
+  /* Screen only: controls */
+  .screen-controls {
+    max-width:700px; margin:20px auto;
+    padding:16px; display:flex; gap:10px; flex-wrap:wrap;
+    justify-content:center;
+  }
+  .btn-print { padding:10px 24px; background:#0F3B2E; color:#C9A861; border:none; border-radius:20px; font-weight:700; font-size:14px; cursor:pointer; }
+  .btn-back { padding:10px 20px; background:#fff; color:#0F3B2E; border:2px solid #0F3B2E; border-radius:20px; font-weight:600; font-size:14px; cursor:pointer; }
+
+  @media print {
+    .screen-controls { display:none !important; }
+    body { margin:0; }
+    .print-page { margin:0; border:none; width:148mm; min-height:210mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen-controls" id="screenControls">
+  <button class="btn-back" onclick="window.close()">← กลับ</button>
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ QR Code</button>
+</div>
+
+<div class="print-page" id="printCard">
+
+  <!-- Header -->
+  <div class="card-header">
+    <div class="hotel-name">Mae Yom Palace Hotel</div>
+    <div class="hotel-sub">โรงแรม แม่ยม พาเลส</div>
+    <div class="table-badge" id="tableBadge">🪑 โต๊ะ —</div>
+  </div>
+
+  <!-- QR Code -->
+  <div class="qr-area">
+    <div class="qr-box">
+      <img id="qrImg" src="" alt="QR Code">
+    </div>
+    <div class="scan-label">
+      📱 <strong>สแกน QR</strong> เพื่อสั่งอาหาร<br>
+      <span style="color:#888;">Scan to order • 扫码点餐</span>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions">
+    <div class="inst-title">📋 วิธีสั่งอาหาร · How to Order · 如何点餐</div>
+    <ol class="steps">
+      <li class="step-item">
+        <div class="step-num">1</div>
+        <div>
+          <span class="step-text-main">สแกน QR Code ด้วยมือถือ</span>
+          <span class="step-text-en">Scan the QR Code with your phone</span>
+          <span class="step-text-zh">用手机扫描二维码</span>
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-num">2</div>
+        <div>
+          <span class="step-text-main">เลือกประเภท: กินที่นี่ หรือ กลับบ้าน</span>
+          <span class="step-text-en">Choose: Dine In or Takeaway</span>
+          <span class="step-text-zh">选择：堂食或外带</span>
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-num">3</div>
+        <div>
+          <span class="step-text-main">กรอกชื่อและเบอร์โทร</span>
+          <span class="step-text-en">Enter your name & phone number</span>
+          <span class="step-text-zh">输入姓名和电话号码</span>
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-num">4</div>
+        <div>
+          <span class="step-text-main">เลือกเมนูที่ต้องการแล้วกด "สั่งเลย"</span>
+          <span class="step-text-en">Select dishes and tap "Place Order"</span>
+          <span class="step-text-zh">选择菜品并点击"立即下单"</span>
+        </div>
+      </li>
+      <li class="step-item">
+        <div class="step-num">5</div>
+        <div>
+          <span class="step-text-main">ติดตามสถานะออเดอร์ได้ในแอป</span>
+          <span class="step-text-en">Track your order status in the app</span>
+          <span class="step-text-zh">在应用中追踪您的订单状态</span>
+        </div>
+      </li>
+    </ol>
+
+    <hr class="lang-divider" style="margin-top:10px;">
+    <div style="font-size:10px;color:#888;text-align:center;line-height:1.8;">
+      💡 ไม่ต้องดาวน์โหลดแอป · No app download required · 无需下载应用
+    </div>
+  </div>
+
+  <!-- Icon features -->
+  <div class="icon-row">
+    <div class="icon-item"><div class="ico">🍽️</div><div class="lbl">เมนูหลากหลาย</div></div>
+    <div class="icon-item"><div class="ico">⚡</div><div class="lbl">สั่งได้รวดเร็ว</div></div>
+    <div class="icon-item"><div class="ico">📱</div><div class="lbl">ติดตามสถานะ</div></div>
+    <div class="icon-item"><div class="ico">🔔</div><div class="lbl">แจ้งเตือนทันที</div></div>
+    <div class="icon-item"><div class="ico">🌐</div><div class="lbl">3 ภาษา</div></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="card-footer">
+    <div class="footer-wifi" id="footerUrl">maeyompalace.netlify.app</div>
+    <div class="footer-phone" id="footerPhone">📞 —</div>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const tableNum  = params.get('table') || '?';
+const tableName = params.get('name')  || '';
+const menuUrl   = params.get('url')   || (CONFIG.BASE_URL + 'menu.html?table=' + tableNum);
+
+// ใส่ข้อมูล
+document.getElementById('tableBadge').textContent = '🪑 โต๊ะ ' + tableNum + (tableName ? ' — ' + tableName : '');
+document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
+document.getElementById('footerUrl').textContent = menuUrl.replace('https://','');
+
+// QR Code ผ่าน API
+const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(menuUrl) + '&color=0F3B2E&bgcolor=ffffff&margin=6';
+document.getElementById('qrImg').src = qrUrl;
+</script>
+</body>
+</html>

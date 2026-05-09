@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F3B2E">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>หน้าแอดมิน | โรงแรม แม่ยม พาเลส</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/styles.css">
+
+<style>
+  .page-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 80px; }
+
+  /* Top toolbar */
+  .top-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+  .top-toolbar h1 { font-family:'Cormorant Garamond',serif; color:var(--color-emerald); font-size:30px; margin:0; }
+  .toolbar-controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .toggle-switch { display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none; font-size:13px; font-weight:600; color:var(--color-emerald); }
+  .toggle-switch input { width:40px; height:22px; cursor:pointer; }
+
+  /* Summary Cards */
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+  .summary-card { background:#fff; border-radius:12px; padding:16px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,.04); border-left:4px solid var(--accent, var(--color-gold)); transition:transform .2s; }
+  .summary-card:hover { transform:translateY(-2px); }
+  .summary-icon { font-size:32px; }
+  .summary-label { font-size:12px; color:var(--color-muted); font-weight:600; }
+  .summary-value { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--color-emerald); line-height:1.1; }
+
+  /* Filter bar */
+  .filter-bar { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .filter-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .filter-row .label { font-size:12px; color:var(--color-muted); font-weight:600; min-width:60px; }
+  .filter-btn { padding:7px 14px; border-radius:20px; border:1.5px solid var(--color-line); background:#fff; color:var(--color-emerald); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .filter-btn:hover { border-color:var(--color-gold); }
+  .filter-btn.active { background:var(--color-emerald); border-color:var(--color-emerald); color:#C9A861; }
+
+  /* Order grid */
+  #orders-container { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+
+  .order-card { background:#fff; border-radius:14px; padding:16px; box-shadow:0 4px 14px rgba(0,0,0,.06); border-top:4px solid var(--color-gold); transition:all .2s; }
+  .order-card:hover { box-shadow:0 8px 24px rgba(0,0,0,.1); }
+  .order-card.done { opacity:.6; border-top-color:#999; }
+  .order-card-head { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:10px; border-bottom:1px dashed var(--color-line); margin-bottom:10px; }
+  .order-num { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:700; color:var(--color-emerald); }
+  .order-time { font-size:12px; color:var(--color-muted); }
+  .order-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .status-badge, .type-pill, .table-pill { padding:3px 10px; border-radius:14px; font-size:12px; font-weight:600; border:1px solid transparent; }
+  .table-pill { background:#fef3c7; color:#92400e; }
+  .order-customer { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px; }
+  .order-customer strong { color:var(--color-emerald); }
+  .customer-phone { background:transparent; border:1px solid var(--color-line); color:var(--color-emerald); padding:4px 10px; border-radius:14px; font-size:12px; cursor:pointer; }
+  .customer-phone:hover { background:var(--color-emerald); color:#fff; }
+  .order-items-list { background:#fafaf6; padding:10px 12px; border-radius:8px; margin-bottom:10px; font-size:13px; }
+  .order-item-row { display:flex; justify-content:space-between; padding:3px 0; }
+  .order-item-note { font-size:11px; color:var(--color-muted); padding-left:14px; font-style:italic; }
+  .order-notes { background:#fff7ed; border-left:3px solid #f59e0b; padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:10px; color:#92400e; }
+  .order-total { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px dashed var(--color-line); margin-bottom:10px; }
+  .order-total strong { font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--color-gold); }
+  .order-actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .order-actions .btn { flex:1; min-width:auto; font-size:13px; padding:8px 12px; }
+
+  .btn-emerald { background:var(--color-emerald); color:#fff; border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-weight:600; font-size:13px; transition:all .15s; }
+  .btn-emerald:hover { background:#0a2820; }
+  .btn-gold { background:var(--color-gold); color:#fff; border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-weight:600; font-size:13px; transition:all .15s; }
+  .btn-gold:hover { background:#b09451; }
+
+  .empty-state { text-align:center; padding:60px 20px; color:var(--color-muted); grid-column:1/-1; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="admin.html" class="brand-link">
+      <span class="brand-mark">M</span>
+      <span class="brand-name">แม่ยม พาเลส</span>
+    </a>
+    <nav class="topbar-nav">
+      <a href="admin.html" class="active">ออเดอร์</a>
+      <a href="tables.html">โต๊ะ</a>
+      <a href="menu-manage.html">เมนู</a>
+      <a href="report.html">📊 รายงาน</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <div class="top-toolbar">
+    <h1>📋 ออเดอร์ทั้งหมด</h1>
+    <div class="toolbar-controls">
+      <label class="toggle-switch">
+        <input type="checkbox" id="sound-toggle"> 🔔 เสียงแจ้งเตือน
+      </label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="auto-print"> 🖨️ ปริ้นอัตโนมัติ
+      </label>
+      <button class="btn btn-ghost" id="refreshBtn">🔄 รีเฟรช</button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card" style="--accent:#FCD34D;">
+      <div class="summary-icon">⏳</div>
+      <div><div class="summary-label">รอ</div><div class="summary-value" id="count-pending">0</div></div>
+    </div>
+    <div class="summary-card" style="--accent:#FB923C;">
+      <div class="summary-icon">👨‍🍳</div>
+      <div><div class="summary-label">กำลังทำ</div><div class="summary-value" id="count-cooking">0</div></div>
+    </div>
+    <div class="summary-card" style="--accent:#34D399;">
+      <div class="summary-icon">🍽️</div>
+      <div><div class="summary-label">พร้อมเสิร์ฟ</div><div class="summary-value" id="count-ready">0</div></div>
+    </div>
+    <div class="summary-card" style="--accent:#10B981;">
+      <div class="summary-icon">✨</div>
+      <div><div class="summary-label">วันนี้รวม</div><div class="summary-value" id="count-today">0</div></div>
+    </div>
+    <div class="summary-card" style="--accent:#C9A861;">
+      <div class="summary-icon">💰</div>
+      <div><div class="summary-label">ยอดวันนี้</div><div class="summary-value" id="revenue-today">฿0</div></div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <span class="label">ค้นหา:</span>
+      <input type="text" id="searchCustomer" placeholder="🔍 ชื่อลูกค้า / เบอร์ / เลขออเดอร์..." style="flex:1;padding:8px 14px;border:1.5px solid var(--color-line);border-radius:20px;font-size:13px;font-family:inherit;max-width:360px;" autocomplete="off">
+      <button id="btnClearSearch" style="padding:7px 14px;border-radius:20px;border:1.5px solid var(--color-line);background:#fff;font-size:13px;cursor:pointer;color:var(--color-muted);">✕ ล้าง</button>
+    </div>
+    <div class="filter-row">
+      <span class="label">สถานะ:</span>
+      <button class="filter-btn active" data-status-filter="active">🔥 กำลังดำเนินการ</button>
+      <button class="filter-btn" data-status-filter="pending">⏳ รอ</button>
+      <button class="filter-btn" data-status-filter="cooking">👨‍🍳 ทำ</button>
+      <button class="filter-btn" data-status-filter="ready">🍽️ เสร็จ</button>
+      <button class="filter-btn" data-status-filter="delivering">🚚 ส่ง</button>
+      <button class="filter-btn" data-status-filter="completed">✨ เสร็จสิ้น</button>
+      <button class="filter-btn" data-status-filter="all">📋 ทั้งหมด</button>
+    </div>
+    <div class="filter-row">
+      <span class="label">ประเภท:</span>
+      <button class="filter-btn active" data-type-filter="all">ทั้งหมด</button>
+      <button class="filter-btn" data-type-filter="dine_in">🍽️ กินที่นี่</button>
+      <button class="filter-btn" data-type-filter="takeaway">🥡 กลับบ้าน</button>
+    </div>
+  </div>
+
+  <!-- Orders -->
+  <div id="orders-container">
+    <div style="text-align:center;padding:60px 20px;grid-column:1/-1;">
+      <div style="font-size:48px;">⏳</div>
+      <p style="color:var(--color-muted);">กำลังโหลด...</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/admin-pin.js"></script>
+<script src="js/api.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/admin.js"></script>
+
+</body>
+</html>
