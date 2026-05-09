@@ -713,13 +713,15 @@ async function openOrderHistory() {
                             ' ' + dt.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
             const items = (o.items || []).slice(0, 3).map(i => `${i.quantity}× ${i.name}`).join(', ');
             const moreItems = (o.items || []).length > 3 ? ` +${o.items.length - 3} รายการ` : '';
+            const tableInfo = o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
             return `
                 <div class="history-card" data-order-id="${o.id}" style="cursor:pointer;">
                     <div class="history-head">
-                        <span class="history-num">#${escHtml(o.order_number || '')}</span>
+                        <span class="history-num" style="white-space:nowrap;">#${escHtml(o.order_number || '')}</span>
                         <span class="history-date">${dateStr}</span>
-                        <span class="history-badge" style="background:${st.color}22;color:${st.color};">${st.icon} ${st.label}</span>
+                        <span class="history-badge" style="background:${st.color}22;color:${st.color};white-space:nowrap;">${st.icon} ${st.label}</span>
                     </div>
+                    ${tableInfo ? `<div style="font-size:12px;color:var(--color-muted);margin-bottom:4px;font-weight:600;">${tableInfo}</div>` : ''}
                     <div class="history-items">${escHtml(items + moreItems)}</div>
                     <div class="history-total">฿${Number(o.total_amount || 0).toFixed(0)} → <span style="color:var(--color-gold);font-weight:600;">ดูสถานะ →</span></div>
                 </div>`;
