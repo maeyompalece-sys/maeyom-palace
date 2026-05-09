@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#651713">
+<title>รายงาน | โรงแรม แม่ยมพาเลส</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  .page-wrap { max-width:1400px; margin:0 auto; padding:24px 16px 80px; }
+
+  /* Tabs */
+  .report-tabs { display:flex; gap:0; border-bottom:2px solid var(--color-line); margin-bottom:24px; overflow-x:auto; }
+  .report-tab { padding:11px 22px; border:none; background:none; font-family:'Sarabun',sans-serif; font-size:14px; font-weight:600; color:var(--color-muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:all .15s; }
+  .report-tab.active { color:var(--color-emerald); border-bottom-color:var(--color-gold); }
+
+  /* Date filter */
+  .filter-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; background:#fff; padding:14px 18px; border-radius:12px; border:1px solid var(--color-line); }
+  .filter-bar label { font-size:13px; font-weight:600; color:var(--color-emerald); }
+  .filter-bar input[type=date] { padding:6px 10px; border:1.5px solid var(--color-line); border-radius:8px; font-size:13px; font-family:inherit; }
+  .btn-filter { padding:7px 16px; border-radius:20px; background:var(--color-emerald); color:#C9A861; border:none; font-weight:600; font-size:13px; cursor:pointer; }
+  .btn-export { padding:7px 16px; border-radius:20px; background:#217346; color:#fff; border:none; font-weight:600; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+  .btn-export:hover { background:#1a5c38; }
+  .quick-btns { display:flex; gap:6px; flex-wrap:wrap; }
+  .quick-btn { padding:5px 12px; border-radius:14px; border:1.5px solid var(--color-line); background:#fff; font-size:12px; font-weight:600; cursor:pointer; color:var(--color-emerald); transition:all .15s; }
+  .quick-btn.active, .quick-btn:hover { background:var(--color-emerald); color:#C9A861; border-color:var(--color-emerald); }
+
+  /* Summary cards */
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+  .sum-card { background:#fff; border-radius:12px; padding:18px 16px; border-left:4px solid; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .sum-card .ico { font-size:28px; margin-bottom:6px; }
+  .sum-card .val { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:700; color:var(--color-emerald); }
+  .sum-card .lbl { font-size:12px; color:var(--color-muted); font-weight:600; }
+
+  /* Chart bar */
+  .chart-wrap { background:#fff; border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--color-line); }
+  .chart-title { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--color-emerald); margin:0 0 16px; font-weight:700; }
+  .bar-chart { display:flex; align-items:flex-end; gap:8px; height:160px; padding-bottom:24px; position:relative; overflow-x:auto; }
+  .bar-col { display:flex; flex-direction:column; align-items:center; flex:1; min-width:36px; }
+  .bar-fill { width:100%; border-radius:6px 6px 0 0; background:linear-gradient(180deg,var(--color-gold),#a07840); min-height:4px; transition:height .4s ease; position:relative; }
+  .bar-fill:hover::after { content:attr(data-tip); position:absolute; bottom:calc(100%+4px); left:50%; transform:translateX(-50%); background:#651713; color:#C9A861; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; white-space:nowrap; pointer-events:none; }
+  .bar-label { font-size:10px; color:var(--color-muted); margin-top:4px; text-align:center; }
+
+  /* Table */
+  .report-table-wrap { background:#fff; border-radius:12px; border:1px solid var(--color-line); overflow:hidden; margin-bottom:20px; }
+  .report-table-head { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--color-line); }
+  .report-table-head h3 { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--color-emerald); margin:0; }
+  table { width:100%; border-collapse:collapse; }
+  th { background:#f8f7f2; padding:10px 14px; font-size:12px; font-weight:700; color:var(--color-muted); text-align:left; border-bottom:1px solid var(--color-line); }
+  td { padding:10px 14px; font-size:13px; border-bottom:1px solid var(--color-line); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#fafaf6; }
+  .badge-status { padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+  .txt-gold { color:var(--color-gold); font-family:'Cormorant Garamond',serif; font-weight:700; }
+  .loading-row { text-align:center; padding:40px; color:var(--color-muted); }
+
+  /* Customer card */
+  .customer-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+  .customer-card { background:#fff; border-radius:12px; padding:16px; border:1px solid var(--color-line); transition:all .15s; }
+  .customer-card:hover { border-color:var(--color-gold); box-shadow:0 4px 12px rgba(0,0,0,.06); }
+  .customer-avatar { width:44px; height:44px; border-radius:50%; background:var(--color-emerald); color:#C9A861; font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .customer-info { flex:1; min-width:0; }
+  .customer-name { font-weight:700; color:var(--color-emerald); font-size:15px; }
+  .customer-phone { font-size:12px; color:var(--color-muted); }
+  .customer-stats { display:flex; gap:16px; margin-top:10px; padding-top:10px; border-top:1px solid var(--color-line); }
+  .customer-stat { text-align:center; }
+  .customer-stat .n { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:700; color:var(--color-emerald); }
+  .customer-stat .l { font-size:10px; color:var(--color-muted); }
+
+  /* Top menu */
+  .top-menu-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid var(--color-line); }
+  .top-menu-rank { width:28px; height:28px; border-radius:50%; background:var(--color-emerald); color:#C9A861; font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .top-menu-name { flex:1; font-weight:600; font-size:14px; }
+  .top-menu-bar-wrap { width:80px; height:8px; background:#f0ebe0; border-radius:4px; overflow:hidden; }
+  .top-menu-bar { height:100%; background:var(--color-gold); border-radius:4px; }
+  .top-menu-qty { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:700; color:var(--color-emerald); min-width:40px; text-align:right; }
+
+  @media(max-width:600px) {
+    .filter-bar { flex-direction:column; align-items:flex-start; }
+    th:nth-child(n+4), td:nth-child(n+4) { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="admin.html" class="brand-link">
+      <img src="images/logo-white.png" class="brand-logo-img" alt="Logo">
+      
+    </a>
+    <nav class="topbar-nav">
+      <a href="admin.html">ออเดอร์</a>
+      <a href="tables.html">โต๊ะ</a>
+      <a href="menu-manage.html">เมนู</a>
+      <a href="report.html" class="active">📊 รายงาน</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <h1 style="font-family:'Cormorant Garamond',serif;color:var(--color-emerald);font-size:30px;margin:0;">📊 รายงานและสถิติ</h1>
+    <button class="btn-export" id="btnExportMain">
+      <span>📥</span> Export Excel
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="report-tabs">
+    <button class="report-tab active" data-tab="summary">📈 สรุปยอดขาย</button>
+    <button class="report-tab" data-tab="orders">📋 ประวัติออเดอร์</button>
+    <button class="report-tab" data-tab="customers">👥 ฐานข้อมูลลูกค้า</button>
+    <button class="report-tab" data-tab="menu">🍽️ เมนูยอดนิยม</button>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="filter-bar">
+    <label>ช่วงวันที่:</label>
+    <input type="date" id="dateFrom">
+    <span style="color:var(--color-muted);">ถึง</span>
+    <input type="date" id="dateTo">
+    <button class="btn-filter" id="btnApplyFilter">🔍 ดูรายงาน</button>
+    <div class="quick-btns">
+      <button class="quick-btn active" data-range="today">วันนี้</button>
+      <button class="quick-btn" data-range="week">7 วัน</button>
+      <button class="quick-btn" data-range="month">30 วัน</button>
+      <button class="quick-btn" data-range="all">ทั้งหมด</button>
+    </div>
+  </div>
+
+  <!-- TAB: สรุปยอดขาย -->
+  <div data-tab-content="summary">
+    <div class="summary-grid" id="summaryCards">
+      <div class="sum-card" style="border-color:#C9A861;"><div class="ico">💰</div><div class="val" id="sumRevenue">-</div><div class="lbl">ยอดขายรวม</div></div>
+      <div class="sum-card" style="border-color:#10b981;"><div class="ico">📋</div><div class="val" id="sumOrders">-</div><div class="lbl">ออเดอร์ทั้งหมด</div></div>
+      <div class="sum-card" style="border-color:#6366f1;"><div class="ico">✅</div><div class="val" id="sumCompleted">-</div><div class="lbl">สำเร็จ</div></div>
+      <div class="sum-card" style="border-color:#ef4444;"><div class="ico">❌</div><div class="val" id="sumCancelled">-</div><div class="lbl">ยกเลิก</div></div>
+      <div class="sum-card" style="border-color:#f59e0b;"><div class="ico">🍽️</div><div class="val" id="sumDineIn">-</div><div class="lbl">กินที่นี่</div></div>
+      <div class="sum-card" style="border-color:#651713;"><div class="ico">🥡</div><div class="val" id="sumTakeaway">-</div><div class="lbl">กลับบ้าน</div></div>
+    </div>
+    <div class="chart-wrap">
+      <h3 class="chart-title">ยอดขายรายวัน</h3>
+      <div class="bar-chart" id="revenueChart"><div class="loading-row" style="width:100%;">กำลังโหลด...</div></div>
+    </div>
+  </div>
+
+  <!-- TAB: ประวัติออเดอร์ -->
+  <div data-tab-content="orders" style="display:none;">
+    <div class="report-table-wrap">
+      <div class="report-table-head">
+        <h3>📋 ประวัติออเดอร์ทั้งหมด</h3>
+        <button class="btn-export" id="btnExportOrders">📥 Export Excel</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th>เลขออเดอร์</th>
+              <th>วัน/เวลา</th>
+              <th>ชื่อลูกค้า</th>
+              <th>เบอร์โทร</th>
+              <th>โต๊ะ</th>
+              <th>ประเภท</th>
+              <th>รายการ</th>
+              <th>ยอดรวม</th>
+              <th>สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <tr><td colspan="9" class="loading-row">กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ฐานข้อมูลลูกค้า -->
+  <div data-tab-content="customers" style="display:none;">
+    <div class="report-table-wrap" style="margin-bottom:16px;">
+      <div class="report-table-head">
+        <h3>👥 ฐานข้อมูลลูกค้า</h3>
+        <button class="btn-export" id="btnExportCustomers">📥 Export Excel</button>
+      </div>
+    </div>
+    <div class="customer-grid" id="customerGrid">
+      <div class="loading-row">กำลังโหลด...</div>
+    </div>
+  </div>
+
+  <!-- TAB: เมนูยอดนิยม -->
+  <div data-tab-content="menu" style="display:none;">
+    <div class="report-table-wrap">
+      <div class="report-table-head">
+        <h3>🍽️ เมนูยอดนิยม</h3>
+        <button class="btn-export" id="btnExportMenu">📥 Export Excel</button>
+      </div>
+      <div id="topMenuList"><div class="loading-row">กำลังโหลด...</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/admin-pin.js"></script>
+<script src="js/api.js"></script>
+<script src="js/notifications.js"></script>
+<script>
+// ============================================================
+// 📊 Report Page
+// ============================================================
+let reportOrders = [];
+let reportItems  = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!checkConfig()) return;
+    initDates();
+    bindEvents();
+    await loadReport();
+});
+
+function initDates() {
+    const today = new Date();
+    const fmt = d => d.toISOString().slice(0,10);
+    document.getElementById('dateFrom').value = fmt(today);
+    document.getElementById('dateTo').value   = fmt(today);
+}
+
+function bindEvents() {
+    // Tabs
+    document.querySelectorAll('.report-tab').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+    // Quick ranges
+    document.querySelectorAll('[data-range]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            setRange(btn.dataset.range);
+            loadReport();
+        });
+    });
+    document.getElementById('btnApplyFilter').addEventListener('click', loadReport);
+    document.getElementById('btnExportMain').addEventListener('click', () => exportExcel('summary'));
+    document.getElementById('btnExportOrders').addEventListener('click', () => exportExcel('orders'));
+    document.getElementById('btnExportCustomers').addEventListener('click', () => exportExcel('customers'));
+    document.getElementById('btnExportMenu').addEventListener('click', () => exportExcel('menu'));
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.report-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('[data-tab-content]').forEach(c => {
+        c.style.display = c.dataset.tabContent === tab ? '' : 'none';
+    });
+}
+
+function setRange(range) {
+    const today = new Date();
+    const fmt = d => d.toISOString().slice(0,10);
+    const from = new Date();
+    if (range === 'today')  { from.setDate(today.getDate()); }
+    if (range === 'week')   { from.setDate(today.getDate() - 6); }
+    if (range === 'month')  { from.setDate(today.getDate() - 29); }
+    if (range === 'all')    { from.setFullYear(2020); }
+    document.getElementById('dateFrom').value = fmt(from);
+    document.getElementById('dateTo').value   = fmt(today);
+}
+
+async function loadReport() {
+    try {
+        const allOrders = await API.getOrders({ status: 'all', limit: 5000 });
+        const from = document.getElementById('dateFrom').value;
+        const to   = document.getElementById('dateTo').value;
+
+        // Filter by date
+        reportOrders = allOrders.filter(o => {
+            const d = String(o.created_at).slice(0,10);
+            return d >= from && d <= to;
+        });
+
+        // Collect items
+        reportItems = [];
+        reportOrders.forEach(o => { (o.items || []).forEach(i => reportItems.push({...i, order: o})); });
+
+        renderSummary();
+        renderOrdersTable();
+        renderCustomers();
+        renderTopMenu();
+    } catch(e) {
+        notifier.showToast('โหลดรายงานล้มเหลว: ' + e.message, 'error');
+    }
+}
+
+function renderSummary() {
+    const done = reportOrders.filter(o => o.status === 'completed');
+    const cancelled = reportOrders.filter(o => o.status === 'cancelled');
+    const revenue = done.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+    const dineIn   = reportOrders.filter(o => o.order_type === 'dine_in').length;
+    const takeaway = reportOrders.filter(o => o.order_type === 'takeaway').length;
+
+    document.getElementById('sumRevenue').textContent   = '฿' + revenue.toLocaleString('th-TH');
+    document.getElementById('sumOrders').textContent    = reportOrders.length;
+    document.getElementById('sumCompleted').textContent = done.length;
+    document.getElementById('sumCancelled').textContent = cancelled.length;
+    document.getElementById('sumDineIn').textContent    = dineIn;
+    document.getElementById('sumTakeaway').textContent  = takeaway;
+
+    renderBarChart();
+}
+
+function renderBarChart() {
+    // Group by day
+    const byDay = {};
+    reportOrders.filter(o => o.status === 'completed').forEach(o => {
+        const d = String(o.created_at).slice(0,10);
+        byDay[d] = (byDay[d] || 0) + parseFloat(o.total_amount || 0);
+    });
+    const keys = Object.keys(byDay).sort();
+    if (!keys.length) {
+        document.getElementById('revenueChart').innerHTML = '<div class="loading-row" style="width:100%;">ไม่มีข้อมูลในช่วงนี้</div>';
+        return;
+    }
+    const max = Math.max(...Object.values(byDay), 1);
+    const chart = document.getElementById('revenueChart');
+    chart.innerHTML = keys.map(k => {
+        const val = byDay[k] || 0;
+        const pct = Math.max((val / max) * 130, 4);
+        const label = k.slice(5); // MM-DD
+        return `<div class="bar-col">
+            <div class="bar-fill" style="height:${pct}px;" data-tip="฿${val.toLocaleString('th-TH')}"></div>
+            <div class="bar-label">${label}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderOrdersTable() {
+    const tbody = document.getElementById('ordersTableBody');
+    if (!reportOrders.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="loading-row">ไม่มีออเดอร์ในช่วงนี้</td></tr>';
+        return;
+    }
+    const statusColor = { pending:'#f59e0b', accepted:'#10b981', cooking:'#f59e0b', ready:'#C9A861', delivering:'#6366f1', completed:'#10b981', cancelled:'#ef4444' };
+    const statusLabel = { pending:'รอ', accepted:'รับแล้ว', cooking:'กำลังทำ', ready:'พร้อม', delivering:'จัดส่ง', completed:'สำเร็จ', cancelled:'ยกเลิก' };
+    tbody.innerHTML = [...reportOrders].reverse().map(o => {
+        const dt = new Date(o.created_at);
+        const dateStr = dt.toLocaleDateString('th-TH', {day:'2-digit', month:'2-digit', year:'2-digit'}) + ' ' +
+                        dt.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+        const items = (o.items || []).map(i => `${i.quantity}×${i.name}`).join(', ');
+        const c = statusColor[o.status] || '#999';
+        const l = statusLabel[o.status] || o.status;
+        return `<tr>
+            <td><strong>#${esc(o.order_number||'')}</strong></td>
+            <td>${dateStr}</td>
+            <td>${esc(o.customer_name||'-')}</td>
+            <td>${esc(o.customer_phone||'-')}</td>
+            <td>${o.table_number || '-'}</td>
+            <td>${o.order_type === 'dine_in' ? '🍽️ กินที่นี่' : '🥡 กลับบ้าน'}</td>
+            <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(items)}</td>
+            <td class="txt-gold">฿${parseFloat(o.total_amount||0).toLocaleString('th-TH')}</td>
+            <td><span class="badge-status" style="background:${c}22;color:${c};">${l}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+function renderCustomers() {
+    // Group by phone
+    const customers = {};
+    reportOrders.forEach(o => {
+        const key = o.customer_phone || o.customer_name || 'unknown';
+        if (!customers[key]) {
+            customers[key] = { name: o.customer_name||'ไม่ระบุ', phone: o.customer_phone||'-', orders:0, revenue:0, lastDate:'' };
+        }
+        customers[key].orders++;
+        if (o.status === 'completed') customers[key].revenue += parseFloat(o.total_amount || 0);
+        const d = String(o.created_at).slice(0,10);
+        if (d > customers[key].lastDate) customers[key].lastDate = d;
+    });
+
+    const list = Object.values(customers).sort((a,b) => b.revenue - a.revenue);
+    const grid = document.getElementById('customerGrid');
+
+    if (!list.length) { grid.innerHTML = '<div class="loading-row">ไม่มีข้อมูลลูกค้าในช่วงนี้</div>'; return; }
+
+    grid.innerHTML = list.map(c => {
+        const initial = c.name.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim().charAt(0).toUpperCase() || '?';
+        const lastDate = c.lastDate ? new Date(c.lastDate).toLocaleDateString('th-TH', {day:'numeric', month:'short'}) : '-';
+        return `<div class="customer-card">
+            <div style="display:flex;gap:12px;align-items:center;">
+                <div class="customer-avatar">${esc(initial)}</div>
+                <div class="customer-info">
+                    <div class="customer-name">${esc(c.name)}</div>
+                    <div class="customer-phone">📞 ${esc(c.phone)} · ล่าสุด ${lastDate}</div>
+                </div>
+            </div>
+            <div class="customer-stats">
+                <div class="customer-stat"><div class="n">${c.orders}</div><div class="l">ออเดอร์</div></div>
+                <div class="customer-stat"><div class="n txt-gold">฿${c.revenue.toLocaleString('th-TH')}</div><div class="l">ยอดรวม</div></div>
+                <div class="customer-stat"><div class="n">${c.revenue && c.orders ? '฿'+(c.revenue/c.orders).toFixed(0) : '-'}</div><div class="l">เฉลี่ย/ครั้ง</div></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderTopMenu() {
+    const menuCount = {};
+    reportItems.filter(i => i.order && i.order.status !== 'cancelled').forEach(i => {
+        const n = i.name || 'ไม่ระบุ';
+        if (!menuCount[n]) menuCount[n] = { name:n, qty:0, revenue:0 };
+        menuCount[n].qty += parseInt(i.quantity || 1);
+        menuCount[n].revenue += parseFloat(i.price||0) * parseInt(i.quantity||1);
+    });
+    const list = Object.values(menuCount).sort((a,b) => b.qty - a.qty).slice(0,20);
+    const maxQty = list[0] ? list[0].qty : 1;
+    const el = document.getElementById('topMenuList');
+    if (!list.length) { el.innerHTML = '<div class="loading-row">ไม่มีข้อมูลในช่วงนี้</div>'; return; }
+    el.innerHTML = list.map((m, i) => `
+        <div class="top-menu-row">
+            <div class="top-menu-rank">${i+1}</div>
+            <div class="top-menu-name">${esc(m.name)}</div>
+            <div class="top-menu-bar-wrap"><div class="top-menu-bar" style="width:${(m.qty/maxQty*100)}%"></div></div>
+            <div class="top-menu-qty">${m.qty} จาน</div>
+            <div class="txt-gold" style="min-width:80px;text-align:right;font-size:14px;">฿${m.revenue.toLocaleString('th-TH')}</div>
+        </div>`).join('');
+}
+
+// ============================================================
+// 📥 Export Excel (ใช้ CSV ที่ Excel เปิดได้)
+// ============================================================
+function exportExcel(type) {
+    const from = document.getElementById('dateFrom').value;
+    const to   = document.getElementById('dateTo').value;
+    let csv = '', filename = '';
+
+    if (type === 'orders' || type === 'summary') {
+        filename = `orders_${from}_${to}.csv`;
+        const rows = [['เลขออเดอร์','วันที่','เวลา','ชื่อลูกค้า','เบอร์โทร','โต๊ะ','ประเภท','รายการอาหาร','ยอดรวม','สถานะ']];
+        [...reportOrders].reverse().forEach(o => {
+            const dt = new Date(o.created_at);
+            const items = (o.items||[]).map(i=>`${i.quantity}x${i.name}`).join(' | ');
+            rows.push([
+                o.order_number||'', dt.toLocaleDateString('th-TH'), dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}),
+                o.customer_name||'', o.customer_phone||'', o.table_number||'',
+                o.order_type==='dine_in'?'กินที่นี่':'กลับบ้าน', items,
+                parseFloat(o.total_amount||0), o.status||''
+            ]);
+        });
+        csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    }
+
+    if (type === 'customers') {
+        filename = `customers_${from}_${to}.csv`;
+        const customers = {};
+        reportOrders.forEach(o => {
+            const key = o.customer_phone||o.customer_name||'unknown';
+            if (!customers[key]) customers[key] = {name:o.customer_name||'-',phone:o.customer_phone||'-',orders:0,revenue:0};
+            customers[key].orders++;
+            if (o.status==='completed') customers[key].revenue += parseFloat(o.total_amount||0);
+        });
+        const rows = [['ชื่อลูกค้า','เบอร์โทร','จำนวนออเดอร์','ยอดรวม (บาท)','เฉลี่ย/ครั้ง']];
+        Object.values(customers).sort((a,b)=>b.revenue-a.revenue).forEach(c => {
+            rows.push([c.name, c.phone, c.orders, c.revenue.toFixed(0), c.orders ? (c.revenue/c.orders).toFixed(0) : '0']);
+        });
+        csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    }
+
+    if (type === 'menu') {
+        filename = `top_menu_${from}_${to}.csv`;
+        const menuCount = {};
+        reportItems.filter(i=>i.order&&i.order.status!=='cancelled').forEach(i => {
+            const n = i.name||'ไม่ระบุ';
+            if (!menuCount[n]) menuCount[n]={name:n,qty:0,revenue:0};
+            menuCount[n].qty += parseInt(i.quantity||1);
+            menuCount[n].revenue += parseFloat(i.price||0)*parseInt(i.quantity||1);
+        });
+        const rows = [['อันดับ','ชื่อเมนู','จำนวน (จาน)','ยอดรวม (บาท)']];
+        Object.values(menuCount).sort((a,b)=>b.qty-a.qty).forEach((m,i) => {
+            rows.push([i+1, m.name, m.qty, m.revenue.toFixed(0)]);
+        });
+        csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    }
+
+    // Download
+    const BOM = '\uFEFF'; // UTF-8 BOM สำหรับ Excel ภาษาไทย
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    notifier.showToast('✓ Export เรียบร้อย: ' + filename, 'success');
+}
+
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>
