@@ -58,11 +58,19 @@ async function init() {
         state.step = 'type';
         // ถ้ามีออเดอร์เก่า → แสดง welcome back banner
         showReturningCustomer();
+    } else if (state.orderType === 'takeaway') {
+        // มาจาก index.html เลือก takeaway แล้ว → ข้ามไป info หรือ menu เลย
+        if (!state.customerName || !state.customerPhone) {
+            state.step = 'info';
+        } else {
+            state.step = 'menu';
+        }
     } else if (!state.customerName || !state.customerPhone) {
         state.step = 'info';
     } else {
         state.step = 'menu';
     }
+    showReturningCustomer();
     showStep(state.step);
 }
 
