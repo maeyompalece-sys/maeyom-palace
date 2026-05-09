@@ -1,5 +1,5 @@
 // ============================================================
-// Service Worker - แม่ยม พาเลส
+// Service Worker - แม่ยมพาเลส
 // ทำหน้าที่: 1) PWA offline cache  2) รับ Push Notification (OneSignal)
 // ============================================================
 
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
 // ============================================================
 self.addEventListener('push', (event) => {
   let payload = {
-    title: 'แม่ยม พาเลส',
+    title: 'แม่ยมพาเลส',
     body: 'มีการแจ้งเตือนใหม่',
     icon: '/images/icon-192.png',
     badge: '/images/badge.png',

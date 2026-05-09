@@ -43,8 +43,8 @@
     flex:1; padding:10px; border:none; border-radius:6px; cursor:pointer;
     font-family:inherit; font-weight:600; font-size:14px;
   }
-  .btn-print { background:#0F3B2E; color:#fff; }
-  .btn-back { background:#fff; color:#0F3B2E; border:1px solid #0F3B2E !important; }
+  .btn-print { background:#651713; color:#fff; }
+  .btn-back { background:#fff; color:#651713; border:1px solid #651713 !important; }
   .btn-58 { background:#C9A861; color:#fff; }
 
   #loading { text-align:center; padding:40px; color:#666; }
@@ -131,6 +131,7 @@ function renderReceipt(order) {
 
   const html = `
     <div class="center">
+      <img src="images/logo.png" style="height:56px;width:auto;margin-bottom:4px;" alt="Logo">
       <div class="bold lg">${escapeHtml(CONFIG.HOTEL_NAME)}</div>
       <div class="muted">${escapeHtml(CONFIG.HOTEL_NAME_EN || '')}</div>
       <div class="muted">โทร ${escapeHtml(CONFIG.HOTEL_PHONE || '')}</div>

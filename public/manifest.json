@@ -1,13 +1,13 @@
 {
-  "name": "โรงแรม แม่ยม พาเลส - ระบบสั่งอาหาร",
-  "short_name": "แม่ยม พาเลส",
-  "description": "ระบบสั่งอาหารและจัดการครัวสำหรับโรงแรมแม่ยม พาเลส",
+  "name": "โรงแรม แม่ยมพาเลส - ระบบสั่งอาหาร",
+  "short_name": "แม่ยมพาเลส",
+  "description": "ระบบสั่งอาหารและจัดการครัวสำหรับโรงแรมแม่ยมพาเลส",
   "lang": "th",
   "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FAF7EE",
-  "theme_color": "#0F3B2E",
+  "theme_color": "#651713",
   "scope": "/",
   "icons": [
     {

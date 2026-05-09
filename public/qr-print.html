@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Code - แม่ยม พาเลส</title>
+<title>QR Code - แม่ยมพาเลส</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -21,7 +21,7 @@
 
   /* Header */
   .card-header {
-    background:linear-gradient(160deg,#0F3B2E 0%,#1a5c47 100%);
+    background:linear-gradient(160deg,#651713 0%,#4A0E0E 100%);
     padding:20px 20px 16px;
     text-align:center;
     color:#fff;
@@ -56,14 +56,14 @@
   }
   .qr-box img { width:152px; height:152px; }
   .scan-label { font-size:11px; color:#666; text-align:center; }
-  .scan-label strong { color:#0F3B2E; }
+  .scan-label strong { color:#651713; }
 
   /* Instructions */
   .instructions { padding:14px 18px; flex:1; }
   .inst-title {
     font-family:'Cormorant Garamond',serif;
     font-size:14px; font-weight:700;
-    color:#0F3B2E; margin-bottom:10px;
+    color:#651713; margin-bottom:10px;
     text-align:center; letter-spacing:.5px;
   }
   .steps { list-style:none; }
@@ -73,7 +73,7 @@
   }
   .step-num {
     width:20px; height:20px; border-radius:50%;
-    background:#0F3B2E; color:#C9A861;
+    background:#651713; color:#C9A861;
     font-size:11px; font-weight:700;
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0; margin-top:1px;
@@ -101,7 +101,7 @@
 
   /* Footer */
   .card-footer {
-    background:#0F3B2E; padding:10px 18px;
+    background:#651713; padding:10px 18px;
     display:flex; justify-content:space-between; align-items:center;
   }
   .footer-wifi { font-size:10px; color:rgba(255,255,255,.7); }
@@ -113,8 +113,8 @@
     padding:16px; display:flex; gap:10px; flex-wrap:wrap;
     justify-content:center;
   }
-  .btn-print { padding:10px 24px; background:#0F3B2E; color:#C9A861; border:none; border-radius:20px; font-weight:700; font-size:14px; cursor:pointer; }
-  .btn-back { padding:10px 20px; background:#fff; color:#0F3B2E; border:2px solid #0F3B2E; border-radius:20px; font-weight:600; font-size:14px; cursor:pointer; }
+  .btn-print { padding:10px 24px; background:#651713; color:#C9A861; border:none; border-radius:20px; font-weight:700; font-size:14px; cursor:pointer; }
+  .btn-back { padding:10px 20px; background:#fff; color:#651713; border:2px solid #651713; border-radius:20px; font-weight:600; font-size:14px; cursor:pointer; }
 
   @media print {
     .screen-controls { display:none !important; }
@@ -134,8 +134,9 @@
 
   <!-- Header -->
   <div class="card-header">
-    <div class="hotel-name">Mae Yom Palace Hotel</div>
-    <div class="hotel-sub">โรงแรม แม่ยม พาเลส</div>
+    <img src="images/logo-white.png" style="height:80px;width:auto;margin-bottom:6px;" alt="Logo">
+    <div class="hotel-name">Maeyom Palace Hotel</div>
+    <div class="hotel-sub">โรงแรม แม่ยมพาเลส</div>
     <div class="table-badge" id="tableBadge">🪑 โต๊ะ —</div>
   </div>
 

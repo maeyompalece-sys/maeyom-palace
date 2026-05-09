@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0F3B2E">
-<title>เมนูอาหาร | โรงแรม แม่ยม พาเลส</title>
+<meta name="theme-color" content="#651713">
+<title>เมนูอาหาร | โรงแรม แม่ยมพาเลส</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,9 +15,10 @@
 
 <style>
   body { padding-bottom:100px; }
-  .page-hero { padding:24px 16px 16px; text-align:center; background:linear-gradient(180deg,#0F3B2E 0%,#0a2820 100%); color:#fff; }
-  .page-hero h1 { font-family:'Cormorant Garamond',serif; font-size:32px; margin:0 0 4px; color:#C9A861; }
-  .page-hero .sub { color:rgba(255,255,255,.7); font-size:13px; }
+  .page-hero { padding:24px 16px 16px; text-align:center; background:linear-gradient(180deg,#651713 0%,#4A0E0E 100%); color:#fff; }
+  .page-hero h1 { display:none; }
+  .page-hero .sub { color:rgba(255,255,255,.7); font-size:13px; margin-top:6px; }
+  .page-hero-logo { height:110px; width:auto; margin-bottom:4px; }
   #tableDisplay { display:none; margin-top:10px; padding:6px 16px; background:rgba(201,168,97,.15); color:#C9A861; border-radius:20px; font-weight:600; font-size:13px; border:1px solid rgba(201,168,97,.3); }
 
   .container-page { max-width:780px; margin:0 auto; padding:20px 16px; }
@@ -26,7 +27,7 @@
   .step-title { font-family:'Cormorant Garamond',serif; font-size:24px; color:var(--color-emerald); margin:0 0 16px; text-align:center; }
   .order-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
   .order-type-card { background:#fff; border:2px solid var(--color-line); border-radius:16px; padding:28px 16px; text-align:center; cursor:pointer; transition:all .2s; }
-  .order-type-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(15,59,46,.12); border-color:var(--color-gold); }
+  .order-type-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(101,23,19,.12); border-color:var(--color-gold); }
   .order-type-card .icon { font-size:48px; margin-bottom:8px; }
   .order-type-card .name { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:var(--color-emerald); margin-bottom:4px; }
   .order-type-card .desc { font-size:12px; color:var(--color-muted); }
@@ -74,8 +75,8 @@
   .modal-btns .btn { flex:1; }
 
   /* Cart bar */
-  #cartBar { display:none; position:fixed; bottom:14px; left:14px; right:14px; max-width:540px; margin:0 auto; background:linear-gradient(135deg,var(--color-emerald) 0%,#0a2820 100%); color:#fff; border-radius:14px; padding:14px 18px; align-items:center; gap:12px; box-shadow:0 12px 32px rgba(0,0,0,.25); cursor:pointer; z-index:90; }
-  #cartCount { background:#C9A861; color:#0F3B2E; padding:4px 10px; border-radius:12px; font-weight:700; font-size:13px; }
+  #cartBar { display:none; position:fixed; bottom:14px; left:14px; right:14px; max-width:540px; margin:0 auto; background:linear-gradient(135deg,var(--color-emerald) 0%,#4A0E0E 100%); color:#fff; border-radius:14px; padding:14px 18px; align-items:center; gap:12px; box-shadow:0 12px 32px rgba(0,0,0,.25); cursor:pointer; z-index:90; }
+  #cartCount { background:#C9A861; color:#651713; padding:4px 10px; border-radius:12px; font-weight:700; font-size:13px; }
   #cartAmount { margin-left:auto; font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; color:#C9A861; }
 
   /* Cart Modal */
@@ -118,7 +119,7 @@
 
   /* 👤 Returning Customer */
   #returningBanner { display:none; margin-bottom:16px; }
-  .returning-card { background:linear-gradient(135deg,rgba(15,59,46,.06),rgba(201,168,97,.08)); border:1px solid rgba(201,168,97,.3); border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .returning-card { background:linear-gradient(135deg,rgba(101,23,19,.06),rgba(201,168,97,.08)); border:1px solid rgba(201,168,97,.3); border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
   .returning-left { display:flex; align-items:center; gap:12px; }
   .returning-avatar { width:44px;height:44px;border-radius:50%;background:var(--color-emerald);color:#C9A861;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center; }
   .returning-name { font-size:14px;color:var(--color-emerald); }
@@ -149,8 +150,9 @@
 
 <div class="page-hero" style="position:relative;">
   <div style="position:absolute;top:12px;right:16px;" id="langSwitcherHero"></div>
-  <h1>โรงแรม แม่ยม พาเลส</h1>
-  <div class="sub">Mae Yom Palace Hotel</div>
+  <img src="images/logo-white.png" class="page-hero-logo" alt="Maeyom Palace Hotel">
+  <h1>โรงแรม แม่ยมพาเลส</h1>
+  <div class="sub">Maeyom Palace Hotel</div>
   <div id="tableDisplay"></div>
 </div>
 
