@@ -38,20 +38,29 @@
                 </p>
             </div>
             
-            <div class="hero-actions">
-                <a href="#" id="btn-customer" class="btn btn-primary btn-xl">
+            <!-- ถ้าเคยสั่งแล้ว: ติดตามออเดอร์เด่น + เมนูอาหาร -->
+            <div id="heroHasOrders" style="display:none;width:100%;max-width:400px;margin:0 auto;">
+                <button id="btnTrackOrder" style="width:100%;padding:18px 24px;margin-bottom:12px;border-radius:20px;border:none;background:linear-gradient(135deg,#C9A861,#a07840);color:#fff;font-family:'Sarabun',sans-serif;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(201,168,97,.4);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;">
+                    📋 ติดตามออเดอร์ของฉัน
+                </button>
+                <div style="display:flex;gap:10px;">
+                    <a href="#" id="btn-customer" style="flex:1;padding:14px;border-radius:16px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        🍽️ สั่งอาหาร
+                    </a>
+                    <a href="admin.html" style="flex:1;padding:14px;border-radius:16px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        👨‍💼 แอดมิน
+                    </a>
+                </div>
+            </div>
+
+            <!-- ถ้ายังไม่เคยสั่ง: เมนูอาหาร + แอดมิน -->
+            <div id="heroNoOrders" class="hero-actions">
+                <a href="#" id="btn-customer-new" class="btn btn-primary btn-xl">
                     <span>🍽️</span> เมนูอาหาร
                 </a>
                 <a href="admin.html" class="btn btn-emerald btn-xl">
                     <span>👨‍💼</span> หน้าแอดมิน
                 </a>
-            </div>
-
-            <!-- ปุ่มติดตามออเดอร์ (แสดงเฉพาะเมื่อมีออเดอร์) -->
-            <div id="trackOrderSection" style="display:none;margin-bottom:24px;">
-                <button id="btnTrackOrder" style="background:rgba(201,168,97,.15);border:1.5px solid rgba(201,168,97,.5);color:#C9A861;padding:12px 28px;border-radius:30px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;">
-                    📋 ติดตามออเดอร์ของฉัน
-                </button>
             </div>
             
             <div class="hero-features">
@@ -286,12 +295,13 @@
     async function showTrackModal() {
         document.getElementById('trackModal').style.display = 'flex';
         const list = document.getElementById('trackList');
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">⏳ กำลังโหลด...</div>';
 
         let orders = [];
         try { orders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]'); } catch(e) {}
 
         if (!orders.length) {
-            list.innerHTML = '<div style="text-align:center;padding:30px;color:#999;">ยังไม่มีออเดอร์</div>';
+            list.innerHTML = '<div style="text-align:center;padding:30px;color:#999;">📭 ยังไม่มีออเดอร์</div>';
             return;
         }
 
@@ -315,23 +325,69 @@
             } catch(e) {}
         }
 
-        list.innerHTML = orders.slice(0,10).map(saved => {
-            const o = orderData[saved.id];
-            const st = o ? (statusLabel[o.status] || o.status) : '⚠️ โหลดไม่ได้';
-            const sc = o ? (statusColor[o.status] || '#999') : '#ef4444';
-            const tableInfo = o && o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o && o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
-            const num = o ? o.order_number : (saved.order_number || '?');
-            const items = o && o.items ? o.items.slice(0,2).map(i => `${i.quantity}× ${i.name}`).join(', ') : '';
+        // จัดกลุ่มตามวันที่
+        const grouped = {};
+        orders.forEach(saved => {
+            const dateKey = saved.created_at ? String(saved.created_at).slice(0,10) : 'unknown';
+            if (!grouped[dateKey]) grouped[dateKey] = [];
+            grouped[dateKey].push(saved);
+        });
 
-            return `<div onclick="${o ? `window.location.href='menu.html?table=${o.table_number||''}'` : ''}" style="background:#fafaf6;border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #f0ebe0;cursor:${o?'pointer':'default'};">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                    <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#0F3B2E;">#${num}</span>
-                    <span style="background:${sc}22;color:${sc};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;">${st}</span>
-                </div>
-                ${tableInfo ? `<div style="font-size:13px;color:#666;margin-bottom:4px;">${tableInfo}</div>` : ''}
-                ${items ? `<div style="font-size:12px;color:#999;">${items}</div>` : ''}
-                ${o ? `<div style="font-size:12px;color:#C9A861;margin-top:6px;font-weight:600;">กดเพื่อดูสถานะ →</div>` : ''}
-            </div>`;
+        // เรียงวันใหม่ → เก่า
+        const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+
+        const today = new Date().toISOString().slice(0,10);
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+
+        function dateThai(dateKey) {
+            if (dateKey === today) return '📅 วันนี้';
+            if (dateKey === yesterday) return '📅 เมื่อวาน';
+            if (dateKey === 'unknown') return '📅 ไม่ทราบวันที่';
+            try {
+                const d = new Date(dateKey);
+                return '📅 ' + d.toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' });
+            } catch(e) { return '📅 ' + dateKey; }
+        }
+
+        list.innerHTML = sortedDates.map(dateKey => {
+            const dayOrders = grouped[dateKey];
+            const cardsHtml = dayOrders.map(saved => {
+                const o = orderData[saved.id];
+                const st = o ? (statusLabel[o.status] || o.status) : '⚠️ โหลดไม่ได้';
+                const sc = o ? (statusColor[o.status] || '#999') : '#ef4444';
+                const tableInfo = o && o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o && o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
+                const num = o ? o.order_number : (saved.order_number || '?');
+                const timeStr = o && o.created_at ? new Date(o.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '';
+                const items = o && o.items ? o.items.slice(0,2).map(i => `${i.quantity}× ${i.name}`).join(', ') : '';
+                const total = o ? `฿${Number(o.total_amount||0).toFixed(0)}` : '';
+
+                return `<div onclick="${o ? `window.location.href='status.html?id=${o.id}'` : ''}"
+                    style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1.5px solid #f0ebe0;cursor:${o?'pointer':'default'};transition:all .15s;"
+                    onmouseover="${o?`this.style.borderColor='#C9A861'`:''}"
+                    onmouseout="${o?`this.style.borderColor='#f0ebe0'`:''}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#0F3B2E;white-space:nowrap;">#${num.slice(-7)}</span>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            ${timeStr ? `<span style="font-size:11px;color:#aaa;">${timeStr}</span>` : ''}
+                            <span style="background:${sc}22;color:${sc};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">${st}</span>
+                        </div>
+                    </div>
+                    ${tableInfo ? `<div style="font-size:12px;color:#666;font-weight:600;margin-bottom:3px;">${tableInfo}</div>` : ''}
+                    ${items ? `<div style="font-size:12px;color:#999;margin-bottom:3px;">${items}</div>` : ''}
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        ${total ? `<span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#C9A861;">${total}</span>` : '<span></span>'}
+                        ${o ? `<span style="font-size:11px;color:#C9A861;font-weight:600;">ดูสถานะ →</span>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+
+            return `
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:13px;font-weight:700;color:#0F3B2E;margin-bottom:8px;padding:6px 10px;background:#f0ebe0;border-radius:8px;">
+                        ${dateThai(dateKey)}
+                    </div>
+                    ${cardsHtml}
+                </div>`;
         }).join('');
     }
 
@@ -391,22 +447,47 @@
         document.getElementById('orderTypeModal').style.display = 'flex';
     }
 
-    // ตรวจสอบออเดอร์เก่า → แสดงปุ่มติดตาม
+    // ตรวจสอบออเดอร์เก่า → ล้างที่ไม่ใช่วันนี้ → สลับปุ่ม
     function checkMyOrders() {
         try {
-            const orders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
-            if (orders.length > 0) {
-                document.getElementById('trackOrderSection').style.display = 'block';
+            const today = new Date().toISOString().slice(0,10);
+            let orders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
+
+            // ลบออเดอร์เก่าที่ไม่ใช่วันนี้
+            const todayOrders = orders.filter(o => {
+                const orderDate = o.created_at ? String(o.created_at).slice(0,10) : '';
+                return orderDate === today;
+            });
+
+            // ถ้าลบออกบางส่วน → update localStorage
+            if (todayOrders.length !== orders.length) {
+                localStorage.setItem('maeyom_my_orders', JSON.stringify(todayOrders));
             }
-        } catch(e) {}
+
+            if (todayOrders.length > 0) {
+                // เคยสั่งวันนี้ → แสดงปุ่มติดตาม
+                document.getElementById('heroHasOrders').style.display = 'block';
+                document.getElementById('heroNoOrders').style.display = 'none';
+            } else {
+                // ยังไม่เคยสั่งวันนี้ → แสดงปุ่มปกติ
+                document.getElementById('heroHasOrders').style.display = 'none';
+                document.getElementById('heroNoOrders').style.display = 'flex';
+            }
+        } catch(e) {
+            document.getElementById('heroNoOrders').style.display = 'flex';
+        }
     }
     checkMyOrders();
 
+    // ผูกปุ่มเมนูอาหาร (ทั้งสอง layout)
+    const btnCustomer = document.getElementById('btn-customer');
+    if (btnCustomer) btnCustomer.addEventListener('click', (e) => { e.preventDefault(); showOrderTypeModal(); });
+    const btnCustomerNew = document.getElementById('btn-customer-new');
+    if (btnCustomerNew) btnCustomerNew.addEventListener('click', (e) => { e.preventDefault(); showOrderTypeModal(); });
+
     // กดปุ่มติดตามออเดอร์
     const trackBtn = document.getElementById('btnTrackOrder');
-    if (trackBtn) {
-        trackBtn.addEventListener('click', showTrackModal);
-    }
+    if (trackBtn) trackBtn.addEventListener('click', showTrackModal);
     function closeOrderModal() {
         document.getElementById('orderTypeModal').style.display = 'none';
         document.getElementById('tableModal').style.display = 'none';
