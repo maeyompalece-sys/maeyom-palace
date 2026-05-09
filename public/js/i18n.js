@@ -9,8 +9,8 @@ const I18N = {
     data: {
         th: {
             // Hero
-            hotel_name: 'โรงแรม แม่ยม พาเลส',
-            hotel_sub: 'Mae Yom Palace Hotel',
+            hotel_name: 'โรงแรม แม่ยมพาเลส',
+            hotel_sub: 'Maeyom Palace Hotel',
             // Step 1
             order_type_q: 'คุณต้องการสั่งแบบไหน?',
             dine_in: 'กินที่นี่',
@@ -59,8 +59,8 @@ const I18N = {
             lang_zh: '中文',
         },
         en: {
-            hotel_name: 'Mae Yom Palace Hotel',
-            hotel_sub: 'โรงแรม แม่ยม พาเลส',
+            hotel_name: 'Maeyom Palace Hotel',
+            hotel_sub: 'โรงแรม แม่ยมพาเลส',
             order_type_q: 'How would you like to order?',
             dine_in: 'Dine In',
             dine_in_desc: 'Eat at the table',
@@ -103,7 +103,7 @@ const I18N = {
         },
         zh: {
             hotel_name: '湄扬宫殿酒店',
-            hotel_sub: 'Mae Yom Palace Hotel',
+            hotel_sub: 'Maeyom Palace Hotel',
             order_type_q: '您想如何点餐？',
             dine_in: '堂食',
             dine_in_desc: '在餐桌用餐',

@@ -105,7 +105,7 @@ function renderTables() {
 
     // วาด QR
     tablesState.tables.forEach(t => {
-        drawQR('qrbox-' + t.id, buildTableUrl(t.table_number), 140, '#0F3B2E');
+        drawQR('qrbox-' + t.id, buildTableUrl(t.table_number), 140, '#651713');
     });
 }
 
@@ -114,7 +114,7 @@ function renderPrintView() {
     if (!v) return;
     v.innerHTML = `
         <div style="text-align:center;margin-bottom:8mm;">
-            <h1 style="font-family:'Cormorant Garamond',serif;color:#0F3B2E;margin:0;">${escapeHtml(CONFIG.HOTEL_NAME)}</h1>
+            <h1 style="font-family:'Cormorant Garamond',serif;color:#651713;margin:0;">${escapeHtml(CONFIG.HOTEL_NAME)}</h1>
             <p style="color:#888;margin:4px 0 0;">QR Code สำหรับสั่งอาหารประจำโต๊ะ</p>
         </div>
         <div class="print-grid">
@@ -138,7 +138,7 @@ function renderPrintView() {
 function drawQR(elementId, url, size, color) {
     const box = document.getElementById(elementId);
     if (!box) return;
-    const c = (color || '#0F3B2E').replace('#', '');
+    const c = (color || '#651713').replace('#', '');
     const encoded = encodeURIComponent(url);
     box.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&color=${c}&bgcolor=ffffff&margin=4" width="${size}" height="${size}" style="border-radius:6px;display:block;" alt="QR">`;
 }

@@ -8,9 +8,9 @@
     --color-gold: #C9A861;
     --color-gold-light: #E0C892;
     --color-gold-dark: #A88840;
-    --color-emerald: #0F3B2E;
-    --color-emerald-light: #1A5F4A;
-    --color-emerald-dark: #082319;
+    --color-emerald: #651713;
+    --color-emerald-light: #8B2020;
+    --color-emerald-dark: #4A0E0E;
     
     /* Neutral */
     --color-cream: #F8F4EC;
@@ -131,19 +131,16 @@ h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
 }
 
 .maeyom-logo-mark {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--color-gold-light), var(--color-gold), var(--color-gold-dark));
-    border-radius: 50%;
+    width: 100px;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 22px;
-    color: var(--color-emerald-dark);
-    box-shadow: var(--shadow-gold);
-    border: 2px solid var(--color-gold-light);
+}
+
+.maeyom-logo-mark img {
+    width: 100px;
+    height: auto;
 }
 
 .maeyom-logo-text {
@@ -418,7 +415,7 @@ h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 59, 46, 0.6);
+    background: rgba(101, 23, 19, 0.6);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -520,7 +517,7 @@ h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
     background: linear-gradient(135deg, var(--color-emerald-dark) 0%, var(--color-emerald) 100%);
     color: var(--color-cream);
     padding: 14px 16px;
-    box-shadow: 0 2px 12px rgba(15,59,46,.15);
+    box-shadow: 0 2px 12px rgba(101,23,19,.20);
     margin-bottom: 0;
 }
 .topbar-inner {
@@ -539,6 +536,12 @@ h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
     display: flex; align-items: center; justify-content: center;
     font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700;
     border: 2px solid var(--color-gold-light);
+}
+.brand-logo-img {
+    height: 48px;
+    width: auto;
+    opacity: 0.95;
+    display: block;
 }
 .brand-name {
     font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600;
@@ -666,4 +669,4 @@ h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
     cursor: pointer;
     transition: all .15s;
 }
-.order-actions .btn-emerald:hover { background: #082319; }
+.order-actions .btn-emerald:hover { background: #4A0E0E; }

@@ -318,7 +318,7 @@ function renderOrders() {
     });
 
     if (orders.length === 0) {
-        c.innerHTML = '<div class="empty-state" style="text-align:center;padding:60px 20px;color:#888;"><div style="font-size:64px;">📭</div><h3 style="font-family:\'Cormorant Garamond\',serif;color:#0F3B2E;">ยังไม่มีออเดอร์</h3></div>';
+        c.innerHTML = '<div class="empty-state" style="text-align:center;padding:60px 20px;color:#888;"><div style="font-size:64px;">📭</div><h3 style="font-family:\'Cormorant Garamond\',serif;color:#651713;">ยังไม่มีออเดอร์</h3></div>';
         return;
     }
 

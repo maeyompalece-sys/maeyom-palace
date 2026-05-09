@@ -9,9 +9,9 @@ const CONFIG = {
     APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxCP7SxWBSGfcdM-W34uOCDNpNznn0LpNATIDTcTPFduDxTdVynDJKIotvHLzLm7vKDFw/exec',
 
     // ข้อมูลโรงแรม
-    HOTEL_NAME: 'โรงแรม แม่ยม พาเลส',
-    HOTEL_NAME_EN: 'Mae Yom Palace Hotel',
-    HOTEL_PHONE: '054511628',
+    HOTEL_NAME: 'โรงแรม แม่ยมพาเลส',
+    HOTEL_NAME_EN: 'Maeyom Palace Hotel',
+    HOTEL_PHONE: '054-521-028',
 
     // URL สำหรับสร้าง QR Code (ปล่อยค่า default ก็ได้)
     BASE_URL: 'https://maeyompalece-sys.github.io/maeyom-palace',

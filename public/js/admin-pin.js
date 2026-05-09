@@ -19,9 +19,9 @@
         overlay.id = 'pinOverlay';
         overlay.innerHTML = `
 <style>
-#pinOverlay{position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0F3B2E 0%,#0a2820 60%,#061a14 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Sarabun',-apple-system,sans-serif;}
+#pinOverlay{position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#651713 0%,#4A0E0E 60%,#3a0a0a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Sarabun',-apple-system,sans-serif;}
 .pin-logo{text-align:center;margin-bottom:32px;}
-.pin-logo .mark{width:72px;height:72px;border-radius:50%;background:rgba(201,168,97,.15);border:2px solid rgba(201,168,97,.4);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:#C9A861;margin:0 auto 12px;}
+.pin-logo img{width:160px;height:auto;margin:0 auto 12px;display:block;filter:brightness(0) invert(1) sepia(1) saturate(2) hue-rotate(320deg) brightness(0.85);}
 .pin-logo h1{font-family:'Cormorant Garamond',serif;color:#C9A861;font-size:26px;margin:0;}
 .pin-logo p{color:rgba(255,255,255,.5);font-size:13px;margin:4px 0 0;}
 .pin-label{color:rgba(255,255,255,.7);font-size:14px;margin-bottom:16px;letter-spacing:.5px;}
@@ -40,9 +40,9 @@
 .pin-shake{animation:pinShake .4s ease;}
 </style>
 <div class="pin-logo">
-  <div class="mark">M</div>
-  <h1>แม่ยม พาเลส</h1>
-  <p>Mae Yom Palace Hotel</p>
+  <img src="images/logo-white.png" alt="Maeyom Palace Hotel">
+  <h1>แม่ยมพาเลส</h1>
+  <p>Maeyom Palace Hotel</p>
 </div>
 <div class="pin-label">🔐 กรอก PIN 6 หลัก</div>
 <div class="pin-dots" id="pinDots">

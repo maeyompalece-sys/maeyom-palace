@@ -196,7 +196,7 @@ const STATUS_BAR_CONFIG = {
     cooking:    { bg: 'linear-gradient(135deg,#f59e0b,#d97706)', progress: 50,  icon: '👨‍🍳' },
     ready:      { bg: 'linear-gradient(135deg,#C9A861,#a07840)', progress: 75,  icon: '🍽️' },
     delivering: { bg: 'linear-gradient(135deg,#6366f1,#4f46e5)', progress: 88,  icon: '🚶' },
-    completed:  { bg: 'linear-gradient(135deg,#0F3B2E,#1a5c47)', progress: 100, icon: '✨' },
+    completed:  { bg: 'linear-gradient(135deg,#651713,#4A0E0E)', progress: 100, icon: '✨' },
     cancelled:  { bg: 'linear-gradient(135deg,#ef4444,#dc2626)', progress: 100, icon: '❌' },
 };
 
