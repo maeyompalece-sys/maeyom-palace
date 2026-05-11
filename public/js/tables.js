@@ -109,30 +109,71 @@ function renderTables() {
     });
 }
 
+let currentPaperSize = 'a4';
+
+function setPaperSize(size) {
+    currentPaperSize = size;
+    ['a4','a5','a6'].forEach(s => {
+        const btn = document.getElementById('size' + s.toUpperCase());
+        if (btn) btn.classList.toggle('active', s === size);
+    });
+    // Update grid class
+    const grid = document.querySelector('.print-grid');
+    if (grid) {
+        grid.className = 'print-grid size-' + size;
+        // Resize QR images
+        const qrSize = size === 'a5' ? 180 : size === 'a6' ? 90 : 130;
+        document.querySelectorAll('.pc-qr img').forEach(img => {
+            const url = img.src.replace(/size=\d+x\d+/, `size=${qrSize}x${qrSize}`);
+            img.src = url; img.width = qrSize; img.height = qrSize;
+        });
+    }
+}
+
 function renderPrintView() {
     const v = document.getElementById('printAllView');
     if (!v) return;
+
+    const steps = [
+        { th:'สแกน QR Code ด้วยมือถือ', en:'Scan the QR Code with your phone' },
+        { th:'เลือกประเภท: กินที่นี่ หรือ กลับบ้าน', en:'Choose: Dine In or Takeaway' },
+        { th:'กรอกชื่อและเบอร์โทร', en:'Enter your name & phone number' },
+        { th:'เลือกเมนูที่ต้องการและกด "สั่งเลย"', en:'Select dishes and tap "Place Order"' },
+    ];
+    const stepsHtml = steps.map((s,i) => `
+        <div class="pc-step">
+            <div class="pc-num">${i+1}</div>
+            <div><strong>${escapeHtml(s.th)}</strong><br><span style="color:#888;">${s.en}</span></div>
+        </div>`).join('');
+
+    const activeTables = tablesState.tables.filter(t => t.is_active);
+    const qrSize = currentPaperSize === 'a5' ? 180 : currentPaperSize === 'a6' ? 90 : 130;
+
     v.innerHTML = `
-        <div style="text-align:center;margin-bottom:8mm;">
-            <h1 style="font-family:'Cormorant Garamond',serif;color:#651713;margin:0;">${escapeHtml(CONFIG.HOTEL_NAME)}</h1>
-            <p style="color:#888;margin:4px 0 0;">QR Code สำหรับสั่งอาหารประจำโต๊ะ</p>
-        </div>
-        <div class="print-grid">
-            ${tablesState.tables.filter(t => t.is_active).map(t => `
+        <div class="print-grid size-${currentPaperSize}" id="printGrid">
+            ${activeTables.map(t => `
                 <div class="print-card">
-                    <h3>${escapeHtml(CONFIG.HOTEL_NAME)}</h3>
-                    <div style="font-size:12px;color:#666;">โต๊ะหมายเลข</div>
-                    <div class="pn">${t.table_number}</div>
-                    ${t.table_name ? `<div style="color:#C9A861;font-weight:600;">${escapeHtml(t.table_name)}</div>` : ''}
-                    <div id="pqr-${t.id}" style="display:flex;justify-content:center;margin:8px 0;"></div>
-                    <div class="scan">📱 สแกนเพื่อสั่งอาหาร</div>
+                    <div class="pc-header">
+                        <img src="images/logo-white.png" alt="Logo">
+                        <div class="pc-hotel">${escapeHtml(CONFIG.HOTEL_NAME_EN || 'Maeyom Palace Hotel')}</div>
+                        <div class="pc-sub">${escapeHtml(CONFIG.HOTEL_NAME || 'โรงแรม แม่ยมพาเลส')}</div>
+                        <div class="pc-badge">🪑 โต๊ะ ${t.table_number}${t.table_name ? ' · ' + escapeHtml(t.table_name) : ''}</div>
+                    </div>
+                    <div class="pc-qr">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(buildTableUrl(t.table_number))}&color=651713&bgcolor=ffffff&margin=4"
+                            width="${qrSize}" height="${qrSize}" alt="QR Code" style="border-radius:8px;">
+                        <div class="pc-scan">📱 สแกน QR เพื่อสั่งอาหาร<br><strong>Scan to order</strong></div>
+                    </div>
+                    <div class="pc-steps">
+                        <div style="font-size:10px;font-weight:700;color:#651713;text-align:center;margin-bottom:5px;">📋 วิธีสั่งอาหาร · How to Order</div>
+                        ${stepsHtml}
+                    </div>
+                    <div class="pc-footer">
+                        🌐 ${escapeHtml(CONFIG.BASE_URL || '')} &nbsp;|&nbsp; 📞 ${escapeHtml(CONFIG.HOTEL_PHONE || '')}
+                    </div>
                 </div>
             `).join('')}
         </div>`;
-
-    tablesState.tables.filter(t => t.is_active).forEach(t => {
-        drawQR('pqr-' + t.id, buildTableUrl(t.table_number), 200, '#000');
-    });
 }
 
 function drawQR(elementId, url, size, color) {
