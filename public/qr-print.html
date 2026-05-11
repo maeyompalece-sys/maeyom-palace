@@ -153,22 +153,35 @@
     body { margin:0; }
     .print-page { margin:0 !important; border:none !important; }
   }
-  /* 2-up: แสดง 2 การ์ดเคียงกัน */
-  #printWrapper { display:flex; gap:0; justify-content:center; flex-wrap:nowrap; }
-  #printWrapper.copies-2 { gap:2mm; }
-  #printWrapper.copies-2 .print-page { page-break-after:avoid !important; }
-  #cardClone { display:none; }
-  #printWrapper.copies-2 #cardClone { display:flex; }
-  /* เส้นตัด */
-  #printWrapper.copies-2::after {
-    content:'';
-    position:absolute;
-    left:50%; top:0; bottom:0;
-    width:1px;
-    border-left:1px dashed #bbb;
-    pointer-events:none;
+  /* Single mode */
+  #printWrapper { display:flex; justify-content:center; }
+
+  /* 2-up mode: wrapper = full page, each card = half */
+  #printWrapper.copies-2 {
+    display:flex; flex-direction:row; gap:0;
+    overflow:hidden;
+    margin:0 auto;
+    border:1px solid #eee;
   }
-  #printWrapper { position:relative; }
+  #printWrapper.copies-2 .print-page {
+    flex:1; min-width:0;
+    /* Override individual card border/margin */
+    margin:0 !important; border:none !important;
+    border-right:1.5px dashed #ccc;
+    min-height:unset !important;
+    height:100%;
+  }
+  #cardClone { display:none; }
+  #printWrapper.copies-2 #cardClone { display:flex; flex-direction:column; border-right:none !important; }
+
+  @media print {
+    .screen-controls { display:none !important; }
+    body { margin:0; padding:0; }
+    #printWrapper { margin:0 !important; border:none !important; }
+    #printWrapper .print-page { margin:0 !important; border:none !important; }
+    #printWrapper.copies-2 .print-page { border-right:1px dashed #ccc !important; }
+    #printWrapper.copies-2 #cardClone  { border-right:none !important; }
+  }
 </style>
 </head>
 <body>
@@ -304,45 +317,68 @@ function setQR(size) {
 }
 
 // ===== Size & Orientation =====
-const PAGE_CFG = {
-  a4: { w:'210mm', h:'297mm', wLand:'297mm', hLand:'210mm', qr:280, qrLand:280 },
-  a5: { w:'148mm', h:'210mm', wLand:'210mm', hLand:'148mm', qr:220, qrLand:220 },
-  a6: { w:'105mm', h:'148mm', wLand:'148mm', hLand:'105mm', qr:130, qrLand:110 },
+// Page dimensions in mm
+const PAGE_MM = {
+  a4: { pw:210, ph:297 },
+  a5: { pw:148, ph:210 },
+  a6: { pw:105, ph:148 },
 };
 let curSize = 'a5', curOrient = 'portrait', curCopies = 1;
 
 function applyLayout() {
   const page    = document.getElementById('printCard');
   const wrapper = document.getElementById('printWrapper');
-  const cfg     = PAGE_CFG[curSize];
+  const pm      = PAGE_MM[curSize];
   const land    = curOrient === 'landscape';
 
-  page.className     = 'print-page size-' + curSize + (land ? ' landscape' : '');
-  page.style.width   = land ? cfg.wLand : cfg.w;
-  page.style.minHeight = land ? cfg.hLand : cfg.h;
-  setQR(land ? cfg.qrLand : cfg.qr);
+  // Page W/H in mm (swap if landscape)
+  const PW = land ? pm.ph : pm.pw;  // page width
+  const PH = land ? pm.pw : pm.ph;  // page height
 
-  // 2-up: scale card to half width when 2 copies
   if (curCopies === 2) {
-    const halfW = land
-      ? 'calc(' + cfg.hLand + ' / 2 - 2mm)'
-      : 'calc(' + cfg.w    + ' / 2 - 1mm)';
-    page.style.width = halfW;
+    // Wrapper = full page, each card = half width
+    wrapper.style.width    = PW + 'mm';
+    wrapper.style.height   = PH + 'mm';
     wrapper.classList.add('copies-2');
-    buildClone();
+
+    // Each card half-width, full-height, no overflow
+    const cardW = (PW / 2) + 'mm';
+    page.className     = 'print-page size-' + curSize;
+    page.style.width   = cardW;
+    page.style.height  = PH + 'mm';
+    page.style.minHeight = 'unset';
+
+    // QR size ~ 40% of card width in px (approx)
+    const qrPx = Math.round(PW / 2 * 3.78 * 0.45);
+    setQR(Math.min(qrPx, 180));
+
+    buildClone(cardW, PH + 'mm');
   } else {
+    // Single card
+    wrapper.style.width  = '';
+    wrapper.style.height = '';
     wrapper.classList.remove('copies-2');
     removeClone();
+
+    page.className     = 'print-page size-' + curSize + (land ? ' landscape' : '');
+    page.style.width   = PW + 'mm';
+    page.style.height  = PH + 'mm';
+    page.style.minHeight = 'unset';
+
+    const qrPx = Math.round(PW * 3.78 * 0.55);
+    setQR(Math.min(qrPx, 280));
   }
 
-  // @page
+  // @page for print
   let st = document.getElementById('dynPageStyle');
   if (!st) { st = document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
   const sz = curSize==='a4'?'A4':curSize==='a5'?'A5':'A6';
-  st.textContent = `@media print { @page { size: ${sz} ${curOrient}; margin:0; } .print-page { margin:0 auto; } }`;
+  st.textContent = `@media print {
+    @page { size: ${sz} ${curOrient}; margin:0; }
+    #printWrapper { margin:0 !important; }
+  }`;
 }
 
-let curCopiesVal = 1;
 function setCopies(n) {
   curCopies = n;
   document.getElementById('cp1')?.classList.toggle('active', n===1);
@@ -350,12 +386,15 @@ function setCopies(n) {
   applyLayout();
 }
 
-function buildClone() {
+function buildClone(w, h) {
   removeClone();
   const orig  = document.getElementById('printCard');
   const clone = orig.cloneNode(true);
   clone.id    = 'cardClone';
-  clone.style.width = orig.style.width;
+  clone.style.width  = w;
+  clone.style.height = h;
+  clone.style.minHeight = 'unset';
+  clone.classList.add('print-page', 'size-' + curSize);
   orig.parentNode.appendChild(clone);
 }
 function removeClone() {
@@ -376,7 +415,7 @@ function setOrientation(o) {
   applyLayout();
 }
 
-// Init
+// Init A5 portrait 1-up
 applyLayout();
 
 // ===== Save as PNG =====
