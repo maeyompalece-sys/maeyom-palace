@@ -24,21 +24,76 @@
   .table-card .badge-off { position:absolute; top:8px; right:8px; background:#fee; color:#c33; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
   .empty-state { text-align:center; padding:60px 20px; color:var(--color-muted); }
   .empty-state .ico { font-size:64px; margin-bottom:12px; }
+  /* Print size picker */
+  .print-size-bar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .size-btn { padding:6px 16px; border-radius:20px; border:1.5px solid var(--color-line); background:#fff; font-size:13px; font-weight:700; cursor:pointer; color:var(--color-emerald); transition:all .15s; }
+  .size-btn.active { background:var(--color-emerald); color:#C9A861; border-color:var(--color-emerald); }
+
   /* Print all view */
   #printAllView { display:none; }
-  .print-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8mm; }
-  .print-card { border:2px dashed #ccc; border-radius:8px; padding:12px; text-align:center; page-break-inside:avoid; }
-  .print-card h3 { font-family:'Cormorant Garamond',serif; color:#651713; margin:0 0 4px; font-size:20px; }
-  .print-card .pn { font-family:'Cormorant Garamond',serif; font-size:42px; color:#C9A861; font-weight:700; line-height:1; margin:6px 0; }
-  .print-card .scan { font-size:12px; color:#666; margin-top:6px; }
-  .print-card canvas, .print-card img { margin:6px auto; display:block; }
+
+  /* === Card design (เหมือน qr-print.html) === */
+  .print-card {
+    page-break-inside:avoid; break-inside:avoid;
+    overflow:hidden; border-radius:10px;
+    border:1px solid #ddd;
+    display:flex; flex-direction:column;
+    font-family:'Sarabun',sans-serif;
+  }
+  .pc-header {
+    background:linear-gradient(160deg,#651713 0%,#4A0E0E 100%);
+    padding:12px 14px 10px; text-align:center;
+  }
+  .pc-header img { height:52px; width:auto; margin-bottom:4px; display:block; margin-left:auto; margin-right:auto; }
+  .pc-hotel { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:700; color:#C9A861; letter-spacing:.5px; }
+  .pc-sub { font-size:9px; color:rgba(255,255,255,.65); }
+  .pc-badge {
+    display:inline-block; margin-top:7px;
+    background:rgba(201,168,97,.2); border:1px solid rgba(201,168,97,.5);
+    color:#C9A861; padding:2px 14px; border-radius:14px;
+    font-size:11px; font-weight:700; letter-spacing:.5px;
+  }
+  .pc-qr { background:#fafaf6; padding:12px; text-align:center; border-bottom:1.5px dashed #e0dbd0; }
+  .pc-qr img { width:130px; height:130px; border-radius:8px; display:block; margin:0 auto 6px; }
+  .pc-scan { font-size:10px; color:#666; }
+  .pc-scan strong { color:#651713; }
+  .pc-steps { padding:8px 12px; flex:1; }
+  .pc-step { display:flex; align-items:flex-start; gap:7px; margin-bottom:5px; font-size:9.5px; line-height:1.45; color:#333; }
+  .pc-num { width:16px; height:16px; border-radius:50%; background:#651713; color:#C9A861; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .pc-footer { background:#651713; color:rgba(255,255,255,.75); font-size:8.5px; text-align:center; padding:5px; }
+
+  /* Grid layouts */
+  .print-grid { display:grid; gap:6mm; }
+  .print-grid.size-a4 { grid-template-columns:repeat(2,1fr); }
+  .print-grid.size-a5 { grid-template-columns:1fr; }
+  .print-grid.size-a6 { grid-template-columns:repeat(2,1fr); }
+
+  /* Card sizes */
+  .size-a4 .print-card { min-height:130mm; }
+  .size-a5 .print-card { min-height:180mm; }
+  .size-a6 .print-card { min-height:90mm; }
+  .size-a5 .pc-header img { height:70px; }
+  .size-a5 .pc-hotel { font-size:20px; }
+  .size-a5 .pc-qr img { width:180px; height:180px; }
+  .size-a5 .pc-step { font-size:11px; margin-bottom:7px; }
+  .size-a5 .pc-num { width:20px; height:20px; font-size:11px; }
+  .size-a6 .pc-header img { height:36px; }
+  .size-a6 .pc-hotel { font-size:12px; }
+  .size-a6 .pc-qr img { width:90px; height:90px; }
+  .size-a6 .pc-steps { display:none; }
+
   @media print {
     body { background:#fff; }
     .no-print { display:none !important; }
     .page-wrap { padding:0; max-width:none; }
     #printAllView { display:block !important; }
     #tablesContainer { display:none !important; }
+    .print-size-bar { display:none !important; }
+    .print-header-text { display:none !important; }
   }
+  @media print { @page { size: A4 portrait; margin:10mm; } }
+  body.print-a5 @media print { @page { size: A5 portrait; margin:8mm; } }
+  body.print-a6 @media print { @page { size: A4 portrait; margin:8mm; } }
 </style>
 </head>
 <body>
@@ -63,6 +118,12 @@
   <div class="page-head no-print">
     <h1>🪑 จัดการโต๊ะอาหาร</h1>
     <div class="actions">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:600;color:var(--color-muted);">ขนาดกระดาษ:</span>
+        <button class="size-btn active" id="sizeA4" onclick="setPaperSize('a4')">A4</button>
+        <button class="size-btn" id="sizeA5" onclick="setPaperSize('a5')">A5</button>
+        <button class="size-btn" id="sizeA6" onclick="setPaperSize('a6')">A6</button>
+      </div>
       <button class="btn btn-ghost" id="btnPrintAll">🖨️ ปริ้น QR ทุกโต๊ะ</button>
       <button class="btn btn-primary" id="btnAdd">+ เพิ่มโต๊ะ</button>
     </div>

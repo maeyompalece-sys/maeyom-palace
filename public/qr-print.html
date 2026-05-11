@@ -10,13 +10,15 @@
   body { font-family:'Sarabun',sans-serif; background:#fff; color:#1a1a1a; }
 
   /* Print layout: 1 card per page */
+  /* base print-page — size set by JS class */
   .print-page {
-    width:148mm; min-height:210mm; /* A5 */
     margin:20px auto; padding:0;
     border:1px solid #eee;
     background:#fff;
     display:flex; flex-direction:column;
     page-break-after: always;
+    /* default A5 */
+    width:148mm; min-height:210mm;
   }
 
   /* Header */
@@ -111,22 +113,47 @@
   .screen-controls {
     max-width:700px; margin:20px auto;
     padding:16px; display:flex; gap:10px; flex-wrap:wrap;
-    justify-content:center;
+    justify-content:center; align-items:center;
   }
   .btn-print { padding:10px 24px; background:#651713; color:#C9A861; border:none; border-radius:20px; font-weight:700; font-size:14px; cursor:pointer; }
   .btn-back { padding:10px 20px; background:#fff; color:#651713; border:2px solid #651713; border-radius:20px; font-weight:600; font-size:14px; cursor:pointer; }
+  .size-sep { width:1px; height:30px; background:#ddd; }
+  .ps-btn { padding:7px 16px; border-radius:16px; border:1.5px solid #651713; background:#fff; color:#651713; font-size:13px; font-weight:700; cursor:pointer; transition:all .15s; }
+  .ps-btn.active { background:#651713; color:#C9A861; }
 
   @media print {
     .screen-controls { display:none !important; }
     body { margin:0; }
-    .print-page { margin:0; border:none; width:148mm; min-height:210mm; }
   }
+  /* Default A5 */
+  .print-page { margin:20px auto; border:1px solid #eee; background:#fff; display:flex; flex-direction:column; page-break-after:always; }
+  .print-page.size-a4 { width:210mm; min-height:297mm; }
+  .print-page.size-a5 { width:148mm; min-height:210mm; }
+  .print-page.size-a6 { width:105mm; min-height:148mm; }
+  .print-page.size-a6 .instructions { display:none; }
+  .print-page.size-a6 .card-footer { display:none; }
+  .print-page.size-a6 .qr-box { width:120px; height:120px; }
+  .print-page.size-a6 .qr-box img { width:112px; height:112px; }
+  .print-page.size-a4 .qr-box { width:220px; height:220px; }
+  .print-page.size-a4 .qr-box img { width:212px; height:212px; }
+  .print-page.size-a4 .inst-title { font-size:18px; }
+  .print-page.size-a4 .step-item { font-size:14px; margin-bottom:12px; }
+  .print-page.size-a4 .step-num { width:26px; height:26px; font-size:14px; }
+  .print-page.size-a4 .card-header { padding:28px 24px 20px; }
+  .print-page.size-a4 .hotel-name { font-size:28px; }
+  .print-page.size-a4 .card-icons { padding:14px 20px; }
 </style>
 </head>
 <body>
 
 <div class="screen-controls" id="screenControls">
-  <button class="btn-back" onclick="window.close()">← กลับ</button>
+  <button class="btn-back" onclick="history.back()">← กลับ</button>
+  <div class="size-sep"></div>
+  <span style="font-size:13px;font-weight:600;color:#651713;">ขนาด:</span>
+  <button class="ps-btn" id="psA4" onclick="setSize('a4')">A4</button>
+  <button class="ps-btn active" id="psA5" onclick="setSize('a5')">A5</button>
+  <button class="ps-btn" id="psA6" onclick="setSize('a6')">A6</button>
+  <div class="size-sep"></div>
   <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ QR Code</button>
 </div>
 
@@ -232,9 +259,47 @@ document.getElementById('tableBadge').textContent = '🪑 โต๊ะ ' + table
 document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
 document.getElementById('footerUrl').textContent = menuUrl.replace('https://','');
 
-// QR Code ผ่าน API
-const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(menuUrl) + '&color=0F3B2E&bgcolor=ffffff&margin=6';
-document.getElementById('qrImg').src = qrUrl;
+// QR Code
+function setQR(size) {
+  const url = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data=' + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
+  document.getElementById('qrImg').src = url;
+  document.getElementById('qrImg').width  = size;
+  document.getElementById('qrImg').height = size;
+}
+setQR(300);
+
+// Paper size switcher
+const pageSizes = {
+  a4: { width:'210mm', minHeight:'297mm', qr:320 },
+  a5: { width:'148mm', minHeight:'210mm', qr:300 },
+  a6: { width:'105mm', minHeight:'148mm', qr:140 },
+};
+let currentSize = 'a5';
+
+function setSize(s) {
+  currentSize = s;
+  const page = document.getElementById('printCard');
+  const cfg  = pageSizes[s];
+  // remove old size classes
+  page.classList.remove('size-a4','size-a5','size-a6');
+  page.classList.add('size-' + s);
+  page.style.width     = cfg.width;
+  page.style.minHeight = cfg.minHeight;
+  setQR(cfg.qr);
+  // update button states
+  ['A4','A5','A6'].forEach(x => {
+    const btn = document.getElementById('ps'+x);
+    if (btn) btn.classList.toggle('active', x.toLowerCase() === s);
+  });
+  // update @page size for print
+  let style = document.getElementById('dynPageStyle');
+  if (!style) { style = document.createElement('style'); style.id='dynPageStyle'; document.head.appendChild(style); }
+  const pageSize = s==='a4'?'A4':s==='a5'?'A5 portrait':'A4 portrait';
+  style.textContent = `@media print { @page { size: ${pageSize}; margin:0; } .print-page { margin:0; border:none; } }`;
+}
+
+// Init default A5
+setSize('a5');
 </script>
 </body>
 </html>
