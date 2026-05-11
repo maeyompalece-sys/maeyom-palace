@@ -157,13 +157,13 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
 
     <!-- Actions -->
     <div class="actions">
-      <!-- ปุ่มหลัก: ไปสั่งอาหาร -->
-      <a id="btnMenu" href="menu.html" class="btn-main">
-        🍽️ ดูเมนูและสั่งอาหาร
-      </a>
-      <!-- ปุ่มติดตามออเดอร์ — แสดงเฉพาะถ้ามีออเดอร์ -->
-      <button id="btnTrack" class="btn-track" style="display:none;" onclick="openTrackModal()">
+    <!-- ถ้ามีออเดอร์: ติดตามออเดอร์ขึ้นก่อน -->
+      <button id="btnTrack" class="btn-main" style="display:none;background:linear-gradient(135deg,#651713,#4A0E0E);" onclick="openTrackModal()">
         📋 ติดตามออเดอร์ของฉัน
+      </button>
+      <!-- ปุ่มสั่งอาหาร -->
+      <button id="btnMenu" class="btn-main" style="font-size:16px;" onclick="openOrderTypeModal()">
+        🍽️ ดูเมนูและสั่งอาหาร
       </button>
     </div>
 
@@ -186,6 +186,48 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
   </div>
 </div>
 
+<!-- Order type popup -->
+<div class="modal-bg" id="orderTypeModal" onclick="closeIfBgType(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:48px;margin-bottom:8px;">🍽️</div>
+      <div class="modal-title" style="margin-bottom:4px;">สั่งอาหารแบบไหน?</div>
+      <div style="font-size:13px;color:#888;">How would you like to order?</div>
+    </div>
+
+    <!-- กินที่นี่ -->
+    <div onclick="chooseType('dine_in')" style="
+      display:flex;align-items:center;gap:14px;
+      background:#fff0f0;border:2px solid #651713;border-radius:14px;
+      padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .15s;
+    " onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff0f0'">
+      <span style="font-size:36px;">🪑</span>
+      <div style="flex:1;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#651713;">กินที่นี่</div>
+        <div style="font-size:12px;color:#888;">Dine In · รับประทานที่โต๊ะ</div>
+      </div>
+      <span style="color:#651713;font-size:20px;">→</span>
+    </div>
+
+    <!-- กลับบ้าน -->
+    <div onclick="chooseType('takeaway')" style="
+      display:flex;align-items:center;gap:14px;
+      background:#fffbee;border:2px solid #C9A861;border-radius:14px;
+      padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .15s;
+    " onmouseover="this.style.background='#fef9e7'" onmouseout="this.style.background='#fffbee'">
+      <span style="font-size:36px;">🥡</span>
+      <div style="flex:1;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#a07840;">กลับบ้าน</div>
+        <div style="font-size:12px;color:#888;">Takeaway · รับกลับ</div>
+      </div>
+      <span style="color:#C9A861;font-size:20px;">→</span>
+    </div>
+
+    <button class="close-btn" onclick="closeOrderTypeModal()">ยกเลิก</button>
+  </div>
+</div>
+
 <!-- Modal: ติดตามออเดอร์ -->
 <div class="modal-bg" id="trackModal" onclick="closeIfBg(event)">
   <div class="modal-sheet">
@@ -200,8 +242,21 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
 <script src="js/api.js"></script>
 <script>
 // === Walk-in mode: no table number ===
-// Link to menu without table
-document.getElementById('btnMenu').href = 'menu.html';
+function openOrderTypeModal() {
+  document.getElementById('orderTypeModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeOrderTypeModal() {
+  document.getElementById('orderTypeModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeIfBgType(e) {
+  if (e.target === document.getElementById('orderTypeModal')) closeOrderTypeModal();
+}
+function chooseType(type) {
+  closeOrderTypeModal();
+  window.location.href = 'menu.html?type=' + type + '&source=walkin';
+}
 
 // === Check past orders from localStorage ===
 const STATUS_LABEL = {
@@ -224,20 +279,28 @@ function getSavedOrders() {
 async function checkOrders() {
   const saved = getSavedOrders();
   if (!saved.length) return;
-
-  // ดึงสถานะปัจจุบัน
   try {
     const results = await Promise.allSettled(
-      saved.map(id => API.getOrderStatus ? API.getOrderStatus(id) : API.call('getOrderStatus', { id }))
+      saved.map(id => API.call('getOrderStatus', { id }))
     );
     const active = results
-      .map((r, i) => r.status === 'fulfilled' ? r.value : null)
+      .map(r => r.status === 'fulfilled' ? r.value : null)
       .filter(o => o && o.status !== 'completed' && o.status !== 'cancelled');
     if (active.length) {
       document.getElementById('btnTrack').style.display = 'flex';
+      // ถ้ามีแค่ 1 ออเดอร์ active ให้ลิงก์ตรงไปหน้าสถานะเลย
+      if (active.length === 1) {
+        document.getElementById('btnTrack').onclick = () => {
+          window.location.href = 'status.html?id=' + active[0].id + '&source=walkin';
+        };
+      } else {
+        document.getElementById('btnTrack').onclick = openTrackModal;
+      }
+      // ซ่อนปุ่มเมนูให้เล็กลง
+      document.getElementById('btnMenu').style.fontSize = '15px';
+      document.getElementById('btnMenu').style.padding = '14px 24px';
     }
   } catch (e) {
-    // ถ้าดึงไม่ได้ ให้แสดงปุ่มไว้ก่อน
     if (saved.length) document.getElementById('btnTrack').style.display = 'flex';
   }
 }
@@ -265,10 +328,13 @@ async function openTrackModal() {
       const col = STATUS_COLOR[o.status] || '#999';
       const lbl = STATUS_LABEL[o.status] || o.status;
       const items = (o.items || []).map(i => `${i.quantity}× ${i.name}`).join(', ');
-      return `<div class="order-item">
+      const isActive = o.status !== 'completed' && o.status !== 'cancelled';
+      return `<div class="order-item" style="cursor:${isActive?'pointer':'default'};"
+          onclick="${isActive ? `window.location.href='status.html?id=${o.id}&source=walkin'` : ''}">
         <div class="oi-head">
           <span class="oi-num">#${o.order_number || ''}</span>
           <span class="oi-status" style="background:${col}22;color:${col};">${lbl}</span>
+          ${isActive ? '<span style="font-size:10px;color:#651713;font-weight:700;">→ ดูสถานะ</span>' : ''}
         </div>
         <div class="oi-items">${items || '-'}</div>
         <div class="oi-total">฿${parseFloat(o.total_amount || 0).toLocaleString('th-TH')}</div>

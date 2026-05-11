@@ -94,44 +94,45 @@
     flex:1; height:35mm;
     display:flex; flex-direction:column;
     justify-content:space-between;
-    padding:3mm 4mm 2mm;
+    padding:2.5mm 4mm 1.5mm;
     background:#fff;
     border-left:2px solid #651713;
   }
   .mini-hotel-row {
     display:flex; align-items:center; gap:2mm;
   }
-  .mini-hotel-logo { height:10mm; width:auto; }
+  .mini-hotel-logo { height:9mm; width:auto; }
   .mini-hotel-text { }
   .mini-hotel-name {
     font-family:'Playfair Display','Cormorant Garamond',serif;
-    font-size:7.5pt; font-weight:700; color:#651713;
+    font-size:7pt; font-weight:700; color:#651713;
     letter-spacing:.3px; line-height:1.2;
   }
-  .mini-hotel-sub { font-size:6pt; color:#888; line-height:1.2; }
+  .mini-hotel-sub { font-size:5.5pt; color:#888; line-height:1.2; }
   .mini-table-row {
-    display:flex; align-items:flex-end; justify-content:space-between;
-    gap:2mm;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:2mm; margin-top:auto;
   }
+  .mini-table-left { display:flex; flex-direction:column; justify-content:flex-end; }
   .mini-table-label {
-    font-size:6pt; color:#888; letter-spacing:1px;
-    text-transform:uppercase; line-height:1;
-    margin-bottom:1mm;
+    font-size:5.5pt; color:#651713; letter-spacing:2px;
+    text-transform:uppercase; font-weight:700; line-height:1;
+    margin-bottom:0.5mm;
   }
   .mini-table-num {
     font-family:'Playfair Display','Cormorant Garamond',serif;
-    font-size:24pt; font-weight:900; color:#651713;
-    line-height:.9;
+    font-size:22pt; font-weight:900; color:#651713;
+    line-height:1; margin-top:-1mm;
   }
   .mini-scan-txt {
     font-size:5.5pt; color:#651713; font-weight:700;
-    letter-spacing:.5px; text-align:right; line-height:1.3;
+    letter-spacing:.5px; text-align:right; line-height:1.5;
   }
   .mini-bottom-bar {
-    height:3mm; background:#651713; border-radius:0 0 3px 0;
+    height:2.5mm; background:#651713;
     display:flex; align-items:center; padding:0 2mm;
   }
-  .mini-bottom-txt { font-size:5pt; color:rgba(201,168,97,.8); letter-spacing:.5px; }
+  .mini-bottom-txt { font-size:4.5pt; color:rgba(201,168,97,.85); letter-spacing:.5px; }
 
   /* QR area */
   .qr-area {
@@ -321,13 +322,16 @@
         </div>
       </div>
       <div class="mini-table-row">
-        <div>
+        <div class="mini-table-left">
           <div class="mini-table-label">🪑 TABLE</div>
           <div class="mini-table-num" id="miniTableNum">—</div>
         </div>
-        <div style="text-align:right;">
+        <div style="text-align:right;padding-bottom:1mm;">
           <div class="mini-scan-txt">📱 สแกนเพื่อสั่งอาหาร<br>Scan to order</div>
         </div>
+      </div>
+      <div class="mini-bottom-bar">
+        <span class="mini-bottom-txt" id="miniFooterUrl"></span>
       </div>
     </div>
   </div>
@@ -508,6 +512,8 @@ function applyLayout() {
     // Sync mini table number
     const mn = document.getElementById('miniTableNum');
     if (mn) mn.textContent = tableNum;
+    const mf = document.getElementById('miniFooterUrl');
+    if (mf) mf.textContent = menuUrl.replace('https://','');
 
     let st = document.getElementById('dynPageStyle');
     if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
