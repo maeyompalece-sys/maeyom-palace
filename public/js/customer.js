@@ -180,12 +180,71 @@ function showStep(step) {
 
 function selectOrderType(type) {
     state.orderType = type;
+    // ถ้าเลือก takeaway และไม่มีโต๊ะ → ถามจุดรับอาหาร
+    if (type === 'takeaway' && !state.tableNumber) {
+        showLocationModal();
+        return;
+    }
     if (state.customerName && state.customerPhone) {
         showStep('menu');
     } else {
         showStep('info');
     }
 }
+
+function showLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (!modal) {
+        // ไม่มี modal → ข้ามไปเลย
+        if (state.customerName && state.customerPhone) showStep('menu');
+        else showStep('info');
+        return;
+    }
+    document.getElementById('locTableNum').value = '';
+    document.getElementById('locLocation').value = '';
+    document.getElementById('locNote').value = '';
+    document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function setLocChip(btn, text) {
+    document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('locLocation').value = text;
+}
+
+function confirmTakeawayLocation() {
+    const tableNum = document.getElementById('locTableNum')?.value.trim();
+    const location = document.getElementById('locLocation')?.value.trim();
+    const note     = document.getElementById('locNote')?.value.trim();
+
+    if (!tableNum && !location) {
+        document.getElementById('locTableNum').style.borderColor = '#ef4444';
+        document.getElementById('locLocation').style.borderColor = '#ef4444';
+        document.getElementById('locLocation').placeholder = '⚠️ กรุณาระบุโต๊ะ หรือ จุดที่อยู่';
+        return;
+    }
+
+    if (tableNum) state.tableNumber = parseInt(tableNum);
+    if (location) state.locationNote = location;
+    if (note)     state.preNote = note;
+
+    closeLocationModal();
+    if (state.customerName && state.customerPhone) showStep('menu');
+    else showStep('info');
+}
+
+// expose globals
+window.closeLocationModal   = closeLocationModal;
+window.setLocChip           = setLocChip;
+window.confirmTakeawayLocation = confirmTakeawayLocation;
 
 function submitCustomerInfo() {
     const nameInp = document.getElementById('customerName');
