@@ -111,37 +111,53 @@
 
   /* Screen only: controls */
   .screen-controls {
-    max-width:700px; margin:20px auto;
-    padding:16px; display:flex; gap:10px; flex-wrap:wrap;
+    max-width:800px; margin:20px auto;
+    padding:16px; display:flex; gap:8px; flex-wrap:wrap;
     justify-content:center; align-items:center;
+    background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.08);
   }
-  .btn-print { padding:10px 24px; background:#651713; color:#C9A861; border:none; border-radius:20px; font-weight:700; font-size:14px; cursor:pointer; }
-  .btn-back { padding:10px 20px; background:#fff; color:#651713; border:2px solid #651713; border-radius:20px; font-weight:600; font-size:14px; cursor:pointer; }
-  .size-sep { width:1px; height:30px; background:#ddd; }
-  .ps-btn { padding:7px 16px; border-radius:16px; border:1.5px solid #651713; background:#fff; color:#651713; font-size:13px; font-weight:700; cursor:pointer; transition:all .15s; }
+  .btn-print { padding:10px 20px; background:#651713; color:#C9A861; border:none; border-radius:20px; font-weight:700; font-size:13px; cursor:pointer; }
+  .btn-save  { padding:10px 20px; background:#1d4ed8; color:#fff; border:none; border-radius:20px; font-weight:700; font-size:13px; cursor:pointer; }
+  .btn-save:disabled { opacity:.5; cursor:wait; }
+  .btn-back  { padding:10px 16px; background:#fff; color:#651713; border:2px solid #651713; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; }
+  .size-sep  { width:1px; height:28px; background:#e0dbd0; }
+  .ps-btn    { padding:6px 13px; border-radius:14px; border:1.5px solid #651713; background:#fff; color:#651713; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; }
   .ps-btn.active { background:#651713; color:#C9A861; }
+  .ctrl-label { font-size:11px; font-weight:700; color:#888; white-space:nowrap; }
+
+  /* Landscape sizes */
+  .print-page { margin:20px auto; border:1px solid #eee; background:#fff; display:flex; flex-direction:column; page-break-after:always; width:148mm; min-height:210mm; }
+  .print-page.size-a4  { width:210mm; min-height:297mm; }
+  .print-page.size-a5  { width:148mm; min-height:210mm; }
+  .print-page.size-a6  { width:105mm; min-height:148mm; }
+  /* Landscape */
+  .print-page.landscape.size-a4 { width:297mm; min-height:210mm; }
+  .print-page.landscape.size-a5 { width:210mm; min-height:148mm; }
+  .print-page.landscape.size-a6 { width:148mm; min-height:105mm; }
+  /* A6 hides instructions */
+  .print-page.size-a6 .instructions { display:none; }
+  .print-page.size-a6 .card-footer  { display:none; }
+  .print-page.size-a6 .qr-box       { width:120px; height:120px; }
+  .print-page.size-a6 .qr-box img   { width:112px; height:112px; }
+  /* A4 bigger */
+  .print-page.size-a4 .qr-box       { width:220px; height:220px; }
+  .print-page.size-a4 .qr-box img   { width:212px; height:212px; }
+  .print-page.size-a4 .inst-title   { font-size:18px; }
+  .print-page.size-a4 .step-item    { font-size:14px; margin-bottom:12px; }
+  .print-page.size-a4 .step-num     { width:26px; height:26px; font-size:14px; }
+  .print-page.size-a4 .card-header  { padding:28px 24px 20px; }
+  .print-page.size-a4 .hotel-name   { font-size:28px; }
+  /* Landscape layouts */
+  .print-page.landscape { flex-direction:row; }
+  .print-page.landscape .card-header { width:38%; min-width:38%; flex-direction:column; display:flex; align-items:center; justify-content:center; }
+  .print-page.landscape .qr-area { width:30%; border-bottom:none; border-right:2px dashed #e5e0d5; }
+  .print-page.landscape .instructions { flex:1; }
 
   @media print {
     .screen-controls { display:none !important; }
     body { margin:0; }
+    .print-page { margin:0 !important; border:none !important; }
   }
-  /* Default A5 */
-  .print-page { margin:20px auto; border:1px solid #eee; background:#fff; display:flex; flex-direction:column; page-break-after:always; }
-  .print-page.size-a4 { width:210mm; min-height:297mm; }
-  .print-page.size-a5 { width:148mm; min-height:210mm; }
-  .print-page.size-a6 { width:105mm; min-height:148mm; }
-  .print-page.size-a6 .instructions { display:none; }
-  .print-page.size-a6 .card-footer { display:none; }
-  .print-page.size-a6 .qr-box { width:120px; height:120px; }
-  .print-page.size-a6 .qr-box img { width:112px; height:112px; }
-  .print-page.size-a4 .qr-box { width:220px; height:220px; }
-  .print-page.size-a4 .qr-box img { width:212px; height:212px; }
-  .print-page.size-a4 .inst-title { font-size:18px; }
-  .print-page.size-a4 .step-item { font-size:14px; margin-bottom:12px; }
-  .print-page.size-a4 .step-num { width:26px; height:26px; font-size:14px; }
-  .print-page.size-a4 .card-header { padding:28px 24px 20px; }
-  .print-page.size-a4 .hotel-name { font-size:28px; }
-  .print-page.size-a4 .card-icons { padding:14px 20px; }
 </style>
 </head>
 <body>
@@ -149,12 +165,17 @@
 <div class="screen-controls" id="screenControls">
   <button class="btn-back" onclick="history.back()">← กลับ</button>
   <div class="size-sep"></div>
-  <span style="font-size:13px;font-weight:600;color:#651713;">ขนาด:</span>
+  <span class="ctrl-label">ขนาด:</span>
   <button class="ps-btn" id="psA4" onclick="setSize('a4')">A4</button>
   <button class="ps-btn active" id="psA5" onclick="setSize('a5')">A5</button>
   <button class="ps-btn" id="psA6" onclick="setSize('a6')">A6</button>
   <div class="size-sep"></div>
-  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ QR Code</button>
+  <span class="ctrl-label">แนว:</span>
+  <button class="ps-btn active" id="orPort" onclick="setOrientation('portrait')">↕ ตั้ง</button>
+  <button class="ps-btn" id="orLand" onclick="setOrientation('landscape')">↔ นอน</button>
+  <div class="size-sep"></div>
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+  <button class="btn-save" id="btnSaveImg" onclick="saveAsImage()">💾 บันทึกรูป PNG</button>
 </div>
 
 <div class="print-page" id="printCard">
@@ -247,59 +268,86 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="js/config.js"></script>
 <script>
-const params = new URLSearchParams(window.location.search);
+const params    = new URLSearchParams(window.location.search);
 const tableNum  = params.get('table') || '?';
 const tableName = params.get('name')  || '';
 const menuUrl   = params.get('url')   || (CONFIG.BASE_URL + 'menu.html?table=' + tableNum);
 
-// ใส่ข้อมูล
 document.getElementById('tableBadge').textContent = '🪑 โต๊ะ ' + tableNum + (tableName ? ' — ' + tableName : '');
 document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
-document.getElementById('footerUrl').textContent = menuUrl.replace('https://','');
+document.getElementById('footerUrl').textContent   = menuUrl.replace('https://','');
 
-// QR Code
+// ===== QR =====
 function setQR(size) {
-  const url = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data=' + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
-  document.getElementById('qrImg').src = url;
-  document.getElementById('qrImg').width  = size;
-  document.getElementById('qrImg').height = size;
+  const img = document.getElementById('qrImg');
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='
+    + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
+  img.width = size; img.height = size;
 }
-setQR(300);
 
-// Paper size switcher
-const pageSizes = {
-  a4: { width:'210mm', minHeight:'297mm', qr:320 },
-  a5: { width:'148mm', minHeight:'210mm', qr:300 },
-  a6: { width:'105mm', minHeight:'148mm', qr:140 },
+// ===== Size =====
+const PAGE_CFG = {
+  a4: { w:'210mm', h:'297mm', wLand:'297mm', hLand:'210mm', qr:280, qrLand:200 },
+  a5: { w:'148mm', h:'210mm', wLand:'210mm', hLand:'148mm', qr:220, qrLand:160 },
+  a6: { w:'105mm', h:'148mm', wLand:'148mm', hLand:'105mm', qr:130, qrLand:110 },
 };
-let currentSize = 'a5';
+let curSize = 'a5', curOrient = 'portrait';
+
+function applyLayout() {
+  const page = document.getElementById('printCard');
+  const cfg  = PAGE_CFG[curSize];
+  const land = curOrient === 'landscape';
+  page.className = 'print-page size-' + curSize + (land ? ' landscape' : '');
+  page.style.width     = land ? cfg.wLand : cfg.w;
+  page.style.minHeight = land ? cfg.hLand : cfg.h;
+  setQR(land ? cfg.qrLand : cfg.qr);
+
+  // @page for print
+  let st = document.getElementById('dynPageStyle');
+  if (!st) { st = document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
+  const sz = curSize === 'a4' ? 'A4' : curSize === 'a5' ? 'A5' : 'A6';
+  st.textContent = `@media print { @page { size: ${sz} ${curOrient}; margin:0; } }`;
+}
 
 function setSize(s) {
-  currentSize = s;
-  const page = document.getElementById('printCard');
-  const cfg  = pageSizes[s];
-  // remove old size classes
-  page.classList.remove('size-a4','size-a5','size-a6');
-  page.classList.add('size-' + s);
-  page.style.width     = cfg.width;
-  page.style.minHeight = cfg.minHeight;
-  setQR(cfg.qr);
-  // update button states
-  ['A4','A5','A6'].forEach(x => {
-    const btn = document.getElementById('ps'+x);
-    if (btn) btn.classList.toggle('active', x.toLowerCase() === s);
-  });
-  // update @page size for print
-  let style = document.getElementById('dynPageStyle');
-  if (!style) { style = document.createElement('style'); style.id='dynPageStyle'; document.head.appendChild(style); }
-  const pageSize = s==='a4'?'A4':s==='a5'?'A5 portrait':'A4 portrait';
-  style.textContent = `@media print { @page { size: ${pageSize}; margin:0; } .print-page { margin:0; border:none; } }`;
+  curSize = s;
+  ['A4','A5','A6'].forEach(x => document.getElementById('ps'+x)?.classList.toggle('active', x.toLowerCase()===s));
+  applyLayout();
 }
 
-// Init default A5
-setSize('a5');
+function setOrientation(o) {
+  curOrient = o;
+  document.getElementById('orPort')?.classList.toggle('active', o==='portrait');
+  document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
+  applyLayout();
+}
+
+// Init
+applyLayout();
+
+// ===== Save as PNG =====
+async function saveAsImage() {
+  const btn = document.getElementById('btnSaveImg');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  // Wait for QR image to load
+  const qrImg = document.getElementById('qrImg');
+  if (!qrImg.complete) await new Promise(r => qrImg.onload = r);
+  try {
+    const canvas = await html2canvas(document.getElementById('printCard'), {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false
+    });
+    const link = document.createElement('a');
+    link.download = 'QR_โต๊ะ' + tableNum + '_' + curSize.toUpperCase() + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('บันทึกรูปล้มเหลว: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '💾 บันทึกรูป PNG';
+}
 </script>
 </body>
 </html>

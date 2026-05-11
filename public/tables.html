@@ -64,23 +64,27 @@
 
   /* Grid layouts */
   .print-grid { display:grid; gap:6mm; }
-  .print-grid.size-a4 { grid-template-columns:repeat(2,1fr); }
-  .print-grid.size-a5 { grid-template-columns:1fr; }
-  .print-grid.size-a6 { grid-template-columns:repeat(2,1fr); }
+  .print-grid.size-a4.portrait  { grid-template-columns:repeat(2,1fr); }
+  .print-grid.size-a4.landscape { grid-template-columns:repeat(3,1fr); }
+  .print-grid.size-a5.portrait  { grid-template-columns:1fr; }
+  .print-grid.size-a5.landscape { grid-template-columns:repeat(2,1fr); }
+  .print-grid.size-a6.portrait  { grid-template-columns:repeat(2,1fr); }
+  .print-grid.size-a6.landscape { grid-template-columns:repeat(3,1fr); }
 
   /* Card sizes */
-  .size-a4 .print-card { min-height:130mm; }
+  .size-a4 .print-card { min-height:120mm; }
   .size-a5 .print-card { min-height:180mm; }
-  .size-a6 .print-card { min-height:90mm; }
-  .size-a5 .pc-header img { height:70px; }
-  .size-a5 .pc-hotel { font-size:20px; }
-  .size-a5 .pc-qr img { width:180px; height:180px; }
-  .size-a5 .pc-step { font-size:11px; margin-bottom:7px; }
-  .size-a5 .pc-num { width:20px; height:20px; font-size:11px; }
-  .size-a6 .pc-header img { height:36px; }
-  .size-a6 .pc-hotel { font-size:12px; }
-  .size-a6 .pc-qr img { width:90px; height:90px; }
-  .size-a6 .pc-steps { display:none; }
+  .size-a6 .print-card { min-height:80mm; }
+  .size-a5 .pc-header img  { height:70px; }
+  .size-a5 .pc-hotel       { font-size:20px; }
+  .size-a5 .pc-qr img      { width:180px; height:180px; }
+  .size-a5 .pc-step        { font-size:11px; margin-bottom:7px; }
+  .size-a5 .pc-num         { width:20px; height:20px; font-size:11px; }
+  .size-a6 .pc-header img  { height:34px; }
+  .size-a6 .pc-hotel       { font-size:12px; }
+  .size-a6 .pc-qr img      { width:88px; height:88px; }
+  .size-a6 .pc-steps       { display:none; }
+  .size-a6 .pc-footer      { display:none; }
 
   @media print {
     body { background:#fff; }
@@ -90,10 +94,8 @@
     #tablesContainer { display:none !important; }
     .print-size-bar { display:none !important; }
     .print-header-text { display:none !important; }
+    .print-page { margin:0 !important; border:none !important; }
   }
-  @media print { @page { size: A4 portrait; margin:10mm; } }
-  body.print-a5 @media print { @page { size: A5 portrait; margin:8mm; } }
-  body.print-a6 @media print { @page { size: A4 portrait; margin:8mm; } }
 </style>
 </head>
 <body>
@@ -118,12 +120,17 @@
   <div class="page-head no-print">
     <h1>🪑 จัดการโต๊ะอาหาร</h1>
     <div class="actions">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:600;color:var(--color-muted);">ขนาดกระดาษ:</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;color:var(--color-muted);">ขนาด:</span>
         <button class="size-btn active" id="sizeA4" onclick="setPaperSize('a4')">A4</button>
         <button class="size-btn" id="sizeA5" onclick="setPaperSize('a5')">A5</button>
         <button class="size-btn" id="sizeA6" onclick="setPaperSize('a6')">A6</button>
+        <span style="width:1px;height:22px;background:var(--color-line);display:inline-block;margin:0 4px;"></span>
+        <span style="font-size:12px;font-weight:700;color:var(--color-muted);">แนว:</span>
+        <button class="size-btn active" id="orPort" onclick="setOrient('portrait')">↕ ตั้ง</button>
+        <button class="size-btn" id="orLand" onclick="setOrient('landscape')">↔ นอน</button>
       </div>
+      <button class="btn btn-ghost" id="btnSaveAll">💾 บันทึกรูปทุกโต๊ะ</button>
       <button class="btn btn-ghost" id="btnPrintAll">🖨️ ปริ้น QR ทุกโต๊ะ</button>
       <button class="btn btn-primary" id="btnAdd">+ เพิ่มโต๊ะ</button>
     </div>
@@ -178,6 +185,8 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/admin-pin.js"></script>
 <script src="js/api.js"></script>
