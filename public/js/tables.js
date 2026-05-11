@@ -14,6 +14,38 @@ async function init() {
     if (!checkConfig()) return;
     bindEvents();
     await loadTables();
+    initWalkinQR();
+}
+
+// ============================================================
+// 🚶 Walk-in QR
+// ============================================================
+function initWalkinQR() {
+    const walkinUrl = (CONFIG.BASE_URL || '') + '/walkin.html';
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data='
+        + encodeURIComponent(walkinUrl) + '&color=651713&bgcolor=ffffff&margin=4';
+    const img = document.getElementById('walkinQrImg');
+    const urlEl = document.getElementById('walkinUrl');
+    if (img) img.src = qrUrl;
+    if (urlEl) urlEl.textContent = walkinUrl;
+}
+
+function printWalkinQR() {
+    const walkinUrl = (CONFIG.BASE_URL || '') + '/walkin.html';
+    const url = 'qr-print.html?table=Walk-in&name=ลูกค้าทั่วไป&url=' + encodeURIComponent(walkinUrl);
+    window.open(url, '_blank');
+}
+
+async function saveWalkinQR() {
+    const walkinUrl = (CONFIG.BASE_URL || '') + '/walkin.html';
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data='
+        + encodeURIComponent(walkinUrl) + '&color=651713&bgcolor=ffffff&margin=6';
+    // Download directly
+    const a = document.createElement('a');
+    a.href = qrUrl;
+    a.download = 'QR_Walk-in_Maeyom.png';
+    a.target = '_blank';
+    a.click();
 }
 
 // ============================================================
