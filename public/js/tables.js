@@ -24,7 +24,16 @@ function bindEvents() {
     if (addBtn) addBtn.addEventListener('click', openAddModal);
 
     const printAllBtn = document.getElementById('btnPrintAll');
-    if (printAllBtn) printAllBtn.addEventListener('click', () => window.print());
+    if (printAllBtn) printAllBtn.addEventListener('click', () => {
+        renderPrintView();
+        setTimeout(() => window.print(), 400);
+    });
+
+    const saveAllBtn = document.getElementById('btnSaveAll');
+    if (saveAllBtn) saveAllBtn.addEventListener('click', () => {
+        renderPrintView();
+        setTimeout(() => saveAllImages(), 400);
+    });
 
     // Modal: save / cancel
     const saveBtn = document.getElementById('btnSave');
@@ -110,24 +119,51 @@ function renderTables() {
 }
 
 let currentPaperSize = 'a4';
+let currentOrient    = 'portrait';
 
 function setPaperSize(size) {
     currentPaperSize = size;
     ['a4','a5','a6'].forEach(s => {
-        const btn = document.getElementById('size' + s.toUpperCase());
-        if (btn) btn.classList.toggle('active', s === size);
+        const btn = document.getElementById('size'+s.toUpperCase());
+        if (btn) btn.classList.toggle('active', s===size);
     });
-    // Update grid class
-    const grid = document.querySelector('.print-grid');
-    if (grid) {
-        grid.className = 'print-grid size-' + size;
-        // Resize QR images
-        const qrSize = size === 'a5' ? 180 : size === 'a6' ? 90 : 130;
-        document.querySelectorAll('.pc-qr img').forEach(img => {
-            const url = img.src.replace(/size=\d+x\d+/, `size=${qrSize}x${qrSize}`);
-            img.src = url; img.width = qrSize; img.height = qrSize;
-        });
-    }
+    applyPrintGrid();
+}
+
+function setOrient(o) {
+    currentOrient = o;
+    document.getElementById('orPort')?.classList.toggle('active', o==='portrait');
+    document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
+    applyPrintGrid();
+}
+
+function applyPrintGrid() {
+    const grid = document.getElementById('printGrid');
+    if (!grid) return;
+    grid.className = 'print-grid size-' + currentPaperSize + ' ' + currentOrient;
+
+    // Update @page
+    const sz = currentPaperSize==='a4'?'A4':currentPaperSize==='a5'?'A5':'A6';
+    let st = document.getElementById('dynPageStyle');
+    if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
+    st.textContent = `@media print { @page { size: ${sz} ${currentOrient}; margin:8mm; } }`;
+
+    // Resize QR images based on size+orientation
+    const qrPx = getQrPx();
+    document.querySelectorAll('.pc-qr img').forEach(img => {
+        const base = img.src.split('?')[1] || '';
+        const data = base.match(/data=([^&]*)/)?.[1] || '';
+        if (data) {
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrPx}x${qrPx}&data=${data}&color=651713&bgcolor=ffffff&margin=4`;
+            img.width = qrPx; img.height = qrPx;
+        }
+    });
+}
+
+function getQrPx() {
+    if (currentPaperSize==='a6') return currentOrient==='landscape'?80:88;
+    if (currentPaperSize==='a5') return currentOrient==='landscape'?140:180;
+    return currentOrient==='landscape'?110:130;
 }
 
 function renderPrintView() {
@@ -147,21 +183,22 @@ function renderPrintView() {
         </div>`).join('');
 
     const activeTables = tablesState.tables.filter(t => t.is_active);
-    const qrSize = currentPaperSize === 'a5' ? 180 : currentPaperSize === 'a6' ? 90 : 130;
+    const qrPx = getQrPx();
 
     v.innerHTML = `
-        <div class="print-grid size-${currentPaperSize}" id="printGrid">
-            ${activeTables.map(t => `
-                <div class="print-card">
+        <div class="print-grid size-${currentPaperSize} ${currentOrient}" id="printGrid">
+            ${activeTables.map(t => {
+                const url = encodeURIComponent(buildTableUrl(t.table_number));
+                return `<div class="print-card" id="pc-${t.id}">
                     <div class="pc-header">
                         <img src="images/logo-white.png" alt="Logo">
                         <div class="pc-hotel">${escapeHtml(CONFIG.HOTEL_NAME_EN || 'Maeyom Palace Hotel')}</div>
                         <div class="pc-sub">${escapeHtml(CONFIG.HOTEL_NAME || 'โรงแรม แม่ยมพาเลส')}</div>
-                        <div class="pc-badge">🪑 โต๊ะ ${t.table_number}${t.table_name ? ' · ' + escapeHtml(t.table_name) : ''}</div>
+                        <div class="pc-badge">🪑 โต๊ะ ${t.table_number}${t.table_name?' · '+escapeHtml(t.table_name):''}</div>
                     </div>
                     <div class="pc-qr">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(buildTableUrl(t.table_number))}&color=651713&bgcolor=ffffff&margin=4"
-                            width="${qrSize}" height="${qrSize}" alt="QR Code" style="border-radius:8px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrPx}x${qrPx}&data=${url}&color=651713&bgcolor=ffffff&margin=4"
+                            width="${qrPx}" height="${qrPx}" alt="QR" style="border-radius:8px;">
                         <div class="pc-scan">📱 สแกน QR เพื่อสั่งอาหาร<br><strong>Scan to order</strong></div>
                     </div>
                     <div class="pc-steps">
@@ -169,11 +206,67 @@ function renderPrintView() {
                         ${stepsHtml}
                     </div>
                     <div class="pc-footer">
-                        🌐 ${escapeHtml(CONFIG.BASE_URL || '')} &nbsp;|&nbsp; 📞 ${escapeHtml(CONFIG.HOTEL_PHONE || '')}
+                        🌐 ${escapeHtml((CONFIG.BASE_URL||'').replace('https://',''))} &nbsp;|&nbsp; 📞 ${escapeHtml(CONFIG.HOTEL_PHONE||'')}
                     </div>
-                </div>
-            `).join('')}
+                </div>`;
+            }).join('')}
         </div>`;
+}
+
+// ===== บันทึกรูปทุกโต๊ะ =====
+async function saveAllImages() {
+    const btn = document.getElementById('btnSaveAll');
+    const activeTables = tablesState.tables.filter(t => t.is_active);
+    if (!activeTables.length) { notifier.showToast('ไม่มีโต๊ะที่เปิดใช้งาน','error'); return; }
+
+    btn.disabled = true; btn.textContent = '⏳ กำลังสร้างรูป...';
+
+    // Show print view temporarily
+    const printView = document.getElementById('printAllView');
+    const tablesCont = document.getElementById('tablesContainer');
+    printView.style.display = 'block';
+    tablesCont.style.display = 'none';
+
+    // Render if empty
+    if (!document.getElementById('printGrid')) renderPrintView();
+
+    // Wait for all QR images to load
+    const imgs = printView.querySelectorAll('img');
+    await Promise.all([...imgs].map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload=r; img.onerror=r; })));
+    await new Promise(r => setTimeout(r, 600)); // buffer
+
+    try {
+        const zip = new JSZip();
+        const cards = printView.querySelectorAll('.print-card');
+
+        for (let i=0; i<cards.length; i++) {
+            const card = cards[i];
+            const t = activeTables[i];
+            if (!t) continue;
+            btn.textContent = `⏳ กำลังสร้าง ${i+1}/${cards.length}...`;
+
+            const canvas = await html2canvas(card, {
+                scale: 2, useCORS: true, backgroundColor:'#ffffff', logging:false
+            });
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+            zip.file(`QR_โต๊ะ${t.table_number}${t.table_name?'_'+t.table_name:''}.png`, blob);
+        }
+
+        const zipBlob = await zip.generateAsync({ type:'blob' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = `QR_โต๊ะทั้งหมด_${currentPaperSize.toUpperCase()}.zip`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        notifier.showToast('✓ บันทึกรูป QR ทั้งหมดแล้ว ('+ activeTables.length +' โต๊ะ)','success');
+    } catch(e) {
+        notifier.showToast('บันทึกรูปล้มเหลว: '+e.message,'error');
+    }
+
+    // Restore view
+    printView.style.display = 'none';
+    tablesCont.style.display = '';
+    btn.disabled = false; btn.textContent = '💾 บันทึกรูปทุกโต๊ะ';
 }
 
 function drawQR(elementId, url, size, color) {
