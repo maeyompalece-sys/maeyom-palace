@@ -37,6 +37,7 @@ async function init() {
     if (params.get('table')) state.tableNumber = parseInt(params.get('table'));
     if (params.get('type')) state.orderType = params.get('type');
     if (params.get('addToOrder')) state.addToOrderId = params.get('addToOrder');
+    if (params.get('source')) state.source = params.get('source');  // walkin
 
     // ดึงข้อมูลลูกค้าเก่าจาก localStorage
     try {
@@ -473,8 +474,18 @@ async function submitOrder() {
                 await Push.linkOrder(order.id);
             } catch(e) {}
 
+            // บันทึก order ID สำหรับ walkin
+            if (state.source === 'walkin') {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('my_orders_walkin') || '[]');
+                    if (!saved.includes(order.id)) { saved.push(order.id); }
+                    localStorage.setItem('my_orders_walkin', JSON.stringify(saved.slice(-10)));
+                } catch(e) {}
+            }
+
+            const sourceParam = state.source ? '&source=' + state.source : '';
             setTimeout(() => {
-                window.location.href = 'status.html?id=' + order.id;
+                window.location.href = 'status.html?id=' + order.id + sourceParam;
             }, 800);
         }
     } catch (err) {

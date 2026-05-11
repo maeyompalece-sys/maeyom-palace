@@ -7,6 +7,7 @@ const statusState = {
     order: null,
     lastStatus: null,
     poller: null,
+    source: null,  // 'walkin' | null
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -16,6 +17,7 @@ async function init() {
 
     const params = new URLSearchParams(window.location.search);
     statusState.orderId = params.get('id');
+    statusState.source  = params.get('source') || null;
 
     if (!statusState.orderId) {
         showError('ไม่พบ Order ID');
@@ -59,9 +61,14 @@ function bindEvents() {
     });
 
     const homeBtn = document.getElementById('btnHome');
-    if (homeBtn) homeBtn.addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
+    if (homeBtn) {
+        if (statusState.source === 'walkin') {
+            homeBtn.textContent = '🚶 กลับหน้า Walk-in';
+        }
+        homeBtn.addEventListener('click', () => {
+            window.location.href = statusState.source === 'walkin' ? 'walkin.html' : 'index.html';
+        });
+    }
 }
 
 async function loadOrder() {
@@ -171,7 +178,7 @@ function renderOrder() {
 function showError(msg) {
     const c = document.getElementById('statusContent');
     if (!c) return;
-    c.innerHTML = '<div style="text-align:center;padding:40px;color:#c33;"><div style="font-size:64px;">⚠️</div><h3>' + escapeHtml(msg) + '</h3><a href="index.html" class="btn btn-primary" style="margin-top:20px;display:inline-block;">กลับหน้าแรก</a></div>';
+    c.innerHTML = '<div style="text-align:center;padding:40px;color:#c33;"><div style="font-size:64px;">⚠️</div><h3>' + escapeHtml(msg) + '</h3><a href="' + (statusState.source === 'walkin' ? 'walkin.html' : 'index.html') + '" class="btn btn-primary" style="margin-top:20px;display:inline-block;">กลับหน้าแรก</a></div>';
     c.style.display = '';
     const loading = document.getElementById('statusLoading');
     if (loading) loading.style.display = 'none';
