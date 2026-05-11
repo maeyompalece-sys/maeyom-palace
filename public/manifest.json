@@ -3,12 +3,12 @@
   "short_name": "แม่ยมพาเลส",
   "description": "ระบบสั่งอาหารและจัดการครัวสำหรับโรงแรมแม่ยมพาเลส",
   "lang": "th",
-  "start_url": "/index.html",
+  "start_url": "/maeyom-palace/",
+  "scope": "/maeyom-palace/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FAF7EE",
+  "background_color": "#651713",
   "theme_color": "#651713",
-  "scope": "/",
   "icons": [
     {
       "src": "images/icon-192.png",
@@ -27,13 +27,13 @@
     {
       "name": "เมนูอาหาร",
       "short_name": "เมนู",
-      "url": "/menu.html",
+      "url": "/maeyom-palace/menu.html",
       "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "หน้าแอดมิน",
       "short_name": "แอดมิน",
-      "url": "/admin.html",
+      "url": "/maeyom-palace/admin.html",
       "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
     }
   ]
