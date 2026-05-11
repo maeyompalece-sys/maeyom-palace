@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#651713">
+<link rel="icon" type="image/png" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+  <meta name="theme-color" content="#651713">
 <title>เมนูอาหาร | โรงแรม แม่ยมพาเลส</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -222,6 +224,76 @@
   <span style="color:rgba(255,255,255,.85);font-size:14px;">🛒 ดูตะกร้า</span>
   <span id="cartAmount">฿0</span>
 </div>
+
+<!-- Location modal for takeaway (no table) -->
+<div id="locationModal" style="
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;
+  display:none;align-items:flex-end;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;
+              padding:20px 20px 32px;max-height:85vh;overflow-y:auto;">
+    <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;"></div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:44px;margin-bottom:6px;">🥡</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#651713;">รับอาหารที่ไหน?</div>
+      <div style="font-size:13px;color:#888;">ระบุจุดรับอาหาร หรือ แลนด์มาร์คของคุณ</div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:#651713;margin-bottom:6px;">🔢 หมายเลขโต๊ะ (ถ้ามี)</div>
+      <input type="number" id="locTableNum" min="1" placeholder="เช่น 5, 12, 18..."
+        style="width:100%;padding:12px 16px;border:2px solid #e0dbd0;border-radius:12px;
+               font-size:18px;font-family:'Sarabun',sans-serif;box-sizing:border-box;
+               text-align:center;font-weight:700;color:#651713;">
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div style="flex:1;height:1px;background:#e0dbd0;"></div>
+      <span style="font-size:12px;color:#aaa;font-weight:600;">หรือ</span>
+      <div style="flex:1;height:1px;background:#e0dbd0;"></div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:#651713;margin-bottom:6px;">📍 จุดที่อยู่ / แลนด์มาร์ค</div>
+      <input type="text" id="locLocation" placeholder="เช่น โซน A, ริมสระ, ห้องพัก..."
+        style="width:100%;padding:12px 16px;border:2px solid #e0dbd0;border-radius:12px;
+               font-size:15px;font-family:'Sarabun',sans-serif;box-sizing:border-box;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <button onclick="setLocChip(this,'ริมสระ')" class="loc-chip">🏊 ริมสระ</button>
+        <button onclick="setLocChip(this,'โซน A')" class="loc-chip">🅰️ โซน A</button>
+        <button onclick="setLocChip(this,'โซน B')" class="loc-chip">🅱️ โซน B</button>
+        <button onclick="setLocChip(this,'ห้องพัก')" class="loc-chip">🛏️ ห้องพัก</button>
+        <button onclick="setLocChip(this,'ระเบียง')" class="loc-chip">🌿 ระเบียง</button>
+        <button onclick="setLocChip(this,'ล็อบบี้')" class="loc-chip">🏨 ล็อบบี้</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px;">💬 หมายเหตุ (ไม่บังคับ)</div>
+      <input type="text" id="locNote" placeholder="เช่น เด็ก 2 คน, แพ้ถั่ว..."
+        style="width:100%;padding:10px 14px;border:1.5px solid #e0dbd0;border-radius:10px;
+               font-size:13px;font-family:'Sarabun',sans-serif;box-sizing:border-box;">
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeLocationModal()" style="flex:1;padding:14px;border-radius:14px;
+        border:1.5px solid #e0dbd0;background:#f8f7f2;color:#651713;font-size:15px;
+        font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer;">ย้อนกลับ</button>
+      <button onclick="confirmTakeawayLocation()" style="flex:2;padding:14px;border-radius:14px;
+        border:none;background:linear-gradient(135deg,#651713,#4A0E0E);color:#C9A861;
+        font-size:16px;font-weight:700;font-family:'Sarabun',sans-serif;cursor:pointer;">
+        ✅ ยืนยันและดูเมนู</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.loc-chip {
+  padding:6px 12px;border-radius:20px;border:1.5px solid #e0dbd0;background:#fff;
+  font-size:12px;font-weight:600;cursor:pointer;color:#651713;
+  transition:all .15s;font-family:'Sarabun',sans-serif;
+}
+.loc-chip.active { background:#651713;color:#C9A861;border-color:#651713; }
+</style>
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
