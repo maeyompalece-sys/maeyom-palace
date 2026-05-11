@@ -140,9 +140,37 @@
 
   <div id="tablesContainer" class="tables-grid"></div>
 
+  <!-- Walk-in QR Section -->
+  <div style="background:#fff;border-radius:16px;border:2px dashed var(--color-gold);padding:20px 24px;margin-bottom:20px;" id="walkinSection">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <div>
+        <h3 style="font-family:'Cormorant Garamond',serif;color:var(--color-emerald);font-size:22px;margin:0;">🚶 QR Code Walk-in</h3>
+        <p style="font-size:12px;color:var(--color-muted);margin:4px 0 0;">สำหรับลูกค้า Walk-in ที่เคาน์เตอร์หรือทางเข้า — ไม่ระบุโต๊ะ</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="printWalkinQR()">🖨️ พิมพ์ QR Walk-in</button>
+        <button class="btn btn-ghost" onclick="saveWalkinQR()">💾 บันทึกรูป</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="background:#fafaf6;border-radius:12px;padding:12px;border:1px solid var(--color-line);text-align:center;">
+        <img id="walkinQrImg" src="" width="140" height="140" style="border-radius:8px;display:block;" alt="Walk-in QR">
+        <div style="font-size:10px;color:#888;margin-top:6px;">🚶 Walk-in QR Code</div>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:13px;font-weight:700;color:var(--color-emerald);margin-bottom:6px;">URL ที่ QR Code นี้ชี้ไป:</div>
+        <div id="walkinUrl" style="font-size:12px;color:#666;background:#f8f7f2;padding:8px 12px;border-radius:8px;word-break:break-all;margin-bottom:10px;"></div>
+        <div style="font-size:12px;color:var(--color-muted);line-height:1.6;">
+          ✅ ลูกค้าสแกนแล้วเข้าสู่หน้าสั่งอาหาร<br>
+          ✅ ไม่มีปุ่มแอดมิน — ปลอดภัย<br>
+          ✅ ติดตามออเดอร์ได้หลังสั่ง
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- View สำหรับปริ้นทุกโต๊ะ -->
   <div id="printAllView"></div>
-
 </div>
 
 <!-- Modal: เพิ่ม/แก้ไขโต๊ะ -->

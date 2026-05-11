@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR Code - แม่ยมพาเลส</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Sarabun',sans-serif; background:#fff; color:#1a1a1a; }
@@ -36,7 +36,7 @@
   }
   .hotel-sub { font-size:11px; color:rgba(255,255,255,.7); }
 
-  /* Table number — ใหญ่และเห็นชัด */
+  /* Table number — ใหญ่และเห็นชัด ฟอนต์ทางการ */
   .table-badge {
     display:block; margin-top:12px;
   }
@@ -46,17 +46,92 @@
     margin-bottom:2px;
   }
   .table-number-big {
-    font-family:'Cormorant Garamond', serif;
-    font-size:72px; font-weight:700; line-height:1;
+    font-family:'Playfair Display', 'Cormorant Garamond', serif;
+    font-size:72px; font-weight:900; line-height:1;
     color:#C9A861;
     text-shadow: 0 2px 12px rgba(0,0,0,.3);
-    letter-spacing:4px;
+    letter-spacing:2px;
   }
   .table-name-sub {
     font-size:13px; color:rgba(201,168,97,.8);
     font-weight:600; margin-top:2px;
     letter-spacing:1px;
   }
+
+  /* ===== MINI CARD 10×3.5cm (แนวนอน) ===== */
+  .print-page.size-mini {
+    width:100mm; height:35mm;
+    min-height:unset;
+    flex-direction:row !important;
+    border:2px solid #651713;
+    border-radius:6px;
+    overflow:hidden;
+  }
+  /* Mini: ซ่อน elements ปกติ */
+  .print-page.size-mini .card-header,
+  .print-page.size-mini .qr-area,
+  .print-page.size-mini .instructions,
+  .print-page.size-mini .icon-row,
+  .print-page.size-mini .card-footer { display:none !important; }
+  /* Mini: แสดง mini-card-inner แทน */
+  .mini-card-inner { display:none; }
+  .print-page.size-mini .mini-card-inner {
+    display:flex; width:100%; height:100%;
+  }
+  /* Mini QR side */
+  .mini-qr-side {
+    width:35mm; height:35mm; flex-shrink:0;
+    background:#651713;
+    display:flex; align-items:center; justify-content:center;
+    padding:3mm;
+  }
+  .mini-qr-side img {
+    width:29mm; height:29mm; border-radius:3px;
+    display:block;
+  }
+  /* Mini info side */
+  .mini-info-side {
+    flex:1; height:35mm;
+    display:flex; flex-direction:column;
+    justify-content:space-between;
+    padding:3mm 4mm 2mm;
+    background:#fff;
+    border-left:2px solid #651713;
+  }
+  .mini-hotel-row {
+    display:flex; align-items:center; gap:2mm;
+  }
+  .mini-hotel-logo { height:10mm; width:auto; }
+  .mini-hotel-text { }
+  .mini-hotel-name {
+    font-family:'Playfair Display','Cormorant Garamond',serif;
+    font-size:7.5pt; font-weight:700; color:#651713;
+    letter-spacing:.3px; line-height:1.2;
+  }
+  .mini-hotel-sub { font-size:6pt; color:#888; line-height:1.2; }
+  .mini-table-row {
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:2mm;
+  }
+  .mini-table-label {
+    font-size:6pt; color:#888; letter-spacing:1px;
+    text-transform:uppercase; line-height:1;
+    margin-bottom:1mm;
+  }
+  .mini-table-num {
+    font-family:'Playfair Display','Cormorant Garamond',serif;
+    font-size:24pt; font-weight:900; color:#651713;
+    line-height:.9;
+  }
+  .mini-scan-txt {
+    font-size:5.5pt; color:#651713; font-weight:700;
+    letter-spacing:.5px; text-align:right; line-height:1.3;
+  }
+  .mini-bottom-bar {
+    height:3mm; background:#651713; border-radius:0 0 3px 0;
+    display:flex; align-items:center; padding:0 2mm;
+  }
+  .mini-bottom-txt { font-size:5pt; color:rgba(201,168,97,.8); letter-spacing:.5px; }
 
   /* QR area */
   .qr-area {
@@ -214,22 +289,50 @@
   <button class="ps-btn" id="psA4" onclick="setSize('a4')">A4</button>
   <button class="ps-btn active" id="psA5" onclick="setSize('a5')">A5</button>
   <button class="ps-btn" id="psA6" onclick="setSize('a6')">A6</button>
-  <div class="size-sep"></div>
-  <span class="ctrl-label">แนว:</span>
+  <button class="ps-btn" id="psMini" onclick="setSize('mini')" style="border-color:#C9A861;color:#C9A861;background:#651713;">🪪 นามบัตร</button>
+  <div class="size-sep" id="sepOrient"></div>
+  <span class="ctrl-label" id="lblOrient">แนว:</span>
   <button class="ps-btn active" id="orPort" onclick="setOrientation('portrait')">↕ ตั้ง</button>
   <button class="ps-btn" id="orLand" onclick="setOrientation('landscape')">↔ นอน</button>
-  <div class="size-sep"></div>
-  <span class="ctrl-label">ใบ/หน้า:</span>
+  <div class="size-sep" id="sepCopies"></div>
+  <span class="ctrl-label" id="lblCopies">ใบ/หน้า:</span>
   <button class="ps-btn active" id="cp1" onclick="setCopies(1)">1 ใบ</button>
   <button class="ps-btn" id="cp2" onclick="setCopies(2)">2 ใบ</button>
   <div class="size-sep"></div>
   <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
-  <button class="btn-save" id="btnSaveImg" onclick="saveAsImage()">💾 บันทึกรูป PNG</button>
+  <button class="btn-save" id="btnSaveImg" onclick="saveAsImage()">💾 บันทึกการ์ด</button>
+  <button class="btn-save" id="btnSaveQR" onclick="saveQROnly()" style="background:#059669;">📷 บันทึก QR</button>
 </div>
 
 <div id="printWrapper" style="display:flex;gap:0;justify-content:center;flex-wrap:nowrap;">
 <div class="print-page" id="printCard">
 
+  <!-- ===== MINI CARD (10×3.5cm) ===== -->
+  <div class="mini-card-inner">
+    <div class="mini-qr-side">
+      <img id="miniQrImg" src="" alt="QR">
+    </div>
+    <div class="mini-info-side">
+      <div class="mini-hotel-row">
+        <img src="images/logo.png" class="mini-hotel-logo" alt="Logo">
+        <div class="mini-hotel-text">
+          <div class="mini-hotel-name">Maeyom Palace Hotel</div>
+          <div class="mini-hotel-sub">โรงแรม แม่ยมพาเลส</div>
+        </div>
+      </div>
+      <div class="mini-table-row">
+        <div>
+          <div class="mini-table-label">🪑 TABLE</div>
+          <div class="mini-table-num" id="miniTableNum">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="mini-scan-txt">📱 สแกนเพื่อสั่งอาหาร<br>Scan to order</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STANDARD CARD ===== -->
   <!-- Header -->
   <div class="card-header">
     <img src="images/logo-white.png" style="height:60px;width:auto;margin-bottom:4px;" alt="Logo">
@@ -327,85 +430,110 @@
 const params    = new URLSearchParams(window.location.search);
 const tableNum  = params.get('table') || '?';
 const tableName = params.get('name')  || '';
-const menuUrl   = params.get('url')   || (CONFIG.BASE_URL + 'menu.html?table=' + tableNum);
+const menuUrl   = params.get('url')   || (CONFIG.BASE_URL + '/menu.html?table=' + tableNum);
+const isWalkin  = tableNum === 'Walk-in' || params.get('walkin') === '1';
 
-document.getElementById('tableNumBig').textContent  = tableNum;
-if (tableName) {
-  document.getElementById('tableNameSub').textContent = tableName;
+// Set table number display
+if (isWalkin) {
+  document.getElementById('tableNumBig').textContent = '🚶';
+  document.getElementById('tableNumBig').style.fontSize = '52px';
+  document.querySelector('.table-label').textContent = 'Walk-in · ลูกค้าทั่วไป';
+  document.getElementById('tableNameSub').textContent = 'สแกนเพื่อสั่งอาหาร';
   document.getElementById('tableNameSub').style.display = 'block';
+} else {
+  document.getElementById('tableNumBig').textContent = tableNum;
+  if (tableName) {
+    document.getElementById('tableNameSub').textContent = tableName;
+    document.getElementById('tableNameSub').style.display = 'block';
+  }
 }
 document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
 document.getElementById('footerUrl').textContent   = menuUrl.replace('https://','');
 
-// ===== QR =====
-function setQR(size) {
-  const img = document.getElementById('qrImg');
+// ===== QR (main card or mini) =====
+function setQR(size, isMini) {
+  const id  = isMini ? 'miniQrImg' : 'qrImg';
+  const img = document.getElementById(id);
+  if (!img) return;
   img.src = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='
-    + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
+    + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=4';
   img.width = size; img.height = size;
 }
 
 // ===== Size & Orientation =====
-// Page dimensions in mm
 const PAGE_MM = {
-  a4: { pw:210, ph:297 },
-  a5: { pw:148, ph:210 },
-  a6: { pw:105, ph:148 },
+  a4:   { pw:210, ph:297 },
+  a5:   { pw:148, ph:210 },
+  a6:   { pw:105, ph:148 },
+  mini: { pw:100, ph:35  },
 };
 let curSize = 'a5', curOrient = 'portrait', curCopies = 1;
 
 function applyLayout() {
   const page    = document.getElementById('printCard');
   const wrapper = document.getElementById('printWrapper');
-  const pm      = PAGE_MM[curSize];
-  const land    = curOrient === 'landscape';
+  const pm      = PAGE_MM[curSize] || PAGE_MM.a5;
+  const isMini  = curSize === 'mini';
+  const land    = isMini ? false : curOrient === 'landscape';
 
-  // Page W/H in mm (swap if landscape)
-  const PW = land ? pm.ph : pm.pw;  // page width
-  const PH = land ? pm.pw : pm.ph;  // page height
+  // Show/hide orient & copies for mini
+  ['sepOrient','lblOrient','orPort','orLand','sepCopies','lblCopies','cp1','cp2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isMini ? 'none' : '';
+  });
+
+  if (isMini) {
+    curCopies = 1;
+    wrapper.classList.remove('copies-2');
+    removeClone();
+    page.className      = 'print-page size-mini';
+    page.style.width    = pm.pw + 'mm';
+    page.style.height   = pm.ph + 'mm';
+    page.style.minHeight = 'unset';
+    // mini QR: 27mm × 3.78px/mm ≈ 102px
+    setQR(102, true);
+    // Also set main qrImg (hidden) for save
+    setQR(200, false);
+    // Sync mini table number
+    const mn = document.getElementById('miniTableNum');
+    if (mn) mn.textContent = tableNum;
+
+    let st = document.getElementById('dynPageStyle');
+    if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
+    st.textContent = `@media print { @page { size:${pm.pw}mm ${pm.ph}mm; margin:0; } #printWrapper{margin:0;} }`;
+    return;
+  }
+
+  const PW = land ? pm.ph : pm.pw;
+  const PH = land ? pm.pw : pm.ph;
 
   if (curCopies === 2) {
-    // Wrapper = full page, each card = half width
-    wrapper.style.width    = PW + 'mm';
-    wrapper.style.height   = PH + 'mm';
+    wrapper.style.width  = PW + 'mm';
+    wrapper.style.height = PH + 'mm';
     wrapper.classList.add('copies-2');
-
-    // Each card half-width, full-height, no overflow
-    const cardW = (PW / 2) + 'mm';
-    page.className     = 'print-page size-' + curSize;
-    page.style.width   = cardW;
-    page.style.height  = PH + 'mm';
+    const cardW = (PW/2)+'mm';
+    page.className      = 'print-page size-'+curSize;
+    page.style.width    = cardW;
+    page.style.height   = PH+'mm';
     page.style.minHeight = 'unset';
-
-    // QR size ~ 40% of card width in px (approx)
-    const qrPx = Math.round(PW / 2 * 3.78 * 0.45);
-    setQR(Math.min(qrPx, 180));
-
-    buildClone(cardW, PH + 'mm');
+    setQR(Math.min(Math.round(PW/2*3.78*0.45),180), false);
+    buildClone(cardW, PH+'mm');
   } else {
-    // Single card
     wrapper.style.width  = '';
     wrapper.style.height = '';
     wrapper.classList.remove('copies-2');
     removeClone();
-
-    page.className     = 'print-page size-' + curSize + (land ? ' landscape' : '');
-    page.style.width   = PW + 'mm';
-    page.style.height  = PH + 'mm';
+    page.className      = 'print-page size-'+curSize+(land?' landscape':'');
+    page.style.width    = PW+'mm';
+    page.style.height   = PH+'mm';
     page.style.minHeight = 'unset';
-
-    const qrPx = Math.round(PW * 3.78 * 0.55);
-    setQR(Math.min(qrPx, 280));
+    setQR(Math.min(Math.round(PW*3.78*0.55),280), false);
   }
 
-  // @page for print
   let st = document.getElementById('dynPageStyle');
-  if (!st) { st = document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
+  if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
   const sz = curSize==='a4'?'A4':curSize==='a5'?'A5':'A6';
-  st.textContent = `@media print {
-    @page { size: ${sz} ${curOrient}; margin:0; }
-    #printWrapper { margin:0 !important; }
-  }`;
+  st.textContent = `@media print { @page { size:${sz} ${curOrient}; margin:0; } #printWrapper{margin:0 !important;} }`;
 }
 
 function setCopies(n) {
@@ -414,61 +542,67 @@ function setCopies(n) {
   document.getElementById('cp2')?.classList.toggle('active', n===2);
   applyLayout();
 }
-
-function buildClone(w, h) {
-  removeClone();
-  const orig  = document.getElementById('printCard');
-  const clone = orig.cloneNode(true);
-  clone.id    = 'cardClone';
-  clone.style.width  = w;
-  clone.style.height = h;
-  clone.style.minHeight = 'unset';
-  clone.classList.add('print-page', 'size-' + curSize);
-  orig.parentNode.appendChild(clone);
-}
-function removeClone() {
-  const old = document.getElementById('cardClone');
-  if (old) old.remove();
-}
-
 function setSize(s) {
   curSize = s;
   ['A4','A5','A6'].forEach(x => document.getElementById('ps'+x)?.classList.toggle('active', x.toLowerCase()===s));
+  document.getElementById('psMini')?.classList.toggle('active', s==='mini');
   applyLayout();
 }
-
 function setOrientation(o) {
   curOrient = o;
   document.getElementById('orPort')?.classList.toggle('active', o==='portrait');
   document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
   applyLayout();
 }
+function buildClone(w,h) {
+  removeClone();
+  const orig=document.getElementById('printCard'),clone=orig.cloneNode(true);
+  clone.id='cardClone'; clone.style.width=w; clone.style.height=h; clone.style.minHeight='unset';
+  clone.classList.add('print-page','size-'+curSize);
+  orig.parentNode.appendChild(clone);
+}
+function removeClone() { const o=document.getElementById('cardClone'); if(o)o.remove(); }
 
-// Init A5 portrait 1-up
+// Init
 applyLayout();
 
-// ===== Save as PNG =====
+// ===== 💾 Save full card =====
 async function saveAsImage() {
   const btn = document.getElementById('btnSaveImg');
-  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
-  const qrImg = document.getElementById('qrImg');
-  if (!qrImg.complete) await new Promise(r => qrImg.onload = r);
-  await new Promise(r => setTimeout(r, 300));
+  btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
+  await new Promise(r=>setTimeout(r,400));
   try {
-    // Capture wrapper (includes both cards if 2-up)
-    const target = curCopies === 2
+    const target = curCopies===2
       ? document.getElementById('printWrapper')
       : document.getElementById('printCard');
-    const canvas = await html2canvas(target, {
-      scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false
-    });
+    const canvas = await html2canvas(target,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false});
     const link = document.createElement('a');
-    link.download = 'QR_โต๊ะ' + tableNum + '_' + curSize.toUpperCase()
-      + (curCopies===2?'_2ใบ':'') + '.png';
+    link.download = (curSize==='mini'?'การ์ดนามบัตร':'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
-  } catch(e) { alert('บันทึกรูปล้มเหลว: ' + e.message); }
-  btn.disabled = false; btn.textContent = '💾 บันทึกรูป PNG';
+  } catch(e) { alert('บันทึกล้มเหลว: '+e.message); }
+  btn.disabled=false; btn.textContent='💾 บันทึกการ์ด';
+}
+
+// ===== 📷 Save QR code only =====
+async function saveQROnly() {
+  const btn = document.getElementById('btnSaveQR');
+  btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
+  try {
+    const hiRes = 'https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='
+      + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
+    // Fetch and download
+    const resp = await fetch(hiRes);
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'QR_โต๊ะ'+tableNum+'.png'; link.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    // Fallback: open in new tab
+    window.open('https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='+encodeURIComponent(menuUrl)+'&color=651713&bgcolor=ffffff&margin=6','_blank');
+  }
+  btn.disabled=false; btn.textContent='📷 บันทึก QR';
 }
 </script>
 </body>
