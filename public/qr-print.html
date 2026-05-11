@@ -425,8 +425,18 @@
 
 </div><!-- end printCard -->
 </div><!-- end printWrapper -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="js/config.js"></script>
+<script>
+// โหลด html2canvas แบบ dynamic
+function loadHtml2Canvas(cb) {
+  if (window.html2canvas) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onload = cb;
+  s.onerror = () => { alert('โหลด html2canvas ล้มเหลว กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'); };
+  document.head.appendChild(s);
+}
+</script>
 <script>
 const params    = new URLSearchParams(window.location.search);
 const tableNum  = params.get('table') || '?';
@@ -570,19 +580,22 @@ applyLayout();
 // ===== 💾 Save full card =====
 async function saveAsImage() {
   const btn = document.getElementById('btnSaveImg');
-  btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
-  await new Promise(r=>setTimeout(r,400));
-  try {
-    const target = curCopies===2
-      ? document.getElementById('printWrapper')
-      : document.getElementById('printCard');
-    const canvas = await html2canvas(target,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false});
-    const link = document.createElement('a');
-    link.download = (curSize==='mini'?'การ์ดนามบัตร':'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  } catch(e) { alert('บันทึกล้มเหลว: '+e.message); }
-  btn.disabled=false; btn.textContent='💾 บันทึกการ์ด';
+  btn.disabled=true; btn.textContent='⏳ กำลังโหลด...';
+  loadHtml2Canvas(async () => {
+    btn.textContent='⏳ กำลังบันทึก...';
+    await new Promise(r=>setTimeout(r,500));
+    try {
+      const target = curCopies===2
+        ? document.getElementById('printWrapper')
+        : document.getElementById('printCard');
+      const canvas = await html2canvas(target,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
+      const link = document.createElement('a');
+      link.download = (curSize==='mini'?'การ์ดนามบัตร':'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch(e) { alert('บันทึกล้มเหลว: '+e.message); }
+    btn.disabled=false; btn.textContent='💾 บันทึกการ์ด';
+  });
 }
 
 // ===== 📷 Save QR code only =====
