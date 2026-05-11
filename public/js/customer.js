@@ -37,7 +37,9 @@ async function init() {
     if (params.get('table')) state.tableNumber = parseInt(params.get('table'));
     if (params.get('type')) state.orderType = params.get('type');
     if (params.get('addToOrder')) state.addToOrderId = params.get('addToOrder');
-    if (params.get('source')) state.source = params.get('source');  // walkin
+    if (params.get('source')) state.source = params.get('source');
+    if (params.get('location')) state.locationNote = params.get('location'); // walk-in location
+    if (params.get('note')) state.preNote = params.get('note'); // walk-in pre-note
 
     // ดึงข้อมูลลูกค้าเก่าจาก localStorage
     try {
@@ -431,7 +433,10 @@ async function submitOrder() {
     }
 
     const orderNotesEl = document.getElementById('orderNotes');
-    const notes = orderNotesEl ? orderNotesEl.value.trim() : '';
+    let notes = orderNotesEl ? orderNotesEl.value.trim() : '';
+    // เพิ่ม location/note จาก walk-in
+    if (state.locationNote) notes = `📍 ${state.locationNote}${notes ? ' · ' + notes : ''}`;
+    if (state.preNote && !notes.includes(state.preNote)) notes = notes ? notes + ' · ' + state.preNote : state.preNote;
 
     showLoading(true);
     try {
