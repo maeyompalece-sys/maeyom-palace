@@ -62,13 +62,15 @@
   .pc-num { width:16px; height:16px; border-radius:50%; background:#651713; color:#C9A861; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
   .pc-footer { background:#651713; color:rgba(255,255,255,.75); font-size:8.5px; text-align:center; padding:5px; }
 
-  /* Grid layouts */
+  /* Grid layouts — การ์ดตั้งตลอด แค่เปลี่ยนจำนวนคอลัมน์ */
   .print-grid { display:grid; gap:6mm; }
+  /* Portrait */
   .print-grid.size-a4.portrait  { grid-template-columns:repeat(2,1fr); }
-  .print-grid.size-a4.landscape { grid-template-columns:repeat(3,1fr); }
-  .print-grid.size-a5.portrait  { grid-template-columns:1fr; }
-  .print-grid.size-a5.landscape { grid-template-columns:repeat(2,1fr); }
+  .print-grid.size-a5.portrait  { grid-template-columns:1fr; max-width:148mm; margin:0 auto; }
   .print-grid.size-a6.portrait  { grid-template-columns:repeat(2,1fr); }
+  /* Landscape — กระดาษหมุน จัดได้มากขึ้น */
+  .print-grid.size-a4.landscape { grid-template-columns:repeat(3,1fr); }
+  .print-grid.size-a5.landscape { grid-template-columns:repeat(2,1fr); }
   .print-grid.size-a6.landscape { grid-template-columns:repeat(3,1fr); }
 
   /* Card sizes */
