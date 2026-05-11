@@ -24,22 +24,38 @@
   /* Header */
   .card-header {
     background:linear-gradient(160deg,#651713 0%,#4A0E0E 100%);
-    padding:20px 20px 16px;
+    padding:16px 20px 20px;
     text-align:center;
     color:#fff;
   }
   .hotel-name {
     font-family:'Cormorant Garamond',serif;
-    font-size:22px; font-weight:700;
+    font-size:20px; font-weight:700;
     color:#C9A861; letter-spacing:1px;
-    margin-bottom:2px;
+    margin-bottom:1px;
   }
   .hotel-sub { font-size:11px; color:rgba(255,255,255,.7); }
+
+  /* Table number — ใหญ่และเห็นชัด */
   .table-badge {
-    display:inline-block; margin-top:10px;
-    background:rgba(201,168,97,.2); border:1.5px solid rgba(201,168,97,.5);
-    color:#C9A861; padding:4px 18px; border-radius:20px;
-    font-size:13px; font-weight:700; letter-spacing:1px;
+    display:block; margin-top:12px;
+  }
+  .table-label {
+    font-size:11px; color:rgba(255,255,255,.6);
+    letter-spacing:2px; text-transform:uppercase;
+    margin-bottom:2px;
+  }
+  .table-number-big {
+    font-family:'Cormorant Garamond', serif;
+    font-size:72px; font-weight:700; line-height:1;
+    color:#C9A861;
+    text-shadow: 0 2px 12px rgba(0,0,0,.3);
+    letter-spacing:4px;
+  }
+  .table-name-sub {
+    font-size:13px; color:rgba(201,168,97,.8);
+    font-weight:600; margin-top:2px;
+    letter-spacing:1px;
   }
 
   /* QR area */
@@ -140,13 +156,18 @@
   .print-page.size-a6 .qr-box       { width:120px; height:120px; }
   .print-page.size-a6 .qr-box img   { width:112px; height:112px; }
   /* A4 bigger */
+  .print-page.size-a4 .table-number-big { font-size:100px; }
   .print-page.size-a4 .qr-box       { width:220px; height:220px; }
   .print-page.size-a4 .qr-box img   { width:212px; height:212px; }
   .print-page.size-a4 .inst-title   { font-size:18px; }
   .print-page.size-a4 .step-item    { font-size:14px; margin-bottom:12px; }
   .print-page.size-a4 .step-num     { width:26px; height:26px; font-size:14px; }
-  .print-page.size-a4 .card-header  { padding:28px 24px 20px; }
+  .print-page.size-a4 .card-header  { padding:20px 24px 22px; }
   .print-page.size-a4 .hotel-name   { font-size:28px; }
+  /* A6 smaller */
+  .print-page.size-a6 .table-number-big { font-size:52px; }
+  .print-page.size-a6 .table-label  { font-size:9px; }
+  .print-page.size-a6 .hotel-name   { font-size:14px; }
 
   @media print {
     .screen-controls { display:none !important; }
@@ -211,10 +232,14 @@
 
   <!-- Header -->
   <div class="card-header">
-    <img src="images/logo-white.png" style="height:80px;width:auto;margin-bottom:6px;" alt="Logo">
+    <img src="images/logo-white.png" style="height:60px;width:auto;margin-bottom:4px;" alt="Logo">
     <div class="hotel-name">Maeyom Palace Hotel</div>
     <div class="hotel-sub">โรงแรม แม่ยมพาเลส</div>
-    <div class="table-badge" id="tableBadge">🪑 โต๊ะ —</div>
+    <div class="table-badge">
+      <div class="table-label">🪑 หมายเลขโต๊ะ · Table No.</div>
+      <div class="table-number-big" id="tableNumBig">—</div>
+      <div class="table-name-sub" id="tableNameSub" style="display:none;"></div>
+    </div>
   </div>
 
   <!-- QR Code -->
@@ -304,7 +329,11 @@ const tableNum  = params.get('table') || '?';
 const tableName = params.get('name')  || '';
 const menuUrl   = params.get('url')   || (CONFIG.BASE_URL + 'menu.html?table=' + tableNum);
 
-document.getElementById('tableBadge').textContent = '🪑 โต๊ะ ' + tableNum + (tableName ? ' — ' + tableName : '');
+document.getElementById('tableNumBig').textContent  = tableNum;
+if (tableName) {
+  document.getElementById('tableNameSub').textContent = tableName;
+  document.getElementById('tableNameSub').style.display = 'block';
+}
 document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
 document.getElementById('footerUrl').textContent   = menuUrl.replace('https://','');
 
