@@ -164,7 +164,6 @@
       <button class="btn btn-ghost" id="btnSaveAll">💾 บันทึกรูปทุกโต๊ะ</button>
       <button class="btn btn-ghost" id="btnPrintAll">🖨️ ปริ้น QR ทุกโต๊ะ</button>
       <button class="btn btn-ghost" onclick="saveAllCards()">🪪 บันทึกการ์ดทุกโต๊ะ</button>
-      <button class="btn btn-ghost" onclick="printAllCards()">🖨️ ปริ้นการ์ดทุกโต๊ะ</button>
       <button class="btn btn-ghost btn-select-mode" id="btnSelectMode" onclick="toggleSelectMode()">☑️ เลือกโต๊ะ</button>
       <button class="btn btn-primary" id="btnAdd">+ เพิ่มโต๊ะ</button>
     </div>
@@ -263,6 +262,25 @@
 <script src="js/api.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/tables.js"></script>
+
+<!-- Print Type Popup -->
+<div id="printTypeModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2);font-family:'Sarabun',sans-serif;">
+    <div style="font-size:18px;font-weight:700;color:#4A0E0E;margin-bottom:6px;">🖨️ ปริ้น QR ทุกโต๊ะ</div>
+    <div style="font-size:13px;color:#888;margin-bottom:20px;">เลือกรูปแบบที่ต้องการปริ้น</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button id="printTypeQR" style="padding:14px 16px;background:#651713;color:#C9A861;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-align:left;">
+        📱 ปริ้น QR เท่านั้น
+        <div style="font-size:11px;font-weight:400;color:rgba(201,168,97,.8);margin-top:2px;">แสดง QR Code บนหน้าจอแล้วปริ้น</div>
+      </button>
+      <button id="printTypeCard" style="padding:14px 16px;background:#fff;color:#651713;border:2px solid #651713;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-align:left;">
+        🪪 ปริ้นการ์ดทุกโต๊ะ
+        <div style="font-size:11px;font-weight:400;color:#888;margin-top:2px;">เปิดหน้าการ์ดพร้อมวิธีสั่งอาหาร</div>
+      </button>
+      <button id="printTypeCancel" style="padding:10px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:13px;cursor:pointer;margin-top:4px;">ยกเลิก</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR Code - แม่ยมพาเลส</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Sarabun',sans-serif; background:#fff; color:#1a1a1a; }
@@ -185,7 +186,11 @@
     display:flex; align-items:center; justify-content:center;
     margin-bottom:10px; overflow:hidden;
   }
-  .qr-box img { width:152px; height:152px; }
+  .qr-box img, .qr-box canvas { width:152px !important; height:152px !important; display:block; }
+  /* mini card QR */
+  .mini-qr-side img, .mini-qr-side canvas { width:29mm !important; height:29mm !important; border-radius:3px; display:block; }
+  /* hide qrcodejs table fallback */
+  .qr-box table, .mini-qr-side table { display:none !important; }
   .scan-label { font-size:11px; color:#666; text-align:center; }
   .scan-label strong { color:#651713; }
 
@@ -267,11 +272,13 @@
   .print-page.size-a6 .instructions { display:none; }
   .print-page.size-a6 .card-footer  { display:none; }
   .print-page.size-a6 .qr-box       { width:120px; height:120px; }
-  .print-page.size-a6 .qr-box img   { width:112px; height:112px; }
+  .print-page.size-a6 .qr-box img,
+  .print-page.size-a6 .qr-box canvas { width:112px !important; height:112px !important; }
   /* A4 bigger */
   .print-page.size-a4 .table-number-big { font-size:100px; }
   .print-page.size-a4 .qr-box       { width:220px; height:220px; }
-  .print-page.size-a4 .qr-box img   { width:212px; height:212px; }
+  .print-page.size-a4 .qr-box img,
+  .print-page.size-a4 .qr-box canvas { width:212px !important; height:212px !important; }
   .print-page.size-a4 .inst-title   { font-size:18px; }
   .print-page.size-a4 .step-item    { font-size:14px; margin-bottom:12px; }
   .print-page.size-a4 .step-num     { width:26px; height:26px; font-size:14px; }
@@ -360,7 +367,7 @@
   <!-- ===== MINI CARD (10×3.5cm) ===== -->
   <div class="mini-card-inner">
     <div class="mini-qr-side">
-      <img id="miniQrImg" src="" alt="QR">
+      <div id="miniQrContainer"></div>
     </div>
     <div class="mini-info-side">
       <div class="mini-hotel-row">
@@ -399,7 +406,7 @@
   <!-- QR Code -->
   <div class="qr-area">
     <div class="qr-box">
-      <img id="qrImg" src="" alt="QR Code">
+      <div id="qrContainer"></div>
     </div>
     <div class="scan-label">
       📱 <strong>สแกน QR</strong> เพื่อสั่งอาหาร<br>
@@ -554,16 +561,24 @@ function setMiniOrient(o) {
 }
 
 // ============================================================
-// QR Code helper
+// QR Code helper — ใช้ qrcodejs (client-side, ไม่พึ่ง external API)
 // ============================================================
 function setQR(size, isMini) {
-  const id  = isMini ? 'miniQrImg' : 'qrImg';
-  const img = document.getElementById(id);
-  if (!img) return;
-  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size
-    + '&data=' + encodeURIComponent(menuUrl)
-    + '&color=651713&bgcolor=ffffff&margin=4';
-  img.width = size; img.height = size;
+  const containerId = isMini ? 'miniQrContainer' : 'qrContainer';
+  const container   = document.getElementById(containerId);
+  if (!container) return;
+
+  // ล้าง QR เก่า
+  container.innerHTML = '';
+
+  new QRCode(container, {
+    text:        menuUrl,
+    width:       size,
+    height:      size,
+    colorDark:   '#651713',
+    colorLight:  '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
 }
 
 // ============================================================
@@ -695,12 +710,12 @@ function buildMultiCards(size, orient) {
 
   const wrapper = document.getElementById('multiWrapper');
   wrapper.style.display = 'block';
-  wrapper.innerHTML = tableNumbers.map(num => {
-    const url    = CONFIG.BASE_URL + '/menu.html?table=' + num;
-    const qrSrc  = 'https://api.qrserver.com/v1/create-qr-code/?size='+qrPx+'x'+qrPx
-                 + '&data=' + encodeURIComponent(url)
-                 + '&color=651713&bgcolor=ffffff&margin=4';
-    const qBoxSz = size==='a4'?'width:220px;height:220px;':size==='a6'?'width:120px;height:120px;':'';
+  const qBoxSzA4 = size==='a4'?'width:220px;height:220px;':'';
+  const qBoxSzA6 = size==='a6'?'width:120px;height:120px;':'';
+  const qBoxSz   = qBoxSzA4 || qBoxSzA6 || '';
+
+  wrapper.innerHTML = tableNumbers.map((num, idx) => {
+    const url = CONFIG.BASE_URL + '/menu.html?table=' + num;
     return `
     <div class="print-page size-${size}${land?' landscape':''}" style="width:${PW}mm;min-height:${PH}mm;">
       <div class="mini-card-inner"></div>
@@ -715,7 +730,7 @@ function buildMultiCards(size, orient) {
       </div>
       <div class="qr-area">
         <div class="qr-box" style="${qBoxSz}">
-          <img src="${qrSrc}" width="${qrPx}" height="${qrPx}" alt="QR Code" style="width:100%;height:100%;">
+          <div class="qr-placeholder" data-url="${url}" data-size="${qrPx}" data-idx="${idx}"></div>
         </div>
         <div class="scan-label">
           📱 <strong>สแกน QR</strong> เพื่อสั่งอาหาร<br>
@@ -744,6 +759,23 @@ function buildMultiCards(size, orient) {
       </div>
     </div>`;
   }).join('');
+
+  // Generate QR codes for each placeholder after HTML is injected
+  wrapper.querySelectorAll('.qr-placeholder').forEach(el => {
+    const url  = el.dataset.url;
+    const size = parseInt(el.dataset.size) || 180;
+    new QRCode(el, {
+      text:         url,
+      width:        size,
+      height:       size,
+      colorDark:    '#651713',
+      colorLight:   '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    // hide fallback table
+    const tbl = el.querySelector('table');
+    if (tbl) tbl.style.display = 'none';
+  });
 }
 
 // ============================================================
@@ -771,22 +803,36 @@ async function saveAsImage() {
 }
 
 // ============================================================
-// 📷 บันทึก QR อย่างเดียว
+// 📷 บันทึก QR อย่างเดียว — ใช้ canvas จาก qrcodejs
 // ============================================================
 async function saveQROnly() {
   const btn = document.getElementById('btnSaveQR');
   btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
   try {
-    const hiRes = 'https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='
-      + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
-    const resp = await fetch(hiRes);
-    const blob = await resp.blob();
-    const url  = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url; link.download = 'QR_โต๊ะ'+tableNum+'.png'; link.click();
-    URL.revokeObjectURL(url);
+    // สร้าง QR ชั่วคราวขนาด 800px
+    const tmp = document.createElement('div');
+    tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+    document.body.appendChild(tmp);
+    const qr = new QRCode(tmp, {
+      text:         menuUrl,
+      width:        800,
+      height:       800,
+      colorDark:    '#651713',
+      colorLight:   '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    // รอให้ render เสร็จ
+    await new Promise(r => setTimeout(r, 200));
+    const canvas = tmp.querySelector('canvas');
+    if (canvas) {
+      const link = document.createElement('a');
+      link.href     = canvas.toDataURL('image/png');
+      link.download = 'QR_โต๊ะ' + tableNum + '.png';
+      link.click();
+    }
+    document.body.removeChild(tmp);
   } catch(e) {
-    window.open('https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='+encodeURIComponent(menuUrl)+'&color=651713&bgcolor=ffffff&margin=6','_blank');
+    alert('บันทึก QR ล้มเหลว: ' + e.message);
   }
   btn.disabled=false; btn.textContent='📷 บันทึก QR';
 }
