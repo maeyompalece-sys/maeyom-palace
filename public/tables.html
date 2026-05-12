@@ -165,6 +165,7 @@
       <button class="btn btn-ghost" id="btnPrintAll">🖨️ ปริ้น QR ทุกโต๊ะ</button>
       <button class="btn btn-ghost" onclick="saveAllCards()">🪪 บันทึกการ์ดทุกโต๊ะ</button>
       <button class="btn btn-ghost btn-select-mode" id="btnSelectMode" onclick="toggleSelectMode()">☑️ เลือกโต๊ะ</button>
+      <button class="btn btn-ghost" id="btnBulkAdd" style="background:var(--color-emerald);color:#C9A861;border-color:var(--color-emerald);">⚡ เพิ่มหลายโต๊ะ</button>
       <button class="btn btn-primary" id="btnAdd">+ เพิ่มโต๊ะ</button>
     </div>
   </div>
@@ -278,6 +279,84 @@
         <div style="font-size:11px;font-weight:400;color:#888;margin-top:2px;">เปิดหน้าการ์ดพร้อมวิธีสั่งอาหาร</div>
       </button>
       <button id="printTypeCancel" style="padding:10px;background:#f5f5f5;color:#666;border:none;border-radius:10px;font-size:13px;cursor:pointer;margin-top:4px;">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: เพิ่มโต๊ะอัตโนมัติ -->
+<div id="bulkAddModal" class="modal-bg" style="display:none;">
+  <div class="modal-card" style="max-width:500px;width:92%;">
+    <h2 style="font-family:'Cormorant Garamond',serif;color:var(--color-emerald);margin-top:0;font-size:26px;">⚡ เพิ่มโต๊ะอัตโนมัติ</h2>
+
+    <!-- Mode toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <button id="modeCountBtn" onclick="setBulkMode('count')"
+        style="flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--color-emerald);
+          background:var(--color-emerald);color:#C9A861;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;">
+        📊 ระบุจำนวน
+      </button>
+      <button id="modeRangeBtn" onclick="setBulkMode('range')"
+        style="flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--color-emerald);
+          background:#fff;color:var(--color-emerald);font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;">
+        ↔️ ระบุช่วง
+      </button>
+    </div>
+
+    <!-- Mode: ระบุจำนวน -->
+    <div id="bulkCountMode">
+      <div style="display:flex;gap:12px;">
+        <div class="form-row" style="flex:1;margin-bottom:12px;">
+          <label>เริ่มจากโต๊ะหมายเลข</label>
+          <input type="number" id="bulkStartNum" min="1" oninput="updateBulkPreview()">
+        </div>
+        <div class="form-row" style="flex:1;margin-bottom:12px;">
+          <label>จำนวนโต๊ะที่ต้องการ</label>
+          <input type="number" id="bulkCount" min="1" max="50" value="5" oninput="updateBulkPreview()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode: ระบุช่วง -->
+    <div id="bulkRangeMode" style="display:none;">
+      <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div class="form-row" style="flex:1;margin-bottom:12px;">
+          <label>จากโต๊ะหมายเลข</label>
+          <input type="number" id="bulkRangeFrom" min="1" oninput="updateBulkPreview()">
+        </div>
+        <div style="padding-bottom:14px;color:var(--color-muted);font-size:18px;font-weight:700;">→</div>
+        <div class="form-row" style="flex:1;margin-bottom:12px;">
+          <label>ถึงโต๊ะหมายเลข</label>
+          <input type="number" id="bulkRangeTo" min="1" oninput="updateBulkPreview()">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-bottom:12px;">
+      <label>จำนวนที่นั่งต่อโต๊ะ (ค่าเริ่มต้น)</label>
+      <input type="number" id="bulkSeats" min="1" max="20" value="4">
+    </div>
+
+    <!-- Preview -->
+    <div id="bulkPreview"
+      style="background:#f8f7f2;border-radius:10px;padding:12px 14px;margin-bottom:16px;
+        font-size:13px;color:var(--color-emerald);min-height:48px;line-height:1.8;border:1px solid var(--color-line);">
+      กำลังคำนวณ...
+    </div>
+
+    <!-- Progress bar (hidden by default) -->
+    <div id="bulkProgress" style="display:none;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--color-emerald);margin-bottom:4px;">
+        <span id="bulkProgressText">กำลังสร้าง...</span>
+        <span id="bulkProgressPct">0%</span>
+      </div>
+      <div style="background:#f0ebe0;border-radius:6px;height:8px;overflow:hidden;">
+        <div id="bulkProgressBar" style="height:100%;background:var(--color-emerald);border-radius:6px;width:0%;transition:width .3s;"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-ghost" onclick="closeBulkModal()" style="flex:1;" id="btnBulkCancel">ยกเลิก</button>
+      <button class="btn btn-primary" id="btnBulkSave" onclick="saveBulkTables()" style="flex:1;">🚀 สร้างโต๊ะทั้งหมด</button>
     </div>
   </div>
 </div>

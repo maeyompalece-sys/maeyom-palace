@@ -369,7 +369,10 @@ async function loadReport(){
     reportOrders=all.filter(o=>{const d=String(o.created_at).slice(0,10);return d>=from&&d<=to;});
     reportItems=[];
     reportOrders.forEach(o=>(o.items||[]).forEach(i=>reportItems.push({...i,order:o})));
-    renderSummary();renderOrdersTable();renderCustomers();renderTopMenu();
+    try{renderSummary();}catch(e){console.error('renderSummary:',e);}
+    try{renderOrdersTable();}catch(e){console.error('renderOrdersTable:',e);}
+    try{renderCustomers();}catch(e){console.error('renderCustomers:',e);document.getElementById('customerGrid').innerHTML='<div class="loading-row" style="color:#ef4444;">เกิดข้อผิดพลาด: '+e.message+'</div>';}
+    try{renderTopMenu();}catch(e){console.error('renderTopMenu:',e);document.getElementById('topMenuList').innerHTML='<div class="loading-row" style="color:#ef4444;">เกิดข้อผิดพลาด: '+e.message+'</div>';}
   }catch(e){notifier.showToast('โหลดรายงานล้มเหลว: '+e.message,'error');}
 }
 
@@ -517,15 +520,15 @@ function renderCustomers(){
   const q=(document.getElementById('customerSearch').value||'').toLowerCase().trim();
   allCustomers={};
   reportOrders.forEach(o=>{
-    const key=(o.customer_phone||'').trim()||(o.customer_name||'').trim()||'unknown';
-    if(!allCustomers[key])allCustomers[key]={name:o.customer_name||'ไม่ระบุ',phone:o.customer_phone||'-',orders:[],revenue:0,lastDate:''};
+    const key=String(o.customer_phone||'').trim()||String(o.customer_name||'').trim()||'unknown';
+    if(!allCustomers[key])allCustomers[key]={name:String(o.customer_name||'ไม่ระบุ'),phone:String(o.customer_phone||'-'),orders:[],revenue:0,lastDate:''};
     allCustomers[key].orders.push(o);
     if(o.status==='completed')allCustomers[key].revenue+=parseFloat(o.total_amount||0);
     const d=String(o.created_at).slice(0,10);
     if(d>allCustomers[key].lastDate)allCustomers[key].lastDate=d;
   });
   let list=Object.entries(allCustomers).map(([k,c])=>({key:k,...c}));
-  if(q)list=list.filter(c=>c.name.toLowerCase().includes(q)||c.phone.toLowerCase().includes(q));
+  if(q)list=list.filter(c=>String(c.name).toLowerCase().includes(q)||String(c.phone).toLowerCase().includes(q));
   list.sort((a,b)=>b.revenue-a.revenue);
   const grid=document.getElementById('customerGrid');
   if(!list.length){grid.innerHTML='<div class="loading-row">ไม่มีข้อมูลลูกค้าในช่วงนี้</div>';return;}
