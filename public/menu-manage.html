@@ -21,7 +21,7 @@
   .menu-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
   .menu-card { background:#fff; border:1px solid var(--color-line); border-radius:14px; overflow:hidden; transition:all .2s; position:relative; }
   .menu-card:hover { box-shadow:0 8px 24px rgba(101,23,19,.08); }
-  .menu-card .img { width:100%; height:260px; background:#fafaf6 center/cover no-repeat; position:relative; }
+  .menu-card .img { width:100%; height:260px; background:#fafaf6 center/contain no-repeat; position:relative; }
   .menu-card .img.empty { display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:48px; }
   .menu-card .badges { position:absolute; top:8px; left:8px; display:flex; gap:4px; }
   .menu-card .body { padding:14px; }
@@ -39,7 +39,7 @@
   .empty-state .ico { font-size:64px; margin-bottom:12px; }
 
   .modal-card.lg { max-width:560px; }
-  .img-preview { width:100%; height:260px; border-radius:10px; background:#fafaf6 center/cover no-repeat; border:1px dashed var(--color-line); display:flex; align-items:center; justify-content:center; color:var(--color-muted); margin-bottom:8px; }
+  .img-preview { width:100%; height:260px; border-radius:10px; background:#fafaf6 center/contain no-repeat; border:1px dashed var(--color-line); display:flex; align-items:center; justify-content:center; color:var(--color-muted); margin-bottom:8px; }
   .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media (max-width:560px) { .form-grid-2 { grid-template-columns:1fr; } }
 
@@ -50,7 +50,7 @@
   .tab-btn:hover { color:var(--color-emerald); }
 
   /* Flash modal */
-  .img-preview { width:100%; height:260px; border-radius:10px; background:#fafaf6 center/cover no-repeat; border:1px dashed var(--color-line); display:flex; align-items:center; justify-content:center; color:var(--color-muted); margin-bottom:8px; font-size:14px; }
+  .img-preview { width:100%; height:260px; border-radius:10px; background:#fafaf6 center/contain no-repeat; border:1px dashed var(--color-line); display:flex; align-items:center; justify-content:center; color:var(--color-muted); margin-bottom:8px; font-size:14px; }
   .quick-duration { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
   .quick-duration button { padding:4px 10px; border:1px solid var(--color-gold); background:#fff; color:var(--color-gold); border-radius:14px; font-size:12px; font-weight:600; cursor:pointer; }
   .quick-duration button:hover { background:var(--color-gold); color:#fff; }
