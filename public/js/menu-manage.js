@@ -437,8 +437,8 @@ function setupImageDropzone(previewId, inputId, onChangeFn) {
     });
 }
 
-// ── ย่อ/ขยายรูปภาพให้พอดีกับขนาดการ์ดเมนู (crop กึ่งกลาง 4:3) ──────────────
-function resizeImageFile(file, targetW = 600, targetH = 450) {
+// ── ย่อ/ขยายรูปภาพให้พอดีกับขนาดการ์ดเมนู (crop กึ่งกลาง 1:1 square) ──────────────
+function resizeImageFile(file, targetW = 600, targetH = 600) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
