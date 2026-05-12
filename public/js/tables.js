@@ -91,9 +91,11 @@ function bindEvents() {
             const id = btn.dataset.tableId;
             const num = btn.dataset.tableNum;
             switch (btn.dataset.action) {
-                case 'view-qr':  openQrModal(id); break;
-                case 'edit':     openEditModal(id); break;
-                case 'delete':   deleteTable(id, num); break;
+                case 'view-qr':    openQrModal(id); break;
+                case 'edit':       openEditModal(id); break;
+                case 'save-card':  saveTableCard(id); break;
+                case 'print-card': printTableCard(id); break;
+                case 'delete':     deleteTable(id, num); break;
             }
         });
     }
@@ -139,6 +141,8 @@ function renderTables() {
                 <div class="row-btns">
                     <button class="btn btn-ghost" data-action="view-qr" data-table-id="${t.id}">ดู QR</button>
                     <button class="btn btn-ghost" data-action="edit" data-table-id="${t.id}">แก้ไข</button>
+                    <button class="btn btn-ghost" data-action="save-card" data-table-id="${t.id}" title="บันทึกการ์ด QR เป็นรูป">💾 การ์ด</button>
+                    <button class="btn btn-ghost" data-action="print-card" data-table-id="${t.id}" title="ปริ้นการ์ด QR">🖨️ ปริ้น</button>
                     <button class="btn btn-ghost" data-action="delete" data-table-id="${t.id}" data-table-num="${t.table_number}" style="color:#c33;">ลบ</button>
                 </div>
             </div>`;
@@ -461,3 +465,89 @@ function escapeHtml(s) {
     if (s == null) return '';
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// ===== บันทึกการ์ด QR เป็นรูป (ต่อโต๊ะ) =====
+async function saveTableCard(id) {
+    const t = tablesState.tables.find(x => x.id === id);
+    if (!t) return;
+
+    const notif = document.createElement('div');
+    notif.textContent = '⏳ กำลังสร้างการ์ด...';
+    Object.assign(notif.style, { position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)',
+        background:'#651713', color:'#fff', padding:'10px 22px', borderRadius:'20px',
+        fontSize:'14px', fontWeight:'600', zIndex:'9999', boxShadow:'0 4px 16px rgba(0,0,0,.25)' });
+    document.body.appendChild(notif);
+
+    try {
+        const url   = buildTableUrl(t.table_number);
+        const qrPx  = 300;
+        const enc   = encodeURIComponent(url);
+        const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=${qrPx}x${qrPx}&data=${enc}&color=651713&bgcolor=ffffff&margin=4`;
+
+        // สร้าง card ชั่วคราว (ซ่อนนอกหน้าจอ)
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;';
+        wrap.innerHTML = `
+          <div id="_save_card_tmp" style="
+            width:320px;background:#fff;border-radius:16px;overflow:hidden;
+            font-family:'Sarabun',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.15);">
+            <div style="background:linear-gradient(160deg,#651713,#4A0E0E);padding:22px 16px 18px;text-align:center;color:#fff;">
+              <img src="images/logo-white.png" style="height:60px;width:auto;margin-bottom:8px;" crossorigin="anonymous">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#C9A861;">
+                ${escapeHtml(CONFIG.HOTEL_NAME_EN||'Maeyom Palace Hotel')}
+              </div>
+              <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;">
+                ${escapeHtml(CONFIG.HOTEL_NAME||'โรงแรม แม่ยมพาเลส')}
+              </div>
+              <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.6);">🪑 หมายเลขโต๊ะ · TABLE NO.</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:700;color:#C9A861;line-height:1.1;">
+                ${t.table_number}
+              </div>
+              ${t.table_name ? `<div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:2px;">${escapeHtml(t.table_name)}</div>` : ''}
+            </div>
+            <div style="padding:20px;text-align:center;background:#fafaf6;">
+              <img src="${qrSrc}" width="${qrPx}" height="${qrPx}"
+                style="width:200px;height:200px;border-radius:10px;border:2px solid #e8e0d4;" crossorigin="anonymous">
+              <div style="margin-top:10px;font-size:12px;color:#651713;font-weight:600;">
+                📱 สแกน QR เพื่อสั่งอาหาร
+              </div>
+              <div style="font-size:11px;color:#888;">Scan to order · 扫码点餐</div>
+            </div>
+            <div style="background:#651713;color:rgba(255,255,255,.65);font-size:10px;text-align:center;padding:8px;">
+              🌐 ${escapeHtml((CONFIG.BASE_URL||'').replace('https://',''))}
+            </div>
+          </div>`;
+        document.body.appendChild(wrap);
+
+        // รอให้รูป QR โหลด
+        await new Promise(r => setTimeout(r, 1200));
+
+        const canvas = await html2canvas(wrap.firstElementChild, {
+            scale: 2, useCORS: true, backgroundColor: '#fff', logging: false
+        });
+        document.body.removeChild(wrap);
+
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `การ์ด_โต๊ะ${t.table_number}_Maeyom.png`;
+        a.click();
+
+        notif.textContent = '✅ บันทึกการ์ดแล้ว!';
+        setTimeout(() => notif.remove(), 2000);
+    } catch(e) {
+        notif.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message;
+        setTimeout(() => notif.remove(), 3000);
+    }
+}
+
+// ===== ปริ้นการ์ด QR (ต่อโต๊ะ) =====
+function printTableCard(id) {
+    const t = tablesState.tables.find(x => x.id === id);
+    if (!t) return;
+    const url  = buildTableUrl(t.table_number);
+    const enc  = encodeURIComponent(url);
+    const name = encodeURIComponent(t.table_name || '');
+    window.open(`qr-print.html?table=${t.table_number}&name=${name}&url=${enc}`, '_blank');
+}
+
