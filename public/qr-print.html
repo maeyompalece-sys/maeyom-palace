@@ -128,11 +128,7 @@
     font-size:5.5pt; color:#651713; font-weight:700;
     letter-spacing:.5px; text-align:right; line-height:1.5;
   }
-  .mini-bottom-bar {
-    height:2.5mm; background:#651713;
-    display:flex; align-items:center; padding:0 2mm;
-  }
-  .mini-bottom-txt { font-size:4.5pt; color:rgba(201,168,97,.85); letter-spacing:.5px; }
+
 
   /* QR area */
   .qr-area {
@@ -245,6 +241,13 @@
   .print-page.size-a6 .table-label  { font-size:9px; }
   .print-page.size-a6 .hotel-name   { font-size:14px; }
 
+  /* Multi-table mode */
+  #multiWrapper .print-page { margin:20px auto; page-break-after:always; break-after:page; }
+  @media print {
+    #multiWrapper { padding:0 !important; }
+    #multiWrapper .print-page { margin:0 !important; page-break-after:always; break-after:page; }
+  }
+
   @media print {
     .screen-controls { display:none !important; }
     body { margin:0; }
@@ -330,9 +333,7 @@
           <div class="mini-scan-txt">📱 สแกนเพื่อสั่งอาหาร<br>Scan to order</div>
         </div>
       </div>
-      <div class="mini-bottom-bar">
-        <span class="mini-bottom-txt" id="miniFooterUrl"></span>
-      </div>
+
     </div>
   </div>
 
@@ -429,6 +430,10 @@
 
 </div><!-- end printCard -->
 </div><!-- end printWrapper -->
+
+<!-- Multi-table mode wrapper -->
+<div id="multiWrapper" style="display:none; padding:20px 0;"></div>
+
 <script src="js/config.js"></script>
 <script>
 // โหลด html2canvas แบบ dynamic
@@ -448,182 +453,306 @@ const tableName = params.get('name')  || '';
 const menuUrl   = params.get('url')   || (CONFIG.BASE_URL + '/menu.html?table=' + tableNum);
 const isWalkin  = tableNum === 'Walk-in' || params.get('walkin') === '1';
 
-// Set table number display
-if (isWalkin) {
-  document.getElementById('tableNumBig').textContent = '🚶';
-  document.getElementById('tableNumBig').style.fontSize = '52px';
-  document.querySelector('.table-label').textContent = 'Walk-in · ลูกค้าทั่วไป';
-  document.getElementById('tableNameSub').textContent = 'สแกนเพื่อสั่งอาหาร';
-  document.getElementById('tableNameSub').style.display = 'block';
-} else {
-  document.getElementById('tableNumBig').textContent = tableNum;
-  if (tableName) {
-    document.getElementById('tableNameSub').textContent = tableName;
-    document.getElementById('tableNameSub').style.display = 'block';
-  }
-}
-document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
-document.getElementById('footerUrl').textContent   = menuUrl.replace('https://','');
+// ====================================================
+// ตรวจว่าเป็นโหมด multi-table หรือไม่
+// ====================================================
+const tablesParam = params.get('tables'); // "1,2,3,4,..."
+const isMulti = !!tablesParam;
 
-// ===== QR (main card or mini) =====
-function setQR(size, isMini) {
-  const id  = isMini ? 'miniQrImg' : 'qrImg';
-  const img = document.getElementById(id);
-  if (!img) return;
-  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='
-    + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=4';
-  img.width = size; img.height = size;
-}
+if (isMulti) {
+  // === โหมด: ปริ้นทุกโต๊ะ ===
+  document.getElementById('printWrapper').style.display = 'none';
 
-// ===== Size & Orientation =====
-const PAGE_MM = {
-  a4:   { pw:210, ph:297 },
-  a5:   { pw:148, ph:210 },
-  a6:   { pw:105, ph:148 },
-  mini: { pw:100, ph:35  },
-};
-let curSize = 'a5', curOrient = 'portrait', curCopies = 1;
-
-function applyLayout() {
-  const page    = document.getElementById('printCard');
-  const wrapper = document.getElementById('printWrapper');
-  const pm      = PAGE_MM[curSize] || PAGE_MM.a5;
-  const isMini  = curSize === 'mini';
-  const land    = isMini ? false : curOrient === 'landscape';
-
-  // Show/hide orient & copies for mini
-  ['sepOrient','lblOrient','orPort','orLand','sepCopies','lblCopies','cp1','cp2'].forEach(id => {
+  // ซ่อน controls ที่ไม่ใช้ในโหมด multi
+  ['psMini','sepOrient','lblOrient','orPort','orLand','sepCopies','lblCopies','cp1','cp2','btnSaveImg','btnSaveQR'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = isMini ? 'none' : '';
+    if (el) el.style.display = 'none';
   });
 
-  if (isMini) {
-    curCopies = 1;
-    wrapper.classList.remove('copies-2');
-    removeClone();
-    page.className      = 'print-page size-mini';
-    page.style.width    = pm.pw + 'mm';
-    page.style.height   = pm.ph + 'mm';
-    page.style.minHeight = 'unset';
-    // mini QR: 27mm × 3.78px/mm ≈ 102px
-    setQR(102, true);
-    // Also set main qrImg (hidden) for save
-    setQR(200, false);
-    // Sync mini table number
-    const mn = document.getElementById('miniTableNum');
-    if (mn) mn.textContent = tableNum;
-    const mf = document.getElementById('miniFooterUrl');
-    if (mf) mf.textContent = menuUrl.replace('https://','');
+  // ปรับปุ่มพิมพ์
+  const printBtn = document.querySelector('.btn-print');
+  if (printBtn) printBtn.textContent = '🖨️ พิมพ์ทุกโต๊ะ';
+
+  const tableNumbers = tablesParam.split(',').map(s => s.trim()).filter(Boolean);
+
+  function buildMultiCards(size, orient) {
+    const PAGE_MM = { a4:{pw:210,ph:297}, a5:{pw:148,ph:210}, a6:{pw:105,ph:148} };
+    const pm = PAGE_MM[size] || PAGE_MM.a5;
+    const land = orient === 'landscape';
+    const PW = land ? pm.ph : pm.pw;
+    const PH = land ? pm.pw : pm.ph;
+    const qrPx = Math.min(Math.round(PW * 3.78 * 0.52), 280);
+
+    const steps = [
+      { th:'สแกน QR Code ด้วยมือถือ', en:'Scan the QR Code with your phone' },
+      { th:'เลือก: กินที่นี่ หรือ กลับบ้าน', en:'Choose: Dine In or Takeaway' },
+      { th:'กรอกชื่อและเบอร์โทร', en:'Enter your name & phone number' },
+      { th:'เลือกเมนูและกด "สั่งเลย"', en:'Select dishes and tap "Place Order"' },
+      { th:'ติดตามสถานะออเดอร์ได้ในแอป', en:'Track your order status in the app' },
+    ];
+    const stepsHtml = steps.map((s,i) => `
+      <li class="step-item">
+        <div class="step-num">${i+1}</div>
+        <div>
+          <span class="step-text-main">${s.th}</span>
+          <span class="step-text-en">${s.en}</span>
+        </div>
+      </li>`).join('');
+
+    const wrapper = document.getElementById('multiWrapper');
+    wrapper.style.display = 'block';
+    wrapper.innerHTML = tableNumbers.map(num => {
+      const url = CONFIG.BASE_URL + '/menu.html?table=' + num;
+      const enc = encodeURIComponent(url);
+      const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=${qrPx}x${qrPx}&data=${enc}&color=651713&bgcolor=ffffff&margin=4`;
+      return `
+      <div class="print-page size-${size}${land?' landscape':''}"
+           style="width:${PW}mm;min-height:${PH}mm;">
+        <div class="mini-card-inner"></div>
+        <div class="card-header">
+          <img src="images/logo-white.png" style="height:60px;width:auto;margin-bottom:4px;" alt="Logo">
+          <div class="hotel-name">${CONFIG.HOTEL_NAME_EN || 'Maeyom Palace Hotel'}</div>
+          <div class="hotel-sub">${CONFIG.HOTEL_NAME || 'โรงแรม แม่ยมพาเลส'}</div>
+          <div class="table-badge">
+            <div class="table-label">🪑 หมายเลขโต๊ะ · Table No.</div>
+            <div class="table-number-big">${num}</div>
+          </div>
+        </div>
+        <div class="qr-area">
+          <div class="qr-box" style="${size==='a4'?'width:220px;height:220px;':size==='a6'?'width:120px;height:120px;':''}">
+            <img src="${qrSrc}" width="${qrPx}" height="${qrPx}" alt="QR Code" style="width:100%;height:100%;">
+          </div>
+          <div class="scan-label">
+            📱 <strong>สแกน QR</strong> เพื่อสั่งอาหาร<br>
+            <span style="color:#888;">Scan to order • 扫码点餐</span>
+          </div>
+        </div>
+        ${size !== 'a6' ? `
+        <div class="instructions">
+          <div class="inst-title">📋 วิธีสั่งอาหาร · How to Order · 如何点餐</div>
+          <ol class="steps">${stepsHtml}</ol>
+          <hr class="lang-divider" style="margin-top:10px;">
+          <div style="font-size:10px;color:#888;text-align:center;line-height:1.8;">
+            💡 ไม่ต้องดาวน์โหลดแอป · No app download required · 无需下载应用
+          </div>
+        </div>
+        <div class="icon-row">
+          <div class="icon-item"><div class="ico">🍽️</div><div class="lbl">เมนูหลากหลาย</div></div>
+          <div class="icon-item"><div class="ico">⚡</div><div class="lbl">สั่งได้รวดเร็ว</div></div>
+          <div class="icon-item"><div class="ico">📱</div><div class="lbl">ติดตามสถานะ</div></div>
+          <div class="icon-item"><div class="ico">🔔</div><div class="lbl">แจ้งเตือนทันที</div></div>
+          <div class="icon-item"><div class="ico">🌐</div><div class="lbl">3 ภาษา</div></div>
+        </div>` : ''}
+        <div class="card-footer">
+          <div class="footer-wifi">${(CONFIG.BASE_URL||'').replace('https://','')}</div>
+          <div class="footer-phone">📞 ${CONFIG.HOTEL_PHONE||''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ===== Size & Orientation (multi mode) =====
+  let curSize = 'a5', curOrient = 'portrait';
+
+  function applyLayout() {
+    buildMultiCards(curSize, curOrient);
+    const sz = curSize==='a4'?'A4':curSize==='a5'?'A5':'A6';
+    let st = document.getElementById('dynPageStyle');
+    if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
+    st.textContent = `@media print { @page { size:${sz} ${curOrient}; margin:0; } }`;
+  }
+
+  function setSize(s) {
+    curSize = s;
+    ['A4','A5','A6'].forEach(x => document.getElementById('ps'+x)?.classList.toggle('active', x.toLowerCase()===s));
+    applyLayout();
+  }
+  function setOrientation(o) {
+    curOrient = o;
+    document.getElementById('orPort')?.classList.toggle('active', o==='portrait');
+    document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
+    applyLayout();
+  }
+  function setCopies() {}      // unused in multi mode
+  function saveAsImage() {}    // unused in multi mode
+  function saveQROnly() {}     // unused in multi mode
+  function buildClone() {}     // unused in multi mode
+  function removeClone() {}    // unused in multi mode
+
+  // Init multi mode
+  applyLayout();
+
+} else {
+  // === โหมด: โต๊ะเดียว (เดิม) ===
+
+  // Set table number display
+  if (isWalkin) {
+    document.getElementById('tableNumBig').textContent = '🚶';
+    document.getElementById('tableNumBig').style.fontSize = '52px';
+    document.querySelector('.table-label').textContent = 'Walk-in · ลูกค้าทั่วไป';
+    document.getElementById('tableNameSub').textContent = 'สแกนเพื่อสั่งอาหาร';
+    document.getElementById('tableNameSub').style.display = 'block';
+  } else {
+    document.getElementById('tableNumBig').textContent = tableNum;
+    if (tableName) {
+      document.getElementById('tableNameSub').textContent = tableName;
+      document.getElementById('tableNameSub').style.display = 'block';
+    }
+  }
+  document.getElementById('footerPhone').textContent = '📞 ' + (CONFIG.HOTEL_PHONE || '');
+  document.getElementById('footerUrl').textContent   = menuUrl.replace('https://','');
+
+  // ===== QR (main card or mini) =====
+  function setQR(size, isMini) {
+    const id  = isMini ? 'miniQrImg' : 'qrImg';
+    const img = document.getElementById(id);
+    if (!img) return;
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='
+      + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=4';
+    img.width = size; img.height = size;
+  }
+
+  // ===== Size & Orientation =====
+  const PAGE_MM = {
+    a4:   { pw:210, ph:297 },
+    a5:   { pw:148, ph:210 },
+    a6:   { pw:105, ph:148 },
+    mini: { pw:100, ph:35  },
+  };
+  let curSize = 'a5', curOrient = 'portrait', curCopies = 1;
+
+  function applyLayout() {
+    const page    = document.getElementById('printCard');
+    const wrapper = document.getElementById('printWrapper');
+    const pm      = PAGE_MM[curSize] || PAGE_MM.a5;
+    const isMini  = curSize === 'mini';
+    const land    = isMini ? false : curOrient === 'landscape';
+
+    // Show/hide orient & copies for mini
+    ['sepOrient','lblOrient','orPort','orLand','sepCopies','lblCopies','cp1','cp2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = isMini ? 'none' : '';
+    });
+
+    if (isMini) {
+      curCopies = 1;
+      wrapper.classList.remove('copies-2');
+      removeClone();
+      page.className      = 'print-page size-mini';
+      page.style.width    = pm.pw + 'mm';
+      page.style.height   = pm.ph + 'mm';
+      page.style.minHeight = 'unset';
+      setQR(102, true);
+      setQR(200, false);
+      const mn = document.getElementById('miniTableNum');
+      if (mn) mn.textContent = tableNum;
+      let st = document.getElementById('dynPageStyle');
+      if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
+      st.textContent = `@media print { @page { size:${pm.pw}mm ${pm.ph}mm; margin:0; } #printWrapper{margin:0;} }`;
+      return;
+    }
+
+    const PW = land ? pm.ph : pm.pw;
+    const PH = land ? pm.pw : pm.ph;
+
+    if (curCopies === 2) {
+      wrapper.style.width  = PW + 'mm';
+      wrapper.style.height = PH + 'mm';
+      wrapper.classList.add('copies-2');
+      const cardW = (PW/2)+'mm';
+      page.className      = 'print-page size-'+curSize;
+      page.style.width    = cardW;
+      page.style.height   = PH+'mm';
+      page.style.minHeight = 'unset';
+      setQR(Math.min(Math.round(PW/2*3.78*0.45),180), false);
+      buildClone(cardW, PH+'mm');
+    } else {
+      wrapper.style.width  = '';
+      wrapper.style.height = '';
+      wrapper.classList.remove('copies-2');
+      removeClone();
+      page.className      = 'print-page size-'+curSize+(land?' landscape':'');
+      page.style.width    = PW+'mm';
+      page.style.height   = PH+'mm';
+      page.style.minHeight = 'unset';
+      setQR(Math.min(Math.round(PW*3.78*0.55),280), false);
+    }
 
     let st = document.getElementById('dynPageStyle');
     if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
-    st.textContent = `@media print { @page { size:${pm.pw}mm ${pm.ph}mm; margin:0; } #printWrapper{margin:0;} }`;
-    return;
+    const sz = curSize==='a4'?'A4':curSize==='a5'?'A5':'A6';
+    st.textContent = `@media print { @page { size:${sz} ${curOrient}; margin:0; } #printWrapper{margin:0 !important;} }`;
   }
 
-  const PW = land ? pm.ph : pm.pw;
-  const PH = land ? pm.pw : pm.ph;
-
-  if (curCopies === 2) {
-    wrapper.style.width  = PW + 'mm';
-    wrapper.style.height = PH + 'mm';
-    wrapper.classList.add('copies-2');
-    const cardW = (PW/2)+'mm';
-    page.className      = 'print-page size-'+curSize;
-    page.style.width    = cardW;
-    page.style.height   = PH+'mm';
-    page.style.minHeight = 'unset';
-    setQR(Math.min(Math.round(PW/2*3.78*0.45),180), false);
-    buildClone(cardW, PH+'mm');
-  } else {
-    wrapper.style.width  = '';
-    wrapper.style.height = '';
-    wrapper.classList.remove('copies-2');
+  function setCopies(n) {
+    curCopies = n;
+    document.getElementById('cp1')?.classList.toggle('active', n===1);
+    document.getElementById('cp2')?.classList.toggle('active', n===2);
+    applyLayout();
+  }
+  function setSize(s) {
+    curSize = s;
+    ['A4','A5','A6'].forEach(x => document.getElementById('ps'+x)?.classList.toggle('active', x.toLowerCase()===s));
+    document.getElementById('psMini')?.classList.toggle('active', s==='mini');
+    applyLayout();
+  }
+  function setOrientation(o) {
+    curOrient = o;
+    document.getElementById('orPort')?.classList.toggle('active', o==='portrait');
+    document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
+    applyLayout();
+  }
+  function buildClone(w,h) {
     removeClone();
-    page.className      = 'print-page size-'+curSize+(land?' landscape':'');
-    page.style.width    = PW+'mm';
-    page.style.height   = PH+'mm';
-    page.style.minHeight = 'unset';
-    setQR(Math.min(Math.round(PW*3.78*0.55),280), false);
+    const orig=document.getElementById('printCard'),clone=orig.cloneNode(true);
+    clone.id='cardClone'; clone.style.width=w; clone.style.height=h; clone.style.minHeight='unset';
+    clone.classList.add('print-page','size-'+curSize);
+    orig.parentNode.appendChild(clone);
+  }
+  function removeClone() { const o=document.getElementById('cardClone'); if(o)o.remove(); }
+
+  // Init single mode
+  applyLayout();
+
+  // ===== 💾 Save full card =====
+  async function saveAsImage() {
+    const btn = document.getElementById('btnSaveImg');
+    btn.disabled=true; btn.textContent='⏳ กำลังโหลด...';
+    loadHtml2Canvas(async () => {
+      btn.textContent='⏳ กำลังบันทึก...';
+      await new Promise(r=>setTimeout(r,500));
+      try {
+        const target = curCopies===2
+          ? document.getElementById('printWrapper')
+          : document.getElementById('printCard');
+        const canvas = await html2canvas(target,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
+        const link = document.createElement('a');
+        link.download = (curSize==='mini'?'การ์ดนามบัตร':'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch(e) { alert('บันทึกล้มเหลว: '+e.message); }
+      btn.disabled=false; btn.textContent='💾 บันทึกการ์ด';
+    });
   }
 
-  let st = document.getElementById('dynPageStyle');
-  if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
-  const sz = curSize==='a4'?'A4':curSize==='a5'?'A5':'A6';
-  st.textContent = `@media print { @page { size:${sz} ${curOrient}; margin:0; } #printWrapper{margin:0 !important;} }`;
-}
-
-function setCopies(n) {
-  curCopies = n;
-  document.getElementById('cp1')?.classList.toggle('active', n===1);
-  document.getElementById('cp2')?.classList.toggle('active', n===2);
-  applyLayout();
-}
-function setSize(s) {
-  curSize = s;
-  ['A4','A5','A6'].forEach(x => document.getElementById('ps'+x)?.classList.toggle('active', x.toLowerCase()===s));
-  document.getElementById('psMini')?.classList.toggle('active', s==='mini');
-  applyLayout();
-}
-function setOrientation(o) {
-  curOrient = o;
-  document.getElementById('orPort')?.classList.toggle('active', o==='portrait');
-  document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
-  applyLayout();
-}
-function buildClone(w,h) {
-  removeClone();
-  const orig=document.getElementById('printCard'),clone=orig.cloneNode(true);
-  clone.id='cardClone'; clone.style.width=w; clone.style.height=h; clone.style.minHeight='unset';
-  clone.classList.add('print-page','size-'+curSize);
-  orig.parentNode.appendChild(clone);
-}
-function removeClone() { const o=document.getElementById('cardClone'); if(o)o.remove(); }
-
-// Init
-applyLayout();
-
-// ===== 💾 Save full card =====
-async function saveAsImage() {
-  const btn = document.getElementById('btnSaveImg');
-  btn.disabled=true; btn.textContent='⏳ กำลังโหลด...';
-  loadHtml2Canvas(async () => {
-    btn.textContent='⏳ กำลังบันทึก...';
-    await new Promise(r=>setTimeout(r,500));
+  // ===== 📷 Save QR code only =====
+  async function saveQROnly() {
+    const btn = document.getElementById('btnSaveQR');
+    btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
     try {
-      const target = curCopies===2
-        ? document.getElementById('printWrapper')
-        : document.getElementById('printCard');
-      const canvas = await html2canvas(target,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
+      const hiRes = 'https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='
+        + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
+      const resp = await fetch(hiRes);
+      const blob = await resp.blob();
+      const url  = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.download = (curSize==='mini'?'การ์ดนามบัตร':'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch(e) { alert('บันทึกล้มเหลว: '+e.message); }
-    btn.disabled=false; btn.textContent='💾 บันทึกการ์ด';
-  });
-}
-
-// ===== 📷 Save QR code only =====
-async function saveQROnly() {
-  const btn = document.getElementById('btnSaveQR');
-  btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
-  try {
-    const hiRes = 'https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='
-      + encodeURIComponent(menuUrl) + '&color=651713&bgcolor=ffffff&margin=6';
-    // Fetch and download
-    const resp = await fetch(hiRes);
-    const blob = await resp.blob();
-    const url  = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url; link.download = 'QR_โต๊ะ'+tableNum+'.png'; link.click();
-    URL.revokeObjectURL(url);
-  } catch(e) {
-    // Fallback: open in new tab
-    window.open('https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='+encodeURIComponent(menuUrl)+'&color=651713&bgcolor=ffffff&margin=6','_blank');
+      link.href = url; link.download = 'QR_โต๊ะ'+tableNum+'.png'; link.click();
+      URL.revokeObjectURL(url);
+    } catch(e) {
+      window.open('https://api.qrserver.com/v1/create-qr-code/?size=800x800&data='+encodeURIComponent(menuUrl)+'&color=651713&bgcolor=ffffff&margin=6','_blank');
+    }
+    btn.disabled=false; btn.textContent='📷 บันทึก QR';
   }
-  btn.disabled=false; btn.textContent='📷 บันทึก QR';
-}
-</script>
+} // end if/else isMulti
 </body>
 </html>
