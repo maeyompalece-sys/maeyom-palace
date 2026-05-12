@@ -55,6 +55,9 @@ function bindEvents() {
     const addBtn = document.getElementById('btnAdd');
     if (addBtn) addBtn.addEventListener('click', openAddModal);
 
+    const bulkAddBtn = document.getElementById('btnBulkAdd');
+    if (bulkAddBtn) bulkAddBtn.addEventListener('click', openBulkAddModal);
+
     const printAllBtn = document.getElementById('btnPrintAll');
     if (printAllBtn) printAllBtn.addEventListener('click', () => {
         const modal = document.getElementById('printTypeModal');
@@ -678,3 +681,151 @@ function printTableCard(id) {
     window.open(`qr-print.html?table=${t.table_number}&name=${name}&url=${enc}`, '_blank');
 }
 
+
+// ============================================================
+// ⚡ Bulk Add Tables — เพิ่มโต๊ะอัตโนมัติ
+// ============================================================
+let _bulkMode = 'count';
+
+function openBulkAddModal() {
+    const next = nextTableNumber();
+    document.getElementById('bulkStartNum').value  = next;
+    document.getElementById('bulkCount').value     = 5;
+    document.getElementById('bulkRangeFrom').value = next;
+    document.getElementById('bulkRangeTo').value   = next + 4;
+    document.getElementById('bulkSeats').value     = 4;
+    document.getElementById('bulkProgress').style.display = 'none';
+    document.getElementById('btnBulkSave').disabled   = false;
+    document.getElementById('btnBulkSave').textContent = '🚀 สร้างโต๊ะทั้งหมด';
+    document.getElementById('btnBulkCancel').textContent = 'ยกเลิก';
+    setBulkMode('count');
+    updateBulkPreview();
+    document.getElementById('bulkAddModal').style.display = 'flex';
+}
+
+function closeBulkModal() {
+    document.getElementById('bulkAddModal').style.display = 'none';
+}
+
+function setBulkMode(mode) {
+    _bulkMode = mode;
+    const isCount = mode === 'count';
+    document.getElementById('bulkCountMode').style.display = isCount ? '' : 'none';
+    document.getElementById('bulkRangeMode').style.display = isCount ? 'none' : '';
+
+    const activeStyle  = 'flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--color-emerald);background:var(--color-emerald);color:#C9A861;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;';
+    const inactiveStyle = 'flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--color-emerald);background:#fff;color:var(--color-emerald);font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;';
+    document.getElementById('modeCountBtn').style.cssText = isCount ? activeStyle : inactiveStyle;
+    document.getElementById('modeRangeBtn').style.cssText = isCount ? inactiveStyle : activeStyle;
+    updateBulkPreview();
+}
+
+function getBulkTableNumbers() {
+    const existing = new Set(tablesState.tables.map(t => parseInt(t.table_number)));
+
+    if (_bulkMode === 'count') {
+        const start = parseInt(document.getElementById('bulkStartNum').value) || 1;
+        const count = Math.min(Math.max(parseInt(document.getElementById('bulkCount').value) || 1, 1), 50);
+        const nums = [], skipped = [];
+        let n = start;
+        while (nums.length < count && n <= start + count + 200) {
+            if (existing.has(n)) { skipped.push(n); }
+            else { nums.push(n); }
+            n++;
+        }
+        return { nums, skipped, existing };
+    } else {
+        const from = parseInt(document.getElementById('bulkRangeFrom').value) || 1;
+        const to   = parseInt(document.getElementById('bulkRangeTo').value)   || from;
+        const lo = Math.min(from, to), hi = Math.min(Math.max(from, to), lo + 49);
+        const nums = [], skipped = [];
+        for (let i = lo; i <= hi; i++) {
+            if (existing.has(i)) skipped.push(i);
+            else nums.push(i);
+        }
+        return { nums, skipped, existing };
+    }
+}
+
+function updateBulkPreview() {
+    const el = document.getElementById('bulkPreview');
+    if (!el) return;
+    const { nums, skipped } = getBulkTableNumbers();
+
+    if (!nums.length) {
+        el.innerHTML = '<span style="color:#ef4444;">⚠️ ไม่มีโต๊ะที่จะสร้าง — โต๊ะในช่วงนี้มีอยู่แล้วทั้งหมด</span>';
+        return;
+    }
+
+    const preview = nums.slice(0, 20).map(n =>
+        `<span style="display:inline-block;background:var(--color-emerald);color:#C9A861;
+          border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;margin:2px;">${n}</span>`
+    ).join('');
+    const more = nums.length > 20 ? `<span style="color:var(--color-muted);font-size:12px;"> +${nums.length - 20} โต๊ะ</span>` : '';
+    const skipNote = skipped.length
+        ? `<div style="margin-top:6px;font-size:11px;color:#f59e0b;">⚠️ ข้ามโต๊ะที่มีอยู่แล้ว: ${skipped.slice(0,10).join(', ')}${skipped.length>10?'...':''} (${skipped.length} โต๊ะ)</div>`
+        : '';
+
+    el.innerHTML = `<div style="font-weight:700;margin-bottom:6px;">สร้าง <span style="color:var(--color-gold);font-size:16px;">${nums.length}</span> โต๊ะ:</div>`
+        + preview + more + skipNote;
+}
+
+async function saveBulkTables() {
+    const { nums } = getBulkTableNumbers();
+    const seats = Math.max(parseInt(document.getElementById('bulkSeats').value) || 4, 1);
+
+    if (!nums.length) {
+        notifier.showToast('ไม่มีโต๊ะที่จะสร้าง', 'error');
+        return;
+    }
+
+    const saveBtn   = document.getElementById('btnBulkSave');
+    const cancelBtn = document.getElementById('btnBulkCancel');
+    const progWrap  = document.getElementById('bulkProgress');
+    const progBar   = document.getElementById('bulkProgressBar');
+    const progText  = document.getElementById('bulkProgressText');
+    const progPct   = document.getElementById('bulkProgressPct');
+
+    saveBtn.disabled  = true;
+    cancelBtn.disabled = true;
+    cancelBtn.textContent = '⏳ กำลังสร้าง...';
+    progWrap.style.display = 'block';
+
+    let success = 0, failed = 0;
+
+    for (let i = 0; i < nums.length; i++) {
+        const pct = Math.round(((i) / nums.length) * 100);
+        progBar.style.width  = pct + '%';
+        progText.textContent = `กำลังสร้างโต๊ะ ${nums[i]} (${i + 1}/${nums.length})`;
+        progPct.textContent  = pct + '%';
+        saveBtn.textContent  = `⏳ ${i + 1}/${nums.length}`;
+
+        try {
+            await API.addTable({ table_number: nums[i], seats, is_active: true });
+            success++;
+        } catch (e) {
+            console.warn('เพิ่มโต๊ะ', nums[i], 'ล้มเหลว:', e.message);
+            failed++;
+        }
+    }
+
+    // 100%
+    progBar.style.width  = '100%';
+    progText.textContent = `✅ เสร็จแล้ว!`;
+    progPct.textContent  = '100%';
+
+    const msg = failed
+        ? `✓ สร้างสำเร็จ ${success} โต๊ะ (ล้มเหลว ${failed} โต๊ะ)`
+        : `✓ สร้างโต๊ะสำเร็จทั้งหมด ${success} โต๊ะ 🎉`;
+    notifier.showToast(msg, 'success', 4000);
+    notifier.playSuccessSound?.();
+
+    await loadTables();
+    closeBulkModal();
+
+    // Reset
+    saveBtn.disabled   = false;
+    cancelBtn.disabled = false;
+    saveBtn.textContent  = '🚀 สร้างโต๊ะทั้งหมด';
+    cancelBtn.textContent = 'ยกเลิก';
+}
