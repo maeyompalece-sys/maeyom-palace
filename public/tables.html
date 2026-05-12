@@ -22,6 +22,35 @@
   .table-card .row-btns { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
   .table-card .row-btns button { font-size:12px; padding:6px 10px; }
   .table-card .badge-off { position:absolute; top:8px; right:8px; background:#fee; color:#c33; font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
+
+  /* === Multi-select mode === */
+  .table-card.selectable { cursor:pointer; user-select:none; }
+  .table-card.selectable:hover { box-shadow:0 8px 24px rgba(101,23,19,.15); border-color:rgba(101,23,19,.3); }
+  .table-card.selected { border:2px solid #651713; box-shadow:0 0 0 3px rgba(101,23,19,.15); transform:translateY(-2px); }
+  .table-card .select-check {
+    position:absolute; top:10px; left:10px;
+    width:22px; height:22px; border-radius:50%;
+    border:2px solid var(--color-line); background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; transition:all .15s;
+  }
+  .table-card.selected .select-check { background:#651713; border-color:#651713; color:#fff; }
+  #selectBar {
+    display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:linear-gradient(135deg,#651713,#4A0E0E); color:#fff;
+    border-radius:16px; padding:12px 20px; align-items:center; gap:12px;
+    box-shadow:0 8px 32px rgba(0,0,0,.3); z-index:200; white-space:nowrap;
+    flex-wrap:wrap; justify-content:center;
+  }
+  #selectBar.show { display:flex; }
+  #selectBar .sel-count { font-weight:700; font-size:14px; background:rgba(201,168,97,.25); padding:4px 12px; border-radius:20px; color:#C9A861; }
+  #selectBar button { padding:8px 16px; border-radius:10px; border:none; font-size:13px; font-weight:700; cursor:pointer; transition:all .15s; }
+  #selectBar .btn-sel-save { background:#C9A861; color:#651713; }
+  #selectBar .btn-sel-print { background:#fff; color:#651713; }
+  #selectBar .btn-sel-all  { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3) !important; }
+  #selectBar .btn-sel-cancel { background:transparent; color:rgba(255,255,255,.6); border:1px solid rgba(255,255,255,.25) !important; font-size:12px; }
+  .btn-select-mode { background:#fff; border:1.5px solid var(--color-emerald); color:var(--color-emerald); }
+  .btn-select-mode.active { background:var(--color-emerald); color:#C9A861; border-color:var(--color-emerald); }
   .empty-state { text-align:center; padding:60px 20px; color:var(--color-muted); }
   .empty-state .ico { font-size:64px; margin-bottom:12px; }
   /* Print size picker */
@@ -134,8 +163,20 @@
       </div>
       <button class="btn btn-ghost" id="btnSaveAll">💾 บันทึกรูปทุกโต๊ะ</button>
       <button class="btn btn-ghost" id="btnPrintAll">🖨️ ปริ้น QR ทุกโต๊ะ</button>
+      <button class="btn btn-ghost" onclick="saveAllCards()">🪪 บันทึกการ์ดทุกโต๊ะ</button>
+      <button class="btn btn-ghost" onclick="printAllCards()">🖨️ ปริ้นการ์ดทุกโต๊ะ</button>
+      <button class="btn btn-ghost btn-select-mode" id="btnSelectMode" onclick="toggleSelectMode()">☑️ เลือกโต๊ะ</button>
       <button class="btn btn-primary" id="btnAdd">+ เพิ่มโต๊ะ</button>
     </div>
+  </div>
+
+  <!-- Floating multi-select bar -->
+  <div id="selectBar">
+    <span class="sel-count" id="selCount">0 โต๊ะ</span>
+    <button class="btn-sel-all"    onclick="selectAll()">เลือกทั้งหมด</button>
+    <button class="btn-sel-save"   onclick="saveSelectedCards()">💾 บันทึกที่เลือก</button>
+    <button class="btn-sel-print"  onclick="printSelectedCards()">🖨️ ปริ้นที่เลือก</button>
+    <button class="btn-sel-cancel" onclick="toggleSelectMode()">✕ ยกเลิก</button>
   </div>
 
   <div id="tablesContainer" class="tables-grid"></div>
