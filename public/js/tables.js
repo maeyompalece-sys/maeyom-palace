@@ -560,7 +560,7 @@ function showNotif(msg) {
     return el;
 }
 
-// ===== บันทึกการ์ด QR เป็นรูป (ต่อโต๊ะ) =====
+// ===== บันทึกการ์ด QR เป็นรูป (ต่อโต๊ะ) — แนวนอน 10×3.5cm =====
 async function saveTableCard(id, silent = false) {
     const t = tablesState.tables.find(x => x.id === id);
     if (!t) return;
@@ -572,57 +572,74 @@ async function saveTableCard(id, silent = false) {
 
     try {
         const url   = buildTableUrl(t.table_number);
-        const qrPx  = 300;
+        const qrPx  = 110;
         const enc   = encodeURIComponent(url);
         const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=${qrPx}x${qrPx}&data=${enc}&color=651713&bgcolor=ffffff&margin=4`;
 
-        // สร้าง card ชั่วคราว (ซ่อนนอกหน้าจอ)
+        // สร้าง mini card แนวนอน 10×3.5cm
+        const W = Math.round(100 * 3.78); // ~378px
+        const H = Math.round(35  * 3.78); // ~132px
+        const QR_SIDE = H;
+
         const wrap = document.createElement('div');
         wrap.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;';
         wrap.innerHTML = `
           <div id="_save_card_tmp" style="
-            width:320px;background:#fff;border-radius:16px;overflow:hidden;
-            font-family:'Sarabun',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.15);">
-            <div style="background:linear-gradient(160deg,#651713,#4A0E0E);padding:22px 16px 18px;text-align:center;color:#fff;">
-              <img src="images/logo-white.png" style="height:60px;width:auto;margin-bottom:8px;" crossorigin="anonymous">
-              <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#C9A861;">
-                ${escapeHtml(CONFIG.HOTEL_NAME_EN||'Maeyom Palace Hotel')}
-              </div>
-              <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;">
-                ${escapeHtml(CONFIG.HOTEL_NAME||'โรงแรม แม่ยมพาเลส')}
-              </div>
-              <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.6);">🪑 หมายเลขโต๊ะ · TABLE NO.</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:700;color:#C9A861;line-height:1.1;">
-                ${t.table_number}
-              </div>
-              ${t.table_name ? `<div style="font-size:13px;color:rgba(255,255,255,.8);margin-top:2px;">${escapeHtml(t.table_name)}</div>` : ''}
-            </div>
-            <div style="padding:20px;text-align:center;background:#fafaf6;">
+            width:${W}px; height:${H}px;
+            display:flex; flex-direction:row;
+            font-family:'Sarabun',sans-serif;
+            border:2px solid #651713; border-radius:6px;
+            overflow:hidden; background:#fff;">
+            <div style="
+              width:${QR_SIDE}px; height:${H}px; flex-shrink:0;
+              background:#651713;
+              display:flex; align-items:center; justify-content:center;
+              padding:8px;">
               <img src="${qrSrc}" width="${qrPx}" height="${qrPx}"
-                style="width:200px;height:200px;border-radius:10px;border:2px solid #e8e0d4;" crossorigin="anonymous">
-              <div style="margin-top:10px;font-size:12px;color:#651713;font-weight:600;">
-                📱 สแกน QR เพื่อสั่งอาหาร
-              </div>
-              <div style="font-size:11px;color:#888;">Scan to order · 扫码点餐</div>
+                style="width:${H-20}px;height:${H-20}px;border-radius:4px;display:block;" crossorigin="anonymous">
             </div>
-            <div style="background:#651713;color:rgba(255,255,255,.65);font-size:10px;text-align:center;padding:8px;">
-              🌐 ${escapeHtml((CONFIG.BASE_URL||'').replace('https://',''))}
+            <div style="
+              flex:1; height:${H}px;
+              display:flex; flex-direction:column;
+              justify-content:space-between;
+              padding:10px 15px 7px;
+              background:#fff;
+              border-left:2px solid #651713;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <img src="images/logo.png" style="height:34px;width:auto;" crossorigin="anonymous">
+                <div>
+                  <div style="font-family:'Playfair Display','Cormorant Garamond',serif;
+                    font-size:10px;font-weight:700;color:#651713;line-height:1.3;">
+                    Maeyom Palace Hotel
+                  </div>
+                  <div style="font-size:8px;color:#888;line-height:1.2;">โรงแรม แม่ยมพาเลส</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+                <div>
+                  <div style="font-size:8px;color:#651713;letter-spacing:2px;text-transform:uppercase;font-weight:700;line-height:1;margin-bottom:2px;">🪑 TABLE</div>
+                  <div style="font-family:'Playfair Display','Cormorant Garamond',serif;
+                    font-size:32px;font-weight:900;color:#651713;line-height:1;">${escapeHtml(String(t.table_number))}</div>
+                </div>
+                <div style="text-align:right;font-size:8px;color:#651713;font-weight:700;line-height:1.8;padding-bottom:2px;">
+                  📱 สแกนเพื่อสั่งอาหาร<br>Scan to order
+                </div>
+              </div>
             </div>
           </div>`;
         document.body.appendChild(wrap);
 
-        // รอให้รูป QR โหลด
-        await new Promise(r => setTimeout(r, 1200));
+        await new Promise(r => setTimeout(r, 1400));
 
         const canvas = await html2canvas(wrap.firstElementChild, {
-            scale: 2, useCORS: true, backgroundColor: '#fff', logging: false
+            scale: 4, useCORS: true, backgroundColor: '#fff', logging: false, allowTaint: true
         });
         document.body.removeChild(wrap);
 
         const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `การ์ด_โต๊ะ${t.table_number}_Maeyom.png`;
+        a.download = `การ์ดนามบัตรแนวนอน_โต๊ะ${t.table_number}_Maeyom.png`;
         a.click();
 
         if (notif) { notif.textContent = '✅ บันทึกการ์ดแล้ว!'; setTimeout(() => notif.remove(), 2000); }
