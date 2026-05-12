@@ -277,7 +277,7 @@ function closeMenuModal() {
     menuState.pendingFile = null;
 }
 
-function onImagePick(e) {
+async function onImagePick(e) {
     const f = e.target.files[0];
     if (!f) return;
     if (f.size > 5 * 1024 * 1024) {
@@ -285,8 +285,15 @@ function onImagePick(e) {
         e.target.value = '';
         return;
     }
-    menuState.pendingFile = f;
-    const url = URL.createObjectURL(f);
+    // Resize ก่อนเก็บ — ทำให้รูปพอดีกับการ์ดเมนู
+    let resized = f;
+    try {
+        resized = await resizeImageFile(f);
+    } catch(err) {
+        console.warn('resize failed, using original', err);
+    }
+    menuState.pendingFile = resized;
+    const url = URL.createObjectURL(resized);
     const prev = document.getElementById('imgPreview');
     prev.style.backgroundImage = "url('" + url + "')";
     prev.textContent = '';
@@ -430,12 +437,59 @@ function setupImageDropzone(previewId, inputId, onChangeFn) {
     });
 }
 
+// ── ย่อ/ขยายรูปภาพให้พอดีกับขนาดการ์ดเมนู (crop กึ่งกลาง 4:3) ──────────────
+function resizeImageFile(file, targetW = 600, targetH = 450) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement('canvas');
+            canvas.width  = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+
+            // Center-crop: คำนวณ source rect ที่มี aspect ratio เดียวกับ target
+            const srcRatio = img.width / img.height;
+            const dstRatio = targetW / targetH;
+            let sx = 0, sy = 0, sw = img.width, sh = img.height;
+            if (srcRatio > dstRatio) {
+                // ภาพกว้างกว่า → crop ซ้ายขวา
+                sw = Math.round(img.height * dstRatio);
+                sx = Math.round((img.width - sw) / 2);
+            } else {
+                // ภาพสูงกว่า → crop บนล่าง
+                sh = Math.round(img.width / dstRatio);
+                sy = Math.round((img.height - sh) / 2);
+            }
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+
+            canvas.toBlob(blob => {
+                if (!blob) { reject(new Error('canvas toBlob failed')); return; }
+                const resized = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+                resolve(resized);
+            }, 'image/jpeg', 0.88);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load image failed')); };
+        img.src = url;
+    });
+}
+
 async function handleImageFile(file, previewId, type) {
     if (file.size > 5 * 1024 * 1024) {
         notifier.showToast('ไฟล์ใหญ่เกิน 5MB', 'error');
         return;
     }
-    // แสดง preview ก่อน
+
+    // Resize ก่อน — ทำให้รูปพอดีกับการ์ดเมนูทุกรูป
+    let uploadFile = file;
+    try {
+        uploadFile = await resizeImageFile(file);
+    } catch(e) {
+        console.warn('resize failed, using original', e);
+    }
+
+    // แสดง preview จากไฟล์ที่ resize แล้ว
     const reader = new FileReader();
     reader.onload = (e) => {
         const prev = document.getElementById(previewId);
@@ -444,17 +498,15 @@ async function handleImageFile(file, previewId, type) {
             prev.innerHTML = '<span class="drop-hint">🖱️ คลิกเพื่อเลือก หรือลากไฟล์มาวางได้เลย</span>';
         }
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(uploadFile);
 
     // อัปโหลดจริง
     notifier.showToast('กำลังอัปโหลดรูป...', 'info', 3000);
     try {
-        const result = await API.uploadImage(file);
+        const result = await API.uploadImage(uploadFile);
         if (type === 'menu') {
-            // เมนูทั่วไป — เก็บไว้ใน menuState
             menuState.editingImageUrl = result.url;
         } else {
-            // เมนูพิเศษ — ใส่ใน hidden input
             const urlInput = document.getElementById('inpFlashImageUrl');
             if (urlInput) urlInput.value = result.url;
         }
