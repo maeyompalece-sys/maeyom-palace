@@ -58,7 +58,7 @@
     letter-spacing:1px;
   }
 
-  /* ===== MINI CARD 10×3.5cm (แนวนอน) ===== */
+  /* ===== MINI CARD — แนวนอน 10×3.5cm ===== */
   .print-page.size-mini {
     width:100mm; height:35mm;
     min-height:unset;
@@ -67,6 +67,12 @@
     border-radius:6px;
     overflow:hidden;
   }
+  /* ===== MINI CARD — แนวตั้ง 3.5×10cm ===== */
+  .print-page.size-mini.mini-portrait {
+    width:35mm; height:100mm;
+    flex-direction:column !important;
+  }
+
   /* Mini: ซ่อน elements ปกติ */
   .print-page.size-mini .card-header,
   .print-page.size-mini .qr-area,
@@ -77,8 +83,13 @@
   .mini-card-inner { display:none; }
   .print-page.size-mini .mini-card-inner {
     display:flex; width:100%; height:100%;
+    flex-direction:row; /* default แนวนอน */
   }
-  /* Mini QR side */
+  .print-page.size-mini.mini-portrait .mini-card-inner {
+    flex-direction:column;
+  }
+
+  /* ======= LANDSCAPE inner (แนวนอน 10×3.5) ======= */
   .mini-qr-side {
     width:35mm; height:35mm; flex-shrink:0;
     background:#651713;
@@ -89,7 +100,6 @@
     width:29mm; height:29mm; border-radius:3px;
     display:block;
   }
-  /* Mini info side */
   .mini-info-side {
     flex:1; height:35mm;
     display:flex; flex-direction:column;
@@ -128,6 +138,37 @@
     font-size:5.5pt; color:#651713; font-weight:700;
     letter-spacing:.5px; text-align:right; line-height:1.5;
   }
+
+  /* ======= PORTRAIT inner (แนวตั้ง 3.5×10) ======= */
+  .mini-portrait .mini-qr-side {
+    width:35mm; height:35mm; flex-shrink:0;
+    background:#651713;
+    display:flex; align-items:center; justify-content:center;
+    padding:3mm;
+  }
+  .mini-portrait .mini-qr-side img {
+    width:29mm; height:29mm; border-radius:3px;
+  }
+  .mini-portrait .mini-info-side {
+    flex:1; height:auto; width:35mm;
+    display:flex; flex-direction:column;
+    justify-content:space-between;
+    padding:2.5mm 3mm 2mm;
+    background:#fff;
+    border-left:none;
+    border-top:2px solid #651713;
+  }
+  .mini-portrait .mini-hotel-row {
+    flex-direction:column; align-items:flex-start; gap:1mm;
+  }
+  .mini-portrait .mini-hotel-logo { height:7mm; }
+  .mini-portrait .mini-hotel-name { font-size:6pt; }
+  .mini-portrait .mini-hotel-sub  { font-size:5pt; }
+  .mini-portrait .mini-table-row  {
+    flex-direction:column; align-items:flex-start; gap:0;
+  }
+  .mini-portrait .mini-table-num  { font-size:28pt; }
+  .mini-portrait .mini-scan-txt   { text-align:left; font-size:5pt; }
 
 
   /* QR area */
@@ -294,6 +335,11 @@
   <button class="ps-btn active" id="psA5" onclick="setSize('a5')">A5</button>
   <button class="ps-btn" id="psA6" onclick="setSize('a6')">A6</button>
   <button class="ps-btn" id="psMini" onclick="setSize('mini')" style="border-color:#C9A861;color:#C9A861;background:#651713;">🪪 นามบัตร</button>
+  <!-- ปุ่มแนวการ์ดนามบัตร (แสดงเฉพาะโหมด mini) -->
+  <div class="size-sep" id="sepMiniOrient" style="display:none;"></div>
+  <span class="ctrl-label" id="lblMiniOrient" style="display:none;">แนวการ์ด:</span>
+  <button class="ps-btn active" id="miniLand" onclick="setMiniOrient('landscape')" style="display:none;" title="แนวนอน 10×3.5cm">↔ นอน</button>
+  <button class="ps-btn" id="miniPort" onclick="setMiniOrient('portrait')" style="display:none;" title="แนวตั้ง 3.5×10cm">↕ ตั้ง</button>
   <div class="size-sep" id="sepOrient"></div>
   <span class="ctrl-label" id="lblOrient">แนว:</span>
   <button class="ps-btn active" id="orPort" onclick="setOrientation('portrait')">↕ ตั้ง</button>
@@ -617,41 +663,53 @@ if (isMulti) {
     a4:   { pw:210, ph:297 },
     a5:   { pw:148, ph:210 },
     a6:   { pw:105, ph:148 },
-    mini: { pw:100, ph:35  },
+    mini: { pw:100, ph:35  },  // แนวนอน default
+    miniP:{ pw:35,  ph:100 },  // แนวตั้ง
   };
   let curSize = 'a5', curOrient = 'portrait', curCopies = 1;
+  let curMiniOrient = 'landscape'; // 'landscape' = 10×3.5cm, 'portrait' = 3.5×10cm
 
   function applyLayout() {
     const page    = document.getElementById('printCard');
     const wrapper = document.getElementById('printWrapper');
-    const pm      = PAGE_MM[curSize] || PAGE_MM.a5;
     const isMini  = curSize === 'mini';
     const land    = isMini ? false : curOrient === 'landscape';
 
-    // Show/hide orient & copies for mini
+    // Show/hide paper orient & copies for non-mini
     ['sepOrient','lblOrient','orPort','orLand','sepCopies','lblCopies','cp1','cp2'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = isMini ? 'none' : '';
+    });
+    // Show/hide mini-orient controls
+    ['sepMiniOrient','lblMiniOrient','miniLand','miniPort'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = isMini ? '' : 'none';
     });
 
     if (isMini) {
       curCopies = 1;
       wrapper.classList.remove('copies-2');
       removeClone();
-      page.className      = 'print-page size-mini';
-      page.style.width    = pm.pw + 'mm';
-      page.style.height   = pm.ph + 'mm';
+      const isPortrait = curMiniOrient === 'portrait';
+      const pw = isPortrait ? 35 : 100;
+      const ph = isPortrait ? 100 : 35;
+      // QR size: แนวนอน ~29mm, แนวตั้ง ~29mm (เหมือนกัน)
+      const qrPx = 110;
+      page.className   = 'print-page size-mini' + (isPortrait ? ' mini-portrait' : '');
+      page.style.width    = pw + 'mm';
+      page.style.height   = ph + 'mm';
       page.style.minHeight = 'unset';
-      setQR(102, true);
+      setQR(qrPx, true);
       setQR(200, false);
       const mn = document.getElementById('miniTableNum');
       if (mn) mn.textContent = tableNum;
       let st = document.getElementById('dynPageStyle');
       if (!st) { st=document.createElement('style'); st.id='dynPageStyle'; document.head.appendChild(st); }
-      st.textContent = `@media print { @page { size:${pm.pw}mm ${pm.ph}mm; margin:0; } #printWrapper{margin:0;} }`;
+      st.textContent = `@media print { @page { size:${pw}mm ${ph}mm; margin:0; } #printWrapper{margin:0;} }`;
       return;
     }
 
+    const pm = PAGE_MM[curSize] || PAGE_MM.a5;
     const PW = land ? pm.ph : pm.pw;
     const PH = land ? pm.pw : pm.ph;
 
@@ -702,6 +760,12 @@ if (isMulti) {
     document.getElementById('orLand')?.classList.toggle('active', o==='landscape');
     applyLayout();
   }
+  function setMiniOrient(o) {
+    curMiniOrient = o;
+    document.getElementById('miniLand')?.classList.toggle('active', o==='landscape');
+    document.getElementById('miniPort')?.classList.toggle('active', o==='portrait');
+    applyLayout();
+  }
   function buildClone(w,h) {
     removeClone();
     const orig=document.getElementById('printCard'),clone=orig.cloneNode(true);
@@ -727,7 +791,8 @@ if (isMulti) {
           : document.getElementById('printCard');
         const canvas = await html2canvas(target,{scale:3,useCORS:true,backgroundColor:'#ffffff',logging:false,allowTaint:true});
         const link = document.createElement('a');
-        link.download = (curSize==='mini'?'การ์ดนามบัตร':'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
+        const orient = curSize==='mini' ? (curMiniOrient==='portrait'?'แนวตั้ง':'แนวนอน') : '';
+        link.download = (curSize==='mini'?'การ์ดนามบัตร'+orient:'การ์ด')+'_โต๊ะ'+tableNum+'_'+curSize.toUpperCase()+'.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
       } catch(e) { alert('บันทึกล้มเหลว: '+e.message); }
