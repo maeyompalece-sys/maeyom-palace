@@ -20,7 +20,11 @@
   .page-hero { padding:24px 16px 16px; text-align:center; background:linear-gradient(180deg,#651713 0%,#4A0E0E 100%); color:#fff; }
   .page-hero h1 { display:none; }
   .page-hero .sub { color:rgba(255,255,255,.7); font-size:13px; margin-top:6px; }
-  .page-hero-logo { height:110px; width:auto; margin-bottom:4px; }
+  .btn-back { position:absolute; top:12px; left:16px; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.25); color:#fff; border-radius:20px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; transition:all .2s; backdrop-filter:blur(4px); }
+  .btn-back:hover { background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.5); }
+  .btn-back svg { width:16px; height:16px; }
+  .page-hero-logo { height:110px; width:auto; margin-bottom:4px; cursor:pointer; transition:opacity .2s; }
+  .page-hero-logo:hover { opacity:.85; }
   #tableDisplay { display:none; margin-top:10px; padding:6px 16px; background:rgba(201,168,97,.15); color:#C9A861; border-radius:20px; font-weight:600; font-size:13px; border:1px solid rgba(201,168,97,.3); }
 
   .container-page { max-width:780px; margin:0 auto; padding:20px 16px; }
@@ -151,8 +155,12 @@
 <body>
 
 <div class="page-hero" style="position:relative;">
+  <a class="btn-back" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span data-i18n="back">ย้อนกลับ</span>
+  </a>
   <div style="position:absolute;top:12px;right:16px;" id="langSwitcherHero"></div>
-  <img src="images/logo-white.png" class="page-hero-logo" alt="Maeyom Palace Hotel">
+  <a href="index.html"><img src="images/logo-white.png" class="page-hero-logo" alt="Maeyom Palace Hotel"></a>
   <h1>โรงแรม แม่ยมพาเลส</h1>
   <div class="sub">Maeyom Palace Hotel</div>
   <div id="tableDisplay"></div>
