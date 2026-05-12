@@ -57,8 +57,30 @@ function bindEvents() {
 
     const printAllBtn = document.getElementById('btnPrintAll');
     if (printAllBtn) printAllBtn.addEventListener('click', () => {
+        const modal = document.getElementById('printTypeModal');
+        if (modal) modal.style.display = 'flex';
+    });
+
+    // Print type popup handlers
+    const printTypeModal  = document.getElementById('printTypeModal');
+    const printTypeQR     = document.getElementById('printTypeQR');
+    const printTypeCard   = document.getElementById('printTypeCard');
+    const printTypeCancel = document.getElementById('printTypeCancel');
+
+    if (printTypeQR) printTypeQR.addEventListener('click', () => {
+        if (printTypeModal) printTypeModal.style.display = 'none';
         renderPrintView();
         setTimeout(() => window.print(), 400);
+    });
+    if (printTypeCard) printTypeCard.addEventListener('click', () => {
+        if (printTypeModal) printTypeModal.style.display = 'none';
+        printAllCards();
+    });
+    if (printTypeCancel) printTypeCancel.addEventListener('click', () => {
+        if (printTypeModal) printTypeModal.style.display = 'none';
+    });
+    if (printTypeModal) printTypeModal.addEventListener('click', (e) => {
+        if (e.target === printTypeModal) printTypeModal.style.display = 'none';
     });
 
     const saveAllBtn = document.getElementById('btnSaveAll');
@@ -147,8 +169,6 @@ function renderTables() {
                 <div class="row-btns">
                     <button class="btn btn-ghost" data-action="view-qr" data-table-id="${t.id}">ดู QR</button>
                     <button class="btn btn-ghost" data-action="edit" data-table-id="${t.id}">แก้ไข</button>
-                    <button class="btn btn-ghost" data-action="save-card" data-table-id="${t.id}" title="บันทึกการ์ด QR เป็นรูป">💾 การ์ด</button>
-                    <button class="btn btn-ghost" data-action="print-card" data-table-id="${t.id}" title="ปริ้นการ์ด QR">🖨️ ปริ้น</button>
                     <button class="btn btn-ghost" data-action="delete" data-table-id="${t.id}" data-table-num="${t.table_number}" style="color:#c33;">ลบ</button>
                 </div>`}
             </div>`;
