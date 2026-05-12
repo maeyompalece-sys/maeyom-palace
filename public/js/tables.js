@@ -91,6 +91,7 @@ function bindEvents() {
             const id = btn.dataset.tableId;
             const num = btn.dataset.tableNum;
             switch (btn.dataset.action) {
+                case 'toggle-select': toggleCardSelect(id); break;
                 case 'view-qr':    openQrModal(id); break;
                 case 'edit':       openEditModal(id); break;
                 case 'save-card':  saveTableCard(id); break;
@@ -130,21 +131,26 @@ function renderTables() {
     }
 
     c.innerHTML = tablesState.tables.map(t => {
-        const off = !t.is_active;
+        const off      = !t.is_active;
+        const isSel    = selectedIds.has(t.id);
+        const selClass = selectMode ? 'selectable' + (isSel ? ' selected' : '') : '';
         return `
-            <div class="table-card ${off ? 'inactive' : ''}">
+            <div class="table-card ${off ? 'inactive' : ''} ${selClass}"
+                 ${selectMode ? `data-action="toggle-select" data-table-id="${t.id}"` : ''}>
                 ${off ? '<span class="badge-off">ปิดใช้งาน</span>' : ''}
+                ${selectMode ? `<div class="select-check">${isSel ? '✓' : ''}</div>` : ''}
                 <div class="num">${t.table_number}</div>
                 ${t.table_name ? `<div class="name">${escapeHtml(t.table_name)}</div>` : '<div class="name">&nbsp;</div>'}
                 <div class="seats">${t.seats || 4} ที่นั่ง</div>
                 <div class="qr-box" id="qrbox-${t.id}"></div>
+                ${selectMode ? '' : `
                 <div class="row-btns">
                     <button class="btn btn-ghost" data-action="view-qr" data-table-id="${t.id}">ดู QR</button>
                     <button class="btn btn-ghost" data-action="edit" data-table-id="${t.id}">แก้ไข</button>
                     <button class="btn btn-ghost" data-action="save-card" data-table-id="${t.id}" title="บันทึกการ์ด QR เป็นรูป">💾 การ์ด</button>
                     <button class="btn btn-ghost" data-action="print-card" data-table-id="${t.id}" title="ปริ้นการ์ด QR">🖨️ ปริ้น</button>
                     <button class="btn btn-ghost" data-action="delete" data-table-id="${t.id}" data-table-num="${t.table_number}" style="color:#c33;">ลบ</button>
-                </div>
+                </div>`}
             </div>`;
     }).join('');
 
@@ -156,6 +162,8 @@ function renderTables() {
 
 let currentPaperSize = 'a4';
 let currentOrient    = 'portrait';
+let selectMode       = false;
+let selectedIds      = new Set();
 
 function setPaperSize(size) {
     currentPaperSize = size;
@@ -466,17 +474,101 @@ function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+async function saveAllCards() {
+    const tables = tablesState.tables.filter(t => t.is_active);
+    if (tables.length === 0) { alert('ไม่มีโต๊ะที่เปิดใช้งาน'); return; }
+    const notif = showNotif('⏳ กำลังสร้างการ์ด 0/' + tables.length + '...');
+    let done = 0;
+    for (const t of tables) {
+        await saveTableCard(t.id, true);
+        done++;
+        notif.textContent = `⏳ กำลังสร้าง ${done}/${tables.length}...`;
+    }
+    notif.textContent = `✅ บันทึกครบ ${done} ใบแล้ว!`;
+    setTimeout(() => notif.remove(), 2500);
+}
+
+function printAllCards() {
+    const tables = tablesState.tables.filter(t => t.is_active);
+    if (tables.length === 0) { alert('ไม่มีโต๊ะที่เปิดใช้งาน'); return; }
+    const nums = tables.map(t => t.table_number).join(',');
+    window.open(`qr-print.html?tables=${encodeURIComponent(nums)}`, '_blank');
+}
+
+// ===== Multi-select mode =====
+function toggleSelectMode() {
+    selectMode = !selectMode;
+    selectedIds.clear();
+    const btn = document.getElementById('btnSelectMode');
+    const bar = document.getElementById('selectBar');
+    if (btn) btn.classList.toggle('active', selectMode);
+    if (bar) bar.classList.toggle('show', selectMode);
+    updateSelCount();
+    renderTables();
+}
+
+function toggleCardSelect(id) {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    updateSelCount();
+    renderTables();
+}
+
+function selectAll() {
+    tablesState.tables.forEach(t => selectedIds.add(t.id));
+    updateSelCount();
+    renderTables();
+}
+
+function updateSelCount() {
+    const el = document.getElementById('selCount');
+    if (el) el.textContent = selectedIds.size + ' โต๊ะที่เลือก';
+}
+
+async function saveSelectedCards() {
+    if (selectedIds.size === 0) { alert('กรุณาเลือกโต๊ะก่อน'); return; }
+    const ids = [...selectedIds];
+    const notif = showNotif('⏳ กำลังสร้างการ์ด ' + ids.length + ' ใบ...');
+    let done = 0;
+    for (const id of ids) {
+        await saveTableCard(id, true);
+        done++;
+        notif.textContent = `⏳ กำลังสร้าง ${done}/${ids.length}...`;
+    }
+    notif.textContent = `✅ บันทึกครบ ${done} ใบแล้ว!`;
+    setTimeout(() => notif.remove(), 2500);
+}
+
+function printSelectedCards() {
+    if (selectedIds.size === 0) { alert('กรุณาเลือกโต๊ะก่อน'); return; }
+    const tables = tablesState.tables.filter(t => selectedIds.has(t.id));
+    const nums   = tables.map(t => t.table_number).join(',');
+    // ส่ง table numbers ผ่าน URL ให้ qr-print.html แสดงทีเดียว
+    window.open(`qr-print.html?tables=${encodeURIComponent(nums)}`, '_blank');
+}
+
+function showNotif(msg) {
+    const el = document.createElement('div');
+    el.textContent = msg;
+    Object.assign(el.style, {
+        position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%)',
+        background:'#651713', color:'#fff', padding:'10px 22px', borderRadius:'20px',
+        fontSize:'14px', fontWeight:'600', zIndex:'9999', boxShadow:'0 4px 16px rgba(0,0,0,.25)',
+        whiteSpace:'nowrap'
+    });
+    document.body.appendChild(el);
+    return el;
+}
+
 // ===== บันทึกการ์ด QR เป็นรูป (ต่อโต๊ะ) =====
-async function saveTableCard(id) {
+async function saveTableCard(id, silent = false) {
     const t = tablesState.tables.find(x => x.id === id);
     if (!t) return;
 
-    const notif = document.createElement('div');
-    notif.textContent = '⏳ กำลังสร้างการ์ด...';
-    Object.assign(notif.style, { position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)',
-        background:'#651713', color:'#fff', padding:'10px 22px', borderRadius:'20px',
-        fontSize:'14px', fontWeight:'600', zIndex:'9999', boxShadow:'0 4px 16px rgba(0,0,0,.25)' });
-    document.body.appendChild(notif);
+    let notif = null;
+    if (!silent) {
+        notif = showNotif('⏳ กำลังสร้างการ์ด...');
+    }
 
     try {
         const url   = buildTableUrl(t.table_number);
@@ -533,11 +625,9 @@ async function saveTableCard(id) {
         a.download = `การ์ด_โต๊ะ${t.table_number}_Maeyom.png`;
         a.click();
 
-        notif.textContent = '✅ บันทึกการ์ดแล้ว!';
-        setTimeout(() => notif.remove(), 2000);
+        if (notif) { notif.textContent = '✅ บันทึกการ์ดแล้ว!'; setTimeout(() => notif.remove(), 2000); }
     } catch(e) {
-        notif.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message;
-        setTimeout(() => notif.remove(), 3000);
+        if (notif) { notif.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message; setTimeout(() => notif.remove(), 3000); }
     }
 }
 
