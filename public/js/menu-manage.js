@@ -437,7 +437,7 @@ function setupImageDropzone(previewId, inputId, onChangeFn) {
     });
 }
 
-// ── ย่อ/ขยายรูปภาพให้พอดีกับขนาดการ์ดเมนู (crop กึ่งกลาง 1:1 square) ──────────────
+// ── ย่อ/ขยายรูปภาพให้พอดีกับขนาดการ์ดเมนู (fit แบบ contain — รูปไม่ถูกตัด) ──────────────
 function resizeImageFile(file, targetW = 600, targetH = 600) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -449,20 +449,18 @@ function resizeImageFile(file, targetW = 600, targetH = 600) {
             canvas.height = targetH;
             const ctx = canvas.getContext('2d');
 
-            // Center-crop: คำนวณ source rect ที่มี aspect ratio เดียวกับ target
-            const srcRatio = img.width / img.height;
-            const dstRatio = targetW / targetH;
-            let sx = 0, sy = 0, sw = img.width, sh = img.height;
-            if (srcRatio > dstRatio) {
-                // ภาพกว้างกว่า → crop ซ้ายขวา
-                sw = Math.round(img.height * dstRatio);
-                sx = Math.round((img.width - sw) / 2);
-            } else {
-                // ภาพสูงกว่า → crop บนล่าง
-                sh = Math.round(img.width / dstRatio);
-                sy = Math.round((img.height - sh) / 2);
-            }
-            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+            // พื้นหลังสีขาวนวล เหมือน card background
+            ctx.fillStyle = '#fafaf6';
+            ctx.fillRect(0, 0, targetW, targetH);
+
+            // Fit แบบ contain — scale ให้พอดีโดยไม่ตัดรูป
+            const scale = Math.min(targetW / img.width, targetH / img.height);
+            const dw = Math.round(img.width  * scale);
+            const dh = Math.round(img.height * scale);
+            const dx = Math.round((targetW - dw) / 2);
+            const dy = Math.round((targetH - dh) / 2);
+
+            ctx.drawImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
 
             canvas.toBlob(blob => {
                 if (!blob) { reject(new Error('canvas toBlob failed')); return; }
