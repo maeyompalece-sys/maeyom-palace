@@ -60,6 +60,38 @@
   .img-preview:hover { border-color:var(--color-gold); background:#fff8f0; }
   .img-preview.dragover { border-color:var(--color-gold); background:#fff8f0; transform:scale(1.01); box-shadow:0 4px 16px rgba(201,168,97,.2); }
   .img-preview .drop-hint { position:absolute; bottom:8px; left:0; right:0; text-align:center; font-size:11px; color:var(--color-muted); pointer-events:none; }
+
+  /* Day Picker */
+  .day-picker { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .day-btn {
+    width:40px; height:40px; border-radius:50%; border:2px solid var(--color-line);
+    background:#fff; color:var(--color-muted); font-family:'Sarabun',sans-serif;
+    font-size:13px; font-weight:700; cursor:pointer; transition:all .15s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .day-btn.selected {
+    background:var(--color-emerald); border-color:var(--color-emerald); color:#fff;
+    box-shadow:0 2px 8px rgba(101,23,19,.25);
+  }
+  .day-btn:hover:not(.selected) { border-color:var(--color-emerald); color:var(--color-emerald); }
+  .quick-day-btns { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .quick-day-btn {
+    padding:4px 12px; border:1px solid var(--color-gold); background:#fff;
+    color:var(--color-gold); border-radius:14px; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:'Sarabun',sans-serif; transition:all .15s;
+  }
+  .quick-day-btn:hover { background:var(--color-gold); color:#fff; }
+  .schedule-summary {
+    margin-top:8px; padding:8px 12px; background:#fafaf6; border-radius:8px;
+    font-size:12px; color:var(--color-muted); border:1px solid var(--color-line);
+  }
+  /* Day chips in card */
+  .day-chips { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:4px; }
+  .day-chip {
+    padding:1px 6px; border-radius:8px; font-size:10px; font-weight:700;
+    background:var(--color-emerald); color:#fff;
+  }
+  .day-chip.off { background:#e5e7eb; color:#9ca3af; }
 </style>
 </head>
 <body>
@@ -190,7 +222,7 @@
 
 <!-- Modal: เมนูพิเศษ -->
 <div id="flashModal" class="modal-bg" style="display:none;">
-  <div class="modal-card lg">
+  <div class="modal-card lg" style="max-height:90vh;overflow-y:auto;">
     <h2 id="flashModalTitle" style="font-family:'Cormorant Garamond',serif;color:#dc2626;margin-top:0;">⭐ เมนูพิเศษใหม่</h2>
 
     <div class="form-row">
@@ -216,29 +248,51 @@
       <input type="number" id="inpFlashPrice" placeholder="เช่น 99" min="1">
     </div>
 
+    <!-- ── วันที่เปิดขาย ── -->
     <div class="form-row">
-      <label>⏰ เวลาเริ่มต้น</label>
-      <input type="datetime-local" id="inpFlashStart">
-    </div>
-
-    <div class="form-row">
-      <label>⏰ เวลาสิ้นสุด</label>
-      <input type="datetime-local" id="inpFlashEnd">
-      <div class="quick-duration">
-        <span style="font-size:12px;color:var(--color-muted);align-self:center;">ตั้งเร็ว:</span>
-        <button data-duration="1">1 ชม.</button>
-        <button data-duration="2">2 ชม.</button>
-        <button data-duration="3">3 ชม.</button>
-        <button data-duration="6">6 ชม.</button>
-        <button data-duration="12">12 ชม.</button>
-        <button data-duration="24">ทั้งวัน</button>
+      <label>📅 วันที่เปิดขาย *</label>
+      <div class="day-picker" id="flashDayPicker">
+        <button type="button" class="day-btn" data-day="1">จ</button>
+        <button type="button" class="day-btn" data-day="2">อ</button>
+        <button type="button" class="day-btn" data-day="3">พ</button>
+        <button type="button" class="day-btn" data-day="4">พฤ</button>
+        <button type="button" class="day-btn" data-day="5">ศ</button>
+        <button type="button" class="day-btn" data-day="6">ส</button>
+        <button type="button" class="day-btn" data-day="0">อา</button>
+      </div>
+      <div class="quick-day-btns">
+        <button type="button" class="quick-day-btn" id="qdWeekday">จ–ศ</button>
+        <button type="button" class="quick-day-btn" id="qdWeekend">ส–อา</button>
+        <button type="button" class="quick-day-btn" id="qdAllWeek">ทุกวัน</button>
+        <button type="button" class="quick-day-btn" id="qdClear">ล้าง</button>
       </div>
     </div>
 
-    <div class="form-row">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-        <input type="checkbox" id="inpFlashActive" checked> เปิดใช้งานเมนูพิเศษนี้
-      </label>
+    <!-- ── ช่วงเวลาขาย ── -->
+    <div class="form-grid-2">
+      <div class="form-row">
+        <label>🕐 เวลาเริ่มขาย *</label>
+        <input type="time" id="inpFlashOpenTime" value="09:00">
+      </div>
+      <div class="form-row">
+        <label>🕑 เวลาปิดขาย *</label>
+        <input type="time" id="inpFlashCloseTime" value="21:00">
+      </div>
+    </div>
+    <div class="schedule-summary" id="scheduleSummary">เลือกวันและเวลาขายด้านบน</div>
+
+    <!-- ── เปิด/ปิดแบบด่วน ── -->
+    <div class="form-row" style="margin-top:12px;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f4f0;border-radius:10px;border:1px solid var(--color-line);">
+        <label class="toggle-switch" style="flex-shrink:0;">
+          <input type="checkbox" id="inpFlashActive" checked>
+          <span class="toggle-slider"></span>
+        </label>
+        <div>
+          <div style="font-weight:600;font-size:14px;color:var(--color-emerald);">เปิดขายตามกำหนดการ</div>
+          <div style="font-size:12px;color:var(--color-muted);">ปิดสวิตช์นี้เพื่อหยุดขายชั่วคราวโดยไม่ลบกำหนดการ</div>
+        </div>
+      </div>
     </div>
 
     <div style="display:flex;gap:8px;margin-top:16px;">
@@ -247,6 +301,22 @@
     </div>
   </div>
 </div>
+
+<style>
+/* Toggle Switch */
+.toggle-switch { position:relative; display:inline-block; width:48px; height:26px; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider {
+  position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
+  background:#ccc; border-radius:26px; transition:.3s;
+}
+.toggle-slider:before {
+  position:absolute; content:""; height:20px; width:20px; left:3px; bottom:3px;
+  background:#fff; border-radius:50%; transition:.3s;
+}
+.toggle-switch input:checked + .toggle-slider { background:var(--color-emerald); }
+.toggle-switch input:checked + .toggle-slider:before { transform:translateX(22px); }
+</style>
 
 
 <script src="js/config.js"></script>
