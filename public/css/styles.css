@@ -670,3 +670,42 @@ h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
     transition: all .15s;
 }
 .order-actions .btn-emerald:hover { background: #4A0E0E; }
+
+/* ============================================================
+   🌐 Language Switcher — Global
+   ============================================================ */
+.lang-switcher {
+    display: flex; align-items: center; gap: 4px;
+    margin-left: 8px;
+}
+.lang-icon { font-size: 15px; opacity: .8; }
+.lang-btn {
+    padding: 3px 9px; border-radius: 12px;
+    border: 1.5px solid rgba(255,255,255,.3);
+    background: transparent; color: rgba(255,255,255,.75);
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    font-family: 'Sarabun', sans-serif;
+    transition: all .15s; line-height: 1.4;
+}
+.lang-btn.active {
+    background: rgba(201,168,97,.25);
+    border-color: #C9A861; color: #C9A861;
+}
+.lang-btn:hover:not(.active) {
+    border-color: rgba(255,255,255,.65); color: #fff;
+}
+/* Floating switcher (index.html / pages without topbar) */
+.lang-switcher-float {
+    position: fixed; top: 14px; right: 16px; z-index: 9999;
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,.35); backdrop-filter: blur(8px);
+    padding: 5px 10px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.15);
+}
+.lang-switcher-float .lang-btn {
+    color: rgba(255,255,255,.8);
+    border-color: rgba(255,255,255,.25);
+}
+.lang-switcher-float .lang-btn.active {
+    background: rgba(201,168,97,.35); border-color: #C9A861; color: #C9A861;
+}
