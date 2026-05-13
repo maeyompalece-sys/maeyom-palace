@@ -224,7 +224,7 @@ function isOpenNow(sch) {
     const nowMins = now.getHours() * 60 + now.getMinutes();
     const openMins  = parseTimeMinsFS(sch.open);
     const closeMins = parseTimeMinsFS(sch.close);
-    return nowMins >= openMins && nowMins <= closeMins;
+    return nowMins >= openMins && nowMins < closeMins;
 }
 
 function getSecondsUntilClose(sch) {
