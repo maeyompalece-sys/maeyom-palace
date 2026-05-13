@@ -149,7 +149,7 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
       <img src="images/logo-white.png" alt="Maeyom Palace Hotel">
     </div>
 
-    <p class="eyebrow">ยินดีต้อนรับ · Welcome</p>
+    <p class="eyebrow" data-i18n="wk_eyebrow">ยินดีต้อนรับ · WELCOME</p>
 
     <div class="divider">
       <div class="divider-line"></div>
@@ -157,20 +157,20 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
       <div class="divider-line"></div>
     </div>
 
-    <p class="desc">สั่งอาหารกับเราได้เลย<br>ไม่ต้องดาวน์โหลดแอป</p>
+    <p class="desc"><span data-i18n="wk_desc_1">สั่งอาหารกับเราได้เลย</span><br><span data-i18n="wk_desc_2">ไม่ต้องดาวน์โหลดแอป</span></p>
 
     <!-- Walk-in badge -->
-    <div class="walkin-badge">🚶 Walk-in · ลูกค้าทั่วไป</div>
+    <div class="walkin-badge" data-i18n="wk_badge">🚶 Walk-in · ลูกค้าทั่วไป</div>
 
     <!-- Actions -->
     <div class="actions">
     <!-- ถ้ามีออเดอร์: ติดตามออเดอร์ขึ้นก่อน -->
       <button id="btnTrack" class="btn-main" style="display:none;background:linear-gradient(135deg,#651713,#4A0E0E);" onclick="openTrackModal()">
-        📋 ติดตามออเดอร์ของฉัน
+        <span data-i18n="wk_btn_track">📋 ติดตามออเดอร์ของฉัน</span>
       </button>
       <!-- ปุ่มสั่งอาหาร -->
       <button id="btnMenu" class="btn-main" style="font-size:16px;" onclick="openOrderTypeModal()">
-        🍽️ ดูเมนูและสั่งอาหาร
+        <span data-i18n="wk_btn_menu">🍽️ ดูเมนูและสั่งอาหาร</span>
       </button>
     </div>
 
@@ -178,15 +178,15 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
     <div class="features">
       <div class="feat">
         <div class="feat-icon">🍴</div>
-        <p>เมนูหลากหลาย</p>
+        <p data-i18n="feat_variety">เมนูหลากหลาย</p>
       </div>
       <div class="feat">
         <div class="feat-icon">⚡</div>
-        <p>สั่งได้รวดเร็ว</p>
+        <p data-i18n="feat_quick">สั่งได้รวดเร็ว</p>
       </div>
       <div class="feat">
         <div class="feat-icon">📋</div>
-        <p>ติดตามสถานะ</p>
+        <p data-i18n="feat_track_status">ติดตามสถานะ</p>
       </div>
     </div>
 
@@ -202,7 +202,7 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
     <div id="step1">
       <div style="text-align:center;margin-bottom:16px;">
         <div style="font-size:48px;margin-bottom:8px;">🍽️</div>
-        <div class="modal-title" style="margin-bottom:4px;">สั่งอาหารแบบไหน?</div>
+        <div class="modal-title" style="margin-bottom:4px;" data-i18n="wk_step1_title">สั่งอาหารแบบไหน?</div>
         <div style="font-size:13px;color:#888;">How would you like to order?</div>
       </div>
 
@@ -213,8 +213,8 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
       " onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff0f0'">
         <span style="font-size:36px;">🪑</span>
         <div style="flex:1;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#651713;">กินที่นี่</div>
-          <div style="font-size:12px;color:#888;">Dine In · รับประทานที่โต๊ะ</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#651713;" data-i18n="wk_dine_label">กินที่นี่</div>
+          <div style="font-size:12px;color:#888;" data-i18n="wk_dine_sub">Dine In · รับประทานที่โต๊ะ</div>
         </div>
         <span style="color:#651713;font-size:20px;">→</span>
       </div>
@@ -226,13 +226,13 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
       " onmouseover="this.style.background='#fef9e7'" onmouseout="this.style.background='#fffbee'">
         <span style="font-size:36px;">🥡</span>
         <div style="flex:1;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#a07840;">กลับบ้าน</div>
-          <div style="font-size:12px;color:#888;">Takeaway · รับกลับ</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#a07840;" data-i18n="wk_take_label">กลับบ้าน</div>
+          <div style="font-size:12px;color:#888;" data-i18n="wk_take_sub">Takeaway · รับกลับ</div>
         </div>
         <span style="color:#C9A861;font-size:20px;">→</span>
       </div>
 
-      <button class="close-btn" onclick="closeOrderTypeModal()">ยกเลิก</button>
+      <button class="close-btn" onclick="closeOrderTypeModal()" data-i18n="wk_cancel">ยกเลิก</button>
     </div>
 
     <!-- Step 2: ระบุโต๊ะ / จุดที่อยู่ -->
@@ -245,7 +245,7 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
 
       <!-- Input โต๊ะเลข -->
       <div style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:700;color:#651713;margin-bottom:6px;">🔢 หมายเลขโต๊ะ (ถ้ามี)</div>
+        <div style="font-size:12px;font-weight:700;color:#651713;margin-bottom:6px;" data-i18n="wk_table_label">🔢 หมายเลขโต๊ะ (ถ้ามี)</div>
         <input type="number" id="inputTableNum" min="1" max="999" placeholder="เช่น 5, 12, 18..."
           style="width:100%;padding:12px 16px;border:2px solid #e0dbd0;border-radius:12px;
                  font-size:18px;font-family:'Sarabun',sans-serif;box-sizing:border-box;
@@ -256,13 +256,13 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
       <!-- หรือ -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <div style="flex:1;height:1px;background:#e0dbd0;"></div>
-        <span style="font-size:12px;color:#aaa;font-weight:600;">หรือ</span>
+        <span style="font-size:12px;color:#aaa;font-weight:600;" data-i18n="wk_or">หรือ</span>
         <div style="flex:1;height:1px;background:#e0dbd0;"></div>
       </div>
 
       <!-- Input จุดที่อยู่ / landmark -->
       <div style="margin-bottom:16px;">
-        <div style="font-size:12px;font-weight:700;color:#651713;margin-bottom:6px;">📍 จุดที่อยู่ / แลนด์มาร์ค</div>
+        <div style="font-size:12px;font-weight:700;color:#651713;margin-bottom:6px;" data-i18n="wk_location_label">📍 จุดที่อยู่ / แลนด์มาร์ค</div>
         <input type="text" id="inputLocation" placeholder="เช่น โซน A, ริมสระ, โต๊ะกลางสวน..."
           style="width:100%;padding:12px 16px;border:2px solid #e0dbd0;border-radius:12px;
                  font-size:15px;font-family:'Sarabun',sans-serif;box-sizing:border-box;"
@@ -280,20 +280,20 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
 
       <!-- Note เพิ่มเติม -->
       <div style="margin-bottom:16px;">
-        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px;">💬 หมายเหตุเพิ่มเติม (ไม่บังคับ)</div>
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px;" data-i18n="wk_note_label">💬 หมายเหตุเพิ่มเติม (ไม่บังคับ)</div>
         <input type="text" id="inputNote" placeholder="เช่น เด็ก 2 คน, แพ้ถั่ว..."
           style="width:100%;padding:10px 14px;border:1.5px solid #e0dbd0;border-radius:10px;
                  font-size:13px;font-family:'Sarabun',sans-serif;box-sizing:border-box;">
       </div>
 
       <div style="display:flex;gap:8px;">
-        <button onclick="backStep1()" class="close-btn" style="flex:1;background:#f8f7f2;">← ย้อนกลับ</button>
+        <button onclick="backStep1()" class="close-btn" style="flex:1;background:#f8f7f2;" data-i18n="wk_back">← ย้อนกลับ</button>
         <button onclick="confirmLocation()" style="
           flex:2;padding:14px;border-radius:14px;border:none;
           background:linear-gradient(135deg,#651713,#4A0E0E);
           color:#C9A861;font-size:16px;font-weight:700;
           font-family:'Sarabun',sans-serif;cursor:pointer;">
-          ✅ ยืนยันและดูเมนู
+          <span data-i18n="wk_confirm">✅ ยืนยันและดูเมนู</span>
         </button>
       </div>
     </div>
@@ -305,9 +305,9 @@ body { font-family: 'Sarabun', sans-serif; background: #651713; min-height: 100v
 <div class="modal-bg" id="trackModal" onclick="closeIfBg(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">📋 ออเดอร์ของฉัน</div>
-    <div id="trackList"><div class="empty-state">📭 ยังไม่มีออเดอร์</div></div>
-    <button class="close-btn" onclick="closeTrackModal()">ปิด</button>
+    <div class="modal-title" data-i18n="wk_track_title">📋 ออเดอร์ของฉัน</div>
+    <div id="trackList"><div class="empty-state" data-i18n="wk_no_orders">📭 ยังไม่มีออเดอร์</div></div>
+    <button class="close-btn" onclick="closeTrackModal()" data-i18n="wk_close">ปิด</button>
   </div>
 </div>
 
@@ -335,12 +335,12 @@ function goStep2(type) {
   document.getElementById('step2').style.display = '';
   if (type === 'dine_in') {
     document.getElementById('step2Icon').textContent = '🪑';
-    document.getElementById('step2Title').textContent = 'คุณนั่งที่ไหน?';
-    document.getElementById('step2Sub').textContent = 'ระบุโต๊ะ หรือ จุดที่อยู่ของคุณ';
+    document.getElementById('step2Title').textContent = I18N.t('wk_step2_dine_title');
+    document.getElementById('step2Sub').textContent = I18N.t('wk_step2_dine_sub');
   } else {
     document.getElementById('step2Icon').textContent = '🥡';
-    document.getElementById('step2Title').textContent = 'รับอาหารที่ไหน?';
-    document.getElementById('step2Sub').textContent = 'ระบุจุดรับของ หรือ แลนด์มาร์ค';
+    document.getElementById('step2Title').textContent = I18N.t('wk_step2_take_title');
+    document.getElementById('step2Sub').textContent = I18N.t('wk_step2_take_sub');
   }
   setTimeout(() => document.getElementById('inputTableNum').focus(), 200);
 }
@@ -391,11 +391,14 @@ function closeIfBgType(e) {
 }
 
 // === Check past orders from localStorage ===
-const STATUS_LABEL = {
-  pending:'⏳ รอ', accepted:'✅ รับแล้ว', cooking:'👨‍🍳 กำลังทำ',
-  ready:'🍽️ พร้อมเสิร์ฟ', delivering:'🚶 กำลังส่ง',
-  completed:'✨ เสร็จสิ้น', cancelled:'❌ ยกเลิก'
-};
+function getStatusLabel() {
+  return {
+    pending: I18N.t('wk_st_pending'), accepted: I18N.t('wk_st_accepted'),
+    cooking: I18N.t('wk_st_cooking'), ready: I18N.t('wk_st_ready'),
+    delivering: I18N.t('wk_st_delivering'), completed: I18N.t('wk_st_completed'),
+    cancelled: I18N.t('wk_st_cancelled')
+  };
+}
 const STATUS_COLOR = {
   pending:'#f59e0b', accepted:'#10b981', cooking:'#f59e0b', ready:'#C9A861',
   delivering:'#6366f1', completed:'#10b981', cancelled:'#ef4444'
@@ -443,22 +446,22 @@ async function openTrackModal() {
   const saved = getSavedOrders();
   const list  = document.getElementById('trackList');
   if (!saved.length) {
-    list.innerHTML = '<div class="empty-state">📭 ยังไม่มีออเดอร์</div>';
+    list.innerHTML = '<div class="empty-state">' + I18N.t('wk_no_orders') + '</div>';
     return;
   }
-  list.innerHTML = '<div class="empty-state">⏳ กำลังโหลด...</div>';
+  list.innerHTML = '<div class="empty-state">' + I18N.t('wk_loading') + '</div>';
   try {
     const results = await Promise.allSettled(
       saved.map(id => API.call('getOrderStatus', { id }))
     );
     const orders = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
     if (!orders.length) {
-      list.innerHTML = '<div class="empty-state">📭 ไม่พบออเดอร์</div>';
+      list.innerHTML = '<div class="empty-state">' + I18N.t('wk_not_found') + '</div>';
       return;
     }
     list.innerHTML = orders.reverse().map(o => {
       const col = STATUS_COLOR[o.status] || '#999';
-      const lbl = STATUS_LABEL[o.status] || o.status;
+      const lbl = getStatusLabel()[o.status] || o.status;
       const items = (o.items || []).map(i => `${i.quantity}× ${i.name}`).join(', ');
       const isActive = o.status !== 'completed' && o.status !== 'cancelled';
       return `<div class="order-item" style="cursor:${isActive?'pointer':'default'};"
@@ -466,14 +469,14 @@ async function openTrackModal() {
         <div class="oi-head">
           <span class="oi-num">#${o.order_number || ''}</span>
           <span class="oi-status" style="background:${col}22;color:${col};">${lbl}</span>
-          ${isActive ? '<span style="font-size:10px;color:#651713;font-weight:700;">→ ดูสถานะ</span>' : ''}
+          ${isActive ? '<span style="font-size:10px;color:#651713;font-weight:700;">' + I18N.t('wk_see_status') + '</span>' : ''}
         </div>
         <div class="oi-items">${items || '-'}</div>
         <div class="oi-total">฿${parseFloat(o.total_amount || 0).toLocaleString('th-TH')}</div>
       </div>`;
     }).join('');
   } catch (e) {
-    list.innerHTML = '<div class="empty-state">❌ โหลดไม่ได้ ลองใหม่อีกครั้ง</div>';
+    list.innerHTML = '<div class="empty-state">' + I18N.t('wk_error') + '</div>';
   }
 }
 

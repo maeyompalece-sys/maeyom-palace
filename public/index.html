@@ -21,7 +21,7 @@
             </div>
             
             <div class="hero-text">
-                <p class="hero-eyebrow">ยินดีต้อนรับสู่ | Welcome to</p>
+                <p class="hero-eyebrow" data-i18n="idx_eyebrow">ยินดีต้อนรับสู่ | WELCOME TO</p>
                 <h1 class="hero-title" style="display:none;">โรงแรม แม่ยมพาเลส</h1>
                 <p class="hero-subtitle" style="display:none;">Maeyom Palace Hotel</p>
                 
@@ -29,49 +29,42 @@
                     <span class="divider-luxury-icon">❀</span>
                 </div>
                 
-                <p class="hero-description">
-                    ระบบสั่งอาหารโรงครัว/โรงอาหาร<br>
-                    สแกน QR Code ที่โต๊ะของคุณเพื่อเริ่มต้น
-                </p>
+                <p class="hero-description"><span data-i18n="idx_desc_1">ระบบสั่งอาหารโรงครัว/โรงอาหาร</span><br><span data-i18n="idx_desc_2">สแกน QR Code ที่โต๊ะของคุณเพื่อเริ่มต้น</span></p>
             </div>
             
             <!-- ถ้าเคยสั่งแล้ว: ติดตามออเดอร์เด่น + เมนูอาหาร -->
             <div id="heroHasOrders" style="display:none;width:100%;max-width:400px;margin:0 auto;">
                 <button id="btnTrackOrder" style="width:100%;padding:18px 24px;margin-bottom:12px;border-radius:20px;border:none;background:linear-gradient(135deg,#C9A861,#a07840);color:#fff;font-family:'Sarabun',sans-serif;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(201,168,97,.4);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;">
-                    📋 ติดตามออเดอร์ของฉัน
+                    <span data-i18n="idx_btn_track">📋 ติดตามออเดอร์ของฉัน</span>
                 </button>
                 <div style="display:flex;gap:10px;">
                     <a href="#" id="btn-customer" style="flex:1;padding:14px;border-radius:16px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-                        🍽️ สั่งอาหาร
+                        🍽️ <span data-i18n="idx_btn_order">สั่งอาหาร</span>
                     </a>
                     <a href="admin.html" style="flex:1;padding:14px;border-radius:16px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-                        👨‍💼 แอดมิน
+                        👨‍💼 <span data-i18n="idx_btn_admin">แอดมิน</span>
                     </a>
                 </div>
             </div>
 
             <!-- ถ้ายังไม่เคยสั่ง: เมนูอาหาร + แอดมิน -->
             <div id="heroNoOrders" class="hero-actions">
-                <a href="#" id="btn-customer-new" class="btn btn-primary btn-xl">
-                    <span>🍽️</span> เมนูอาหาร
-                </a>
-                <a href="admin.html" class="btn btn-emerald btn-xl">
-                    <span>👨‍💼</span> หน้าแอดมิน
-                </a>
+                <a href="#" id="btn-customer-new" class="btn btn-primary btn-xl"><span>🍽️</span> <span data-i18n="idx_btn_menu">เมนูอาหาร</span></a>
+                <a href="admin.html" class="btn btn-emerald btn-xl"><span>👨‍💼</span> <span data-i18n="idx_btn_admin_page">หน้าแอดมิน</span></a>
             </div>
             
             <div class="hero-features">
                 <div class="feature-item">
                     <div class="feature-icon">📱</div>
-                    <p>สแกน QR Code</p>
+                    <p data-i18n="feat_qr">สแกน QR Code</p>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">🍴</div>
-                    <p>เลือกเมนูง่าย</p>
+                    <p data-i18n="feat_easy">เลือกเมนูง่าย</p>
                 </div>
                 <div class="feature-item">
                     <div class="feature-icon">⚡</div>
-                    <p>เสิร์ฟรวดเร็ว</p>
+                    <p data-i18n="feat_fast">เสิร์ฟรวดเร็ว</p>
                 </div>
             </div>
         </div>
@@ -238,10 +231,10 @@
     <div id="trackModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
       <div style="background:#fff;border-radius:24px;padding:24px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:'Sarabun',sans-serif;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-          <h2 style="font-family:'Cormorant Garamond',serif;color:#651713;font-size:22px;margin:0;">📋 ออเดอร์ของฉัน</h2>
+          <h2 style="font-family:'Cormorant Garamond',serif;color:#651713;font-size:22px;margin:0;" data-i18n="idx_track_title">📋 ออเดอร์ของฉัน</h2>
           <button onclick="document.getElementById('trackModal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
         </div>
-        <div id="trackList"><div style="text-align:center;padding:20px;color:#999;">กำลังโหลด...</div></div>
+        <div id="trackList"><div style="text-align:center;padding:20px;color:#999;" id="trackInitLoading">กำลังโหลด...</div></div>
       </div>
     </div>
 
@@ -249,17 +242,17 @@
     async function showTrackModal() {
         document.getElementById('trackModal').style.display = 'flex';
         const list = document.getElementById('trackList');
-        list.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">⏳ กำลังโหลด...</div>';
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">'+I18N.t('idx_loading')+'</div>';
 
         let orders = [];
         try { orders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]'); } catch(e) {}
 
         if (!orders.length) {
-            list.innerHTML = '<div style="text-align:center;padding:30px;color:#999;">📭 ยังไม่มีออเดอร์</div>';
+            list.innerHTML = '<div style="text-align:center;padding:30px;color:#999;">'+I18N.t('idx_no_orders')+'</div>';
             return;
         }
 
-        const statusLabel = { pending:'⏳ รอ', accepted:'✅ รับแล้ว', cooking:'👨‍🍳 กำลังทำ', ready:'🍽️ พร้อมเสิร์ฟ', delivering:'🚶 กำลังส่ง', completed:'✨ เสร็จสิ้น', cancelled:'❌ ยกเลิก' };
+        const statusLabel = () => ({ pending:I18N.t('st_pending'), accepted:I18N.t('st_accepted'), cooking:I18N.t('st_cooking'), ready:I18N.t('st_ready'), delivering:I18N.t('st_delivering'), completed:I18N.t('st_completed'), cancelled:I18N.t('st_cancelled') });
         const statusColor = { pending:'#f59e0b', accepted:'#10b981', cooking:'#f59e0b', ready:'#C9A861', delivering:'#6366f1', completed:'#10b981', cancelled:'#ef4444' };
 
         // โหลดสถานะจาก API
@@ -294,9 +287,9 @@
         const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
 
         function dateThai(dateKey) {
-            if (dateKey === today) return '📅 วันนี้';
-            if (dateKey === yesterday) return '📅 เมื่อวาน';
-            if (dateKey === 'unknown') return '📅 ไม่ทราบวันที่';
+            if (dateKey === today) return I18N.t('idx_today');
+            if (dateKey === yesterday) return I18N.t('idx_yesterday');
+            if (dateKey === 'unknown') return I18N.t('idx_unknown_date');
             try {
                 const d = new Date(dateKey);
                 return '📅 ' + d.toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' });
@@ -307,7 +300,7 @@
             const dayOrders = grouped[dateKey];
             const cardsHtml = dayOrders.map(saved => {
                 const o = orderData[saved.id];
-                const st = o ? (statusLabel[o.status] || o.status) : '⚠️ โหลดไม่ได้';
+                const sl = statusLabel(); const st = o ? (sl[o.status] || o.status) : '⚠️ โหลดไม่ได้';
                 const sc = o ? (statusColor[o.status] || '#999') : '#ef4444';
                 const tableInfo = o && o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o && o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
                 const num = o ? o.order_number : (saved.order_number || '?');
@@ -330,7 +323,7 @@
                     ${items ? `<div style="font-size:12px;color:#999;margin-bottom:3px;">${items}</div>` : ''}
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         ${total ? `<span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#C9A861;">${total}</span>` : '<span></span>'}
-                        ${o ? `<span style="font-size:11px;color:#C9A861;font-weight:600;">ดูสถานะ →</span>` : ''}
+                        ${o ? `<span style="font-size:11px;color:#C9A861;font-weight:600;">${I18N.t('idx_see_status')}</span>` : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -354,7 +347,7 @@
       <div style="background:#fff;border-radius:24px;padding:28px 24px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:'Sarabun',sans-serif;">
         <div style="text-align:center;margin-bottom:24px;">
           <div style="font-size:40px;margin-bottom:8px;">🍽️</div>
-          <h2 style="font-family:'Cormorant Garamond',serif;color:#651713;font-size:24px;margin:0 0 6px;">สั่งอาหารแบบไหน?</h2>
+          <h2 style="font-family:'Cormorant Garamond',serif;color:#651713;font-size:24px;margin:0 0 6px;" data-i18n="idx_modal_order_title">สั่งอาหารแบบไหน?</h2>
           <p style="color:#888;font-size:13px;margin:0;">How would you like to order?</p>
         </div>
 
@@ -362,8 +355,8 @@
         <button onclick="selectDineIn()" style="width:100%;padding:16px;margin-bottom:12px;border-radius:16px;border:2px solid #651713;background:#fff;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:all .15s;" onmouseover="this.style.background='#651713';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='inherit'">
           <span style="font-size:32px;">🪑</span>
           <div>
-            <div style="font-weight:700;font-size:16px;color:inherit;">กินที่นี่</div>
-            <div style="font-size:12px;color:#888;">Dine In · รับประทานที่โต๊ะ</div>
+            <div style="font-weight:700;font-size:16px;color:inherit;" data-i18n="idx_modal_dine_label">กินที่นี่</div>
+            <div style="font-size:12px;color:#888;" data-i18n="idx_modal_dine_sub">Dine In · รับประทานที่โต๊ะ</div>
           </div>
           <span style="margin-left:auto;font-size:20px;">→</span>
         </button>
@@ -372,13 +365,13 @@
         <button onclick="selectTakeaway()" style="width:100%;padding:16px;margin-bottom:20px;border-radius:16px;border:2px solid #C9A861;background:#fff;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:all .15s;" onmouseover="this.style.background='#C9A861'" onmouseout="this.style.background='#fff'">
           <span style="font-size:32px;">🥡</span>
           <div>
-            <div style="font-weight:700;font-size:16px;">กลับบ้าน</div>
-            <div style="font-size:12px;color:#888;">Takeaway · รับกลับ</div>
+            <div style="font-weight:700;font-size:16px;" data-i18n="idx_modal_take_label">กลับบ้าน</div>
+            <div style="font-size:12px;color:#888;" data-i18n="idx_modal_take_sub">Takeaway · รับกลับ</div>
           </div>
           <span style="margin-left:auto;font-size:20px;">→</span>
         </button>
 
-        <button onclick="closeOrderModal()" style="width:100%;padding:10px;border-radius:12px;border:1px solid #eee;background:#fafafa;color:#999;cursor:pointer;font-size:14px;">ยกเลิก</button>
+        <button onclick="closeOrderModal()" style="width:100%;padding:10px;border-radius:12px;border:1px solid #eee;background:#fafafa;color:#999;cursor:pointer;font-size:14px;" data-i18n="idx_modal_cancel">ยกเลิก</button>
       </div>
     </div>
 
@@ -387,12 +380,12 @@
       <div style="background:#fff;border-radius:24px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:'Sarabun',sans-serif;">
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:40px;margin-bottom:8px;">🪑</div>
-          <h2 style="font-family:'Cormorant Garamond',serif;color:#651713;font-size:24px;margin:0 0 6px;">กรอกเลขโต๊ะ</h2>
-          <p style="color:#888;font-size:13px;margin:0;">Enter your table number</p>
+          <h2 style="font-family:'Cormorant Garamond',serif;color:#651713;font-size:24px;margin:0 0 6px;" data-i18n="idx_table_title">กรอกเลขโต๊ะ</h2>
+          <p style="color:#888;font-size:13px;margin:0;" data-i18n="idx_table_sub">Enter your table number</p>
         </div>
         <input id="tableInput" type="number" placeholder="เช่น 1, 2, 3..." min="1" style="width:100%;padding:14px 16px;border-radius:12px;border:2px solid #e5e0d5;font-size:24px;text-align:center;font-family:'Cormorant Garamond',serif;font-weight:700;color:#651713;box-sizing:border-box;margin-bottom:14px;outline:none;" onfocus="this.style.borderColor='#651713'" onblur="this.style.borderColor='#e5e0d5'">
-        <button onclick="confirmTable()" style="width:100%;padding:14px;border-radius:14px;border:none;background:#651713;color:#C9A861;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:10px;">✓ ยืนยันโต๊ะ</button>
-        <button onclick="backToOrderType()" style="width:100%;padding:10px;border-radius:12px;border:1px solid #eee;background:#fafafa;color:#999;cursor:pointer;font-size:14px;">← กลับ</button>
+        <button onclick="confirmTable()" style="width:100%;padding:14px;border-radius:14px;border:none;background:#651713;color:#C9A861;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:10px;" data-i18n="idx_table_confirm">✓ ยืนยันโต๊ะ</button>
+        <button onclick="backToOrderType()" style="width:100%;padding:10px;border-radius:12px;border:1px solid #eee;background:#fafafa;color:#999;cursor:pointer;font-size:14px;" data-i18n="idx_table_back">← กลับ</button>
       </div>
     </div>
 
