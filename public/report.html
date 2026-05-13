@@ -116,6 +116,8 @@
   .edit-field input{width:100%;padding:9px 12px;border:1.5px solid var(--color-line);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;}
   .edit-field input:focus{outline:none;border-color:var(--color-gold);}
   .btn-save{padding:10px 24px;background:var(--color-emerald);color:#C9A861;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;width:100%;}
+  #summaryTable tfoot td{font-weight:700;background:#f8f7f2;border-top:2px solid var(--color-line);}
+  #summaryTable tbody tr:hover td{background:#fff8ee;}
   @media(max-width:600px){
     .filter-bar{flex-direction:column;align-items:flex-start;}
     th:nth-child(n+5),td:nth-child(n+5){display:none;}
@@ -191,6 +193,29 @@
     <div class="chart-wrap">
       <h3 class="chart-title">ยอดขายรายวัน</h3>
       <div class="bar-chart" id="revenueChart"><div class="loading-row" style="width:100%;">กำลังโหลด...</div></div>
+    </div>
+
+    <!-- ตารางสรุปยอดขาย -->
+    <div class="report-table-wrap">
+      <div class="report-table-head">
+        <h3>📊 ตารางสรุปยอดขาย</h3>
+        <button class="btn-export" id="btnExportSummary">📥 Export Excel</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="summaryTable">
+          <thead><tr>
+            <th>วันที่</th>
+            <th style="text-align:center;">ออเดอร์ทั้งหมด</th>
+            <th style="text-align:center;">✅ สำเร็จ</th>
+            <th style="text-align:center;">❌ ยกเลิก</th>
+            <th style="text-align:center;">🍽️ กินที่นี่</th>
+            <th style="text-align:center;">🥡 กลับบ้าน</th>
+            <th style="text-align:right;">ยอดขาย (บาท)</th>
+          </tr></thead>
+          <tbody id="summaryTableBody"><tr><td colspan="7" class="loading-row">กำลังโหลด...</td></tr></tbody>
+          <tfoot id="summaryTableFoot"></tfoot>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -349,6 +374,7 @@ function bindEvents(){
   document.getElementById('btnExportOrders').addEventListener('click',()=>exportExcel('orders'));
   document.getElementById('btnExportCustomers').addEventListener('click',()=>exportExcel('customers'));
   document.getElementById('btnExportMenu').addEventListener('click',()=>exportExcel('menu'));
+  document.getElementById('btnExportSummary').addEventListener('click',()=>exportExcel('summary'));
   // Clickable cards
   document.querySelectorAll('.sum-card').forEach(c=>c.addEventListener('click',()=>{
     currentOrderFilter=c.dataset.filter;currentPage=1;
@@ -399,6 +425,7 @@ function renderSummary(){
   document.getElementById('sumDineIn').textContent=reportOrders.filter(o=>o.order_type==='dine_in').length;
   document.getElementById('sumTakeaway').textContent=reportOrders.filter(o=>o.order_type==='takeaway').length;
   renderBarChart();
+  renderSummaryTable();
 }
 function renderBarChart(){
   const byDay={};
@@ -418,6 +445,57 @@ function jumpToDate(d){
   currentOrderFilter='all';currentPage=1;
   document.getElementById('orderSearch').value=d;
   switchTab('orders');renderOrdersTable();
+}
+
+/* ===== Summary Table ===== */
+function renderSummaryTable(){
+  // Group orders by date
+  const byDay={};
+  reportOrders.forEach(o=>{
+    const d=String(o.created_at).slice(0,10);
+    if(!byDay[d])byDay[d]={date:d,total:0,completed:0,cancelled:0,dineIn:0,takeaway:0,revenue:0};
+    byDay[d].total++;
+    if(o.status==='completed'){byDay[d].completed++;byDay[d].revenue+=parseFloat(o.total_amount||0);}
+    if(o.status==='cancelled')byDay[d].cancelled++;
+    if(o.order_type==='dine_in')byDay[d].dineIn++;
+    if(o.order_type==='takeaway')byDay[d].takeaway++;
+  });
+  const rows=Object.values(byDay).sort((a,b)=>b.date.localeCompare(a.date));
+  const tbody=document.getElementById('summaryTableBody');
+  const tfoot=document.getElementById('summaryTableFoot');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="7" class="loading-row">ไม่มีข้อมูลในช่วงนี้</td></tr>';
+    tfoot.innerHTML='';return;
+  }
+  // Totals
+  const totals=rows.reduce((acc,r)=>{
+    acc.total+=r.total;acc.completed+=r.completed;acc.cancelled+=r.cancelled;
+    acc.dineIn+=r.dineIn;acc.takeaway+=r.takeaway;acc.revenue+=r.revenue;return acc;
+  },{total:0,completed:0,cancelled:0,dineIn:0,takeaway:0,revenue:0});
+  tbody.innerHTML=rows.map(r=>{
+    const dt=new Date(r.date);
+    const ds=isNaN(dt)?r.date:dt.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'2-digit'});
+    const compPct=r.total?Math.round(r.completed/r.total*100):0;
+    return `<tr style="cursor:pointer;" onclick="jumpToDate('${r.date}')">
+      <td><strong>${ds}</strong></td>
+      <td style="text-align:center;">${r.total}</td>
+      <td style="text-align:center;color:#10b981;font-weight:600;">${r.completed} <span style="font-size:10px;color:var(--color-muted);">(${compPct}%)</span></td>
+      <td style="text-align:center;color:#ef4444;">${r.cancelled}</td>
+      <td style="text-align:center;">${r.dineIn}</td>
+      <td style="text-align:center;">${r.takeaway}</td>
+      <td class="txt-gold" style="text-align:right;font-size:15px;">฿${r.revenue.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+    </tr>`;
+  }).join('');
+  const compAllPct=totals.total?Math.round(totals.completed/totals.total*100):0;
+  tfoot.innerHTML=`<tr>
+    <td>รวมทั้งหมด (${rows.length} วัน)</td>
+    <td style="text-align:center;">${totals.total}</td>
+    <td style="text-align:center;color:#10b981;">${totals.completed} <span style="font-size:10px;">(${compAllPct}%)</span></td>
+    <td style="text-align:center;color:#ef4444;">${totals.cancelled}</td>
+    <td style="text-align:center;">${totals.dineIn}</td>
+    <td style="text-align:center;">${totals.takeaway}</td>
+    <td class="txt-gold" style="text-align:right;font-size:16px;">฿${totals.revenue.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+  </tr>`;
 }
 
 /* ===== Orders ===== */
@@ -668,7 +746,7 @@ function renderTopMenu(){
 function exportExcel(type){
   const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
   let csv='',filename='';
-  if(type==='orders'||type==='summary'){
+  if(type==='orders'){
     filename=`orders_${from}_${to}.csv`;
     const rows=[['เลขออเดอร์','วันที่','เวลา','ชื่อลูกค้า','เบอร์โทร','โต๊ะ','ประเภท','รายการ','ยอดรวม','สถานะ']];
     filteredOrdersCache.forEach(o=>{
@@ -679,6 +757,25 @@ function exportExcel(type){
         (o.items||[]).map(i=>`${i.quantity}x${i.name}`).join(' | '),
         parseFloat(o.total_amount||0),o.status||'']);
     });
+    csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  }
+  if(type==='summary'){
+    filename=`summary_${from}_${to}.csv`;
+    const byDay={};
+    reportOrders.forEach(o=>{
+      const d=String(o.created_at).slice(0,10);
+      if(!byDay[d])byDay[d]={date:d,total:0,completed:0,cancelled:0,dineIn:0,takeaway:0,revenue:0};
+      byDay[d].total++;
+      if(o.status==='completed'){byDay[d].completed++;byDay[d].revenue+=parseFloat(o.total_amount||0);}
+      if(o.status==='cancelled')byDay[d].cancelled++;
+      if(o.order_type==='dine_in')byDay[d].dineIn++;
+      if(o.order_type==='takeaway')byDay[d].takeaway++;
+    });
+    const summaryRows=Object.values(byDay).sort((a,b)=>b.date.localeCompare(a.date));
+    const rows=[['วันที่','ออเดอร์ทั้งหมด','สำเร็จ','ยกเลิก','กินที่นี่','กลับบ้าน','ยอดขาย(บาท)']];
+    summaryRows.forEach(r=>rows.push([r.date,r.total,r.completed,r.cancelled,r.dineIn,r.takeaway,r.revenue.toFixed(2)]));
+    const tot=summaryRows.reduce((a,r)=>({total:a.total+r.total,completed:a.completed+r.completed,cancelled:a.cancelled+r.cancelled,dineIn:a.dineIn+r.dineIn,takeaway:a.takeaway+r.takeaway,revenue:a.revenue+r.revenue}),{total:0,completed:0,cancelled:0,dineIn:0,takeaway:0,revenue:0});
+    rows.push(['รวมทั้งหมด',tot.total,tot.completed,tot.cancelled,tot.dineIn,tot.takeaway,tot.revenue.toFixed(2)]);
     csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   }
   if(type==='customers'){
