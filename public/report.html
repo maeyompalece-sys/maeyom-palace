@@ -10,6 +10,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <style>
+  /* ── เลขแบบมาตรฐาน (lining figures) สำหรับ Cormorant Garamond ──
+     ปกติ Cormorant Garamond ใช้ old-style figures ทำให้ "1" ดูเหมือน "I" และ "0" เหมือน "o"
+     เพิ่ม font-variant-numeric: lining-nums tabular-nums เพื่อบังคับให้แสดงเลขแบบเสมอกัน */
+  body, .sum-card .val, .txt-gold, .customer-avatar, .customer-stat .n,
+  .top-menu-rank, .top-menu-qty, .modal-total .val,
+  [style*="Cormorant Garamond"] {
+    font-variant-numeric: lining-nums tabular-nums;
+    -moz-font-feature-settings: "lnum" 1, "tnum" 1;
+    -webkit-font-feature-settings: "lnum" 1, "tnum" 1;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+  }
+
   .page-wrap{max-width:1400px;margin:0 auto;padding:24px 16px 80px;}
   .report-tabs{display:flex;gap:0;border-bottom:2px solid var(--color-line);margin-bottom:24px;overflow-x:auto;}
   .report-tab{padding:11px 22px;border:none;background:none;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--color-muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .15s;}
