@@ -200,7 +200,7 @@ function getFlashStatus(f, sch) {
         return { label: 'เปิดวัน' + DAY_FULL[nextDay], color: '#6b7280' };
     }
     if (nowMins < openMins)  return { label: '⏰ เปิด ' + sch.open + ' น.', color: '#f59e0b' };
-    if (nowMins > closeMins) return { label: '✅ หมดเวลาวันนี้', color: '#9ca3af' };
+    if (nowMins >= closeMins) return { label: '✅ หมดเวลาวันนี้', color: '#9ca3af' };
     return { label: '🔥 กำลังเปิดขาย!', color: '#dc2626' };
 }
 
