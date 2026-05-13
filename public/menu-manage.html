@@ -116,12 +116,25 @@
   <div class="page-head">
     <h1>🍽️ จัดการเมนู</h1>
     <div class="actions" id="menuActions">
+      <button class="btn btn-ghost" id="btnKitchen" style="border-color:#dc2626;color:#dc2626;font-weight:700;">🔴 ปิดครัว</button>
       <button class="btn btn-ghost" id="btnAddCat">+ หมวดหมู่</button>
       <button class="btn btn-primary" id="btnAddMenu">+ เพิ่มเมนู</button>
     </div>
     <div class="actions" id="flashActions" style="display:none;">
       <button class="btn btn-primary" id="btnAddFlash" style="background:#dc2626;">⭐ + เมนูพิเศษใหม่</button>
     </div>
+  </div>
+
+  <!-- ── Kitchen Status Banner ── -->
+  <div id="kitchenBanner" style="display:none;margin-bottom:16px;padding:14px 18px;border-radius:12px;background:#fee2e2;border:1.5px solid #fca5a5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <span style="font-size:22px;">🔴</span>
+    <div style="flex:1;min-width:200px;">
+      <div id="kitchenBannerTitle" style="font-weight:700;color:#b91c1c;font-size:15px;"></div>
+      <div id="kitchenBannerSub" style="font-size:12px;color:#dc2626;margin-top:2px;"></div>
+    </div>
+    <div id="kitchenCountdown" style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#b91c1c;min-width:80px;text-align:center;"></div>
+    <button onclick="openKitchenModal()" style="padding:7px 14px;border-radius:8px;background:#b91c1c;color:#fff;border:none;font-weight:700;font-size:13px;cursor:pointer;">แก้ไข</button>
+    <button onclick="cancelKitchenClose()" style="padding:7px 14px;border-radius:8px;background:#fff;color:#b91c1c;border:1.5px solid #fca5a5;font-weight:700;font-size:13px;cursor:pointer;">🟢 เปิดทั้งหมด</button>
   </div>
 
   <!-- Tabs -->
@@ -318,6 +331,97 @@
 .toggle-switch input:checked + .toggle-slider:before { transform:translateX(22px); }
 </style>
 
+
+<!-- Modal: ปิดครัว -->
+<div id="kitchenModal" class="modal-bg" style="display:none;">
+  <div class="modal-card lg" style="max-height:90vh;overflow-y:auto;">
+    <h2 style="font-family:'Cormorant Garamond',serif;color:#b91c1c;margin-top:0;display:flex;align-items:center;gap:8px;">
+      🔴 จัดการเปิด/ปิดครัว
+    </h2>
+
+    <!-- Action toggle -->
+    <div style="display:flex;gap:0;background:#f3f4f6;border-radius:10px;padding:4px;margin-bottom:18px;">
+      <button id="kActClose" class="k-act-btn k-act-active" onclick="setKitchenAction('close')">🔴 ปิดขาย</button>
+      <button id="kActOpen"  class="k-act-btn"              onclick="setKitchenAction('open')">🟢 เปิดขาย</button>
+    </div>
+
+    <!-- Scope -->
+    <div class="form-row">
+      <label style="font-weight:700;color:var(--color-emerald);">ขอบเขต</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;" id="kScopeBtns">
+        <button class="k-scope-btn k-scope-active" data-scope="all"      onclick="setKitchenScope('all')">📋 ทั้งหมด</button>
+        <button class="k-scope-btn"                data-scope="category" onclick="setKitchenScope('category')">📂 เลือกหมวดหมู่</button>
+        <button class="k-scope-btn"                data-scope="items"    onclick="setKitchenScope('items')">🍽️ เลือกเมนู</button>
+      </div>
+    </div>
+
+    <!-- Category picker -->
+    <div id="kCatPicker" style="display:none;margin-top:12px;">
+      <label style="font-size:13px;font-weight:700;color:var(--color-emerald);">เลือกหมวดหมู่</label>
+      <div id="kCatList" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;max-height:160px;overflow-y:auto;padding:4px;"></div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button class="k-quick" onclick="kSelectAllCats()">เลือกทั้งหมด</button>
+        <button class="k-quick" onclick="kClearCats()">ล้าง</button>
+      </div>
+    </div>
+
+    <!-- Item picker -->
+    <div id="kItemPicker" style="display:none;margin-top:12px;">
+      <label style="font-size:13px;font-weight:700;color:var(--color-emerald);">เลือกเมนู</label>
+      <input id="kItemSearch" type="text" placeholder="🔍 ค้นหาเมนู..." oninput="renderKItemList()"
+        style="width:100%;margin:8px 0;padding:7px 12px;border:1.5px solid var(--color-line);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+      <div id="kItemList" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;padding:4px;border:1px solid var(--color-line);border-radius:8px;background:#fafaf6;"></div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button class="k-quick" onclick="kSelectAllItems()">เลือกทั้งหมด</button>
+        <button class="k-quick" onclick="kClearItems()">ล้าง</button>
+      </div>
+    </div>
+
+    <!-- Timer: auto-reopen -->
+    <div id="kTimerSection" style="margin-top:18px;padding:14px;background:#fafaf6;border-radius:10px;border:1px solid var(--color-line);">
+      <label style="font-size:13px;font-weight:700;color:var(--color-emerald);">⏰ เปิดอัตโนมัติหลัง</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;" id="kTimerBtns">
+        <button class="k-timer-btn k-timer-active" data-mins="0"   onclick="setKTimer(0)">ไม่กำหนด</button>
+        <button class="k-timer-btn"                data-mins="30"  onclick="setKTimer(30)">30 นาที</button>
+        <button class="k-timer-btn"                data-mins="60"  onclick="setKTimer(60)">1 ชม.</button>
+        <button class="k-timer-btn"                data-mins="120" onclick="setKTimer(120)">2 ชม.</button>
+        <button class="k-timer-btn"                data-mins="-1"  onclick="setKTimer(-1)">ระบุเวลา</button>
+      </div>
+      <!-- ระบุเวลาเปิดเอง -->
+      <div id="kTimeUntilWrap" style="display:none;margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <label style="font-size:13px;color:var(--color-muted);">เปิดที่เวลา</label>
+        <input type="time" id="kTimeUntil" style="padding:6px 10px;border:1.5px solid var(--color-line);border-radius:8px;font-size:14px;">
+        <label style="font-size:13px;color:var(--color-muted);">วันที่</label>
+        <input type="date" id="kDateUntil" style="padding:6px 10px;border:1.5px solid var(--color-line);border-radius:8px;font-size:14px;">
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div id="kSummaryBox" style="margin-top:14px;padding:10px 14px;background:#fff8ee;border-radius:8px;border:1px solid #fde68a;font-size:13px;color:#92400e;display:none;"></div>
+
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn btn-ghost" onclick="closeKitchenModal()" style="flex:1;">ยกเลิก</button>
+      <button class="btn btn-primary" id="btnApplyKitchen" onclick="applyKitchenAction()" style="flex:2;background:#b91c1c;">🔴 ปิดขาย</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.k-act-btn{flex:1;padding:8px;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--color-muted);transition:all .15s;}
+.k-act-active{background:#fff;color:#b91c1c;box-shadow:0 1px 4px rgba(0,0,0,.12);}
+.k-scope-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--color-line);background:#fff;color:var(--color-emerald);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;}
+.k-scope-active{background:var(--color-emerald);color:#fff;border-color:var(--color-emerald);}
+.k-timer-btn{padding:6px 14px;border-radius:16px;border:1.5px solid var(--color-line);background:#fff;color:var(--color-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;}
+.k-timer-active{background:#b91c1c;color:#fff;border-color:#b91c1c;}
+.k-quick{padding:4px 12px;border:1px solid var(--color-line);background:#fff;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;color:var(--color-emerald);font-family:'Sarabun',sans-serif;}
+.k-quick:hover{background:var(--color-emerald);color:#fff;}
+.k-cat-chip{padding:6px 12px;border-radius:16px;border:1.5px solid var(--color-line);background:#fff;color:var(--color-emerald);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;white-space:nowrap;}
+.k-cat-chip.selected{background:var(--color-emerald);color:#fff;border-color:var(--color-emerald);}
+.k-item-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;cursor:pointer;transition:background .1s;}
+.k-item-row:hover{background:#fff8ee;}
+.k-item-row.selected{background:#f0fdf4;}
+.k-item-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--color-emerald);}
+</style>
 
 <script src="js/config.js"></script>
 <script src="js/admin-pin.js"></script>
