@@ -1,20 +1,18 @@
 // ============================================================
 // ⭐ เมนูพิเศษ - หน้าลูกค้า
 // ============================================================
-// อ่าน schedule จาก description marker [SCHED:days|open|close]
-// แล้วแสดงเฉพาะเมนูที่กำลังเปิดขายอยู่ตอนนี้
-// ============================================================
 
 const FlashSale = {
     items: [],
     refreshTimer: null,
+    countdownInterval: null,   // interval นับถอยหลัง (ทุก 1 วินาที)
+    COUNTDOWN_THRESHOLD: 60,   // เริ่มแสดง countdown เมื่อเหลือ ≤ 60 นาที
 
     async load() {
         try {
             const all = await API.getFlashSales();
             FlashSale.items = all;
             FlashSale.render();
-            // refresh ทุก 60 วินาที — เผื่อข้ามช่วงเวลาเปิด/ปิด
             if (FlashSale.refreshTimer) clearInterval(FlashSale.refreshTimer);
             FlashSale.refreshTimer = setInterval(() => FlashSale.render(), 60000);
         } catch(e) {
@@ -23,16 +21,15 @@ const FlashSale = {
     },
 
     render() {
+        FlashSale.stopCountdowns();
+
         const section = document.getElementById('specialMenuSection');
         if (!section) return;
 
-        // กรองเฉพาะที่กำลังเปิดขายตอนนี้
         const openItems = FlashSale.items.filter(item => {
             if (!item.is_active) return false;
             const sch = getScheduleFromDesc(item.description);
             if (!sch) {
-                // ไม่มี schedule — backward-compat กับข้อมูลเก่า
-                // ใช้ end_time แบบเดิม ถ้ายังไม่หมดเวลาก็แสดง
                 if (item.end_time) return new Date(item.end_time) > new Date();
                 return true;
             }
@@ -55,6 +52,16 @@ const FlashSale = {
                 openItems.map(item => FlashSale.cardHtml(item)).join('') +
             '</div>';
 
+        // inject CSS animation ถ้ายังไม่มี
+        if (!document.getElementById('cdt-style')) {
+            const st = document.createElement('style');
+            st.id = 'cdt-style';
+            st.textContent =
+                '@keyframes cdtPulse{0%,100%{opacity:1}50%{opacity:.45}}' +
+                '.countdown-tick{display:inline-block;font-variant-numeric:tabular-nums;}';
+            document.head.appendChild(st);
+        }
+
         const grid = document.getElementById('specialGrid');
         if (grid) {
             grid.addEventListener('click', e => {
@@ -62,6 +69,8 @@ const FlashSale = {
                 if (btn) FlashSale.addToCart(btn.dataset.flashAdd);
             });
         }
+
+        FlashSale.startCountdowns();
     },
 
     cardHtml(item) {
@@ -71,15 +80,22 @@ const FlashSale = {
             ? Math.round((1 - item.flash_price / item.original_price) * 100) : 0;
         const imgStyle = item.image_url ? "background-image:url('" + item.image_url + "');" : '';
 
-        // แสดงข้อมูลตามตารางเวลา
         let timeInfo;
         if (sch) {
-            const minsLeft = getMinutesUntilClose(sch);
-            if (minsLeft > 0 && minsLeft < 60) {
+            const secsLeft = getSecondsUntilClose(sch);
+            const minsLeft = Math.ceil(secsLeft / 60);
+            if (secsLeft > 0 && minsLeft <= FlashSale.COUNTDOWN_THRESHOLD) {
+                const closeAt = Math.floor(Date.now() / 1000) + secsLeft;
+                const formatted = fmtSecs(secsLeft);
                 timeInfo =
                     '<div class="special-timer-row">' +
-                        '<span class="special-timer-label">⏰ ใกล้ปิด</span>' +
-                        '<span class="special-timer" style="color:#dc2626;">เหลือ ' + minsLeft + ' นาที</span>' +
+                        '<span class="special-timer-label">⏰ ปิดใน</span>' +
+                        '<span class="special-timer countdown-tick" ' +
+                              'id="cdt-' + item.id + '" ' +
+                              'data-close-at="' + closeAt + '" ' +
+                              'style="color:#dc2626;font-weight:700;">' +
+                            formatted +
+                        '</span>' +
                     '</div>';
             } else {
                 timeInfo =
@@ -114,13 +130,64 @@ const FlashSale = {
         '</div>';
     },
 
+    startCountdowns() {
+        FlashSale.countdownInterval = setInterval(() => {
+            const tickers = document.querySelectorAll('.countdown-tick');
+            if (!tickers.length) { FlashSale.stopCountdowns(); return; }
+
+            const nowSec = Math.floor(Date.now() / 1000);
+            let anyExpired = false;
+
+            tickers.forEach(el => {
+                const closeAt = parseInt(el.dataset.closeAt, 10);
+                const left = closeAt - nowSec;
+
+                if (left <= 0) {
+                    anyExpired = true;
+                    el.textContent = 'หมดเวลา!';
+                    el.style.animation = '';
+                    const card = el.closest('.special-card');
+                    if (card) {
+                        const btn = card.querySelector('.btn-special-add');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.textContent = '⏰ หมดเวลาแล้ว';
+                            btn.style.opacity = '0.5';
+                            btn.style.cursor = 'not-allowed';
+                        }
+                    }
+                    return;
+                }
+
+                el.textContent = fmtSecs(left);
+
+                // กระพริบเมื่อเหลือ ≤ 60 วินาที
+                if (left <= 60) {
+                    el.style.color = '#b91c1c';
+                    el.style.animation = 'cdtPulse 1s infinite';
+                }
+            });
+
+            if (anyExpired) {
+                FlashSale.stopCountdowns();
+                setTimeout(() => location.reload(), 2000);
+            }
+        }, 1000);
+    },
+
+    stopCountdowns() {
+        if (FlashSale.countdownInterval) {
+            clearInterval(FlashSale.countdownInterval);
+            FlashSale.countdownInterval = null;
+        }
+    },
+
     addToCart(itemId) {
         const item = FlashSale.items.find(x => x.id === itemId);
         if (!item) return;
-        // ตรวจสอบอีกครั้งว่ายังเปิดขายอยู่
         const sch = getScheduleFromDesc(item.description);
         if (sch && !isOpenNow(sch)) {
-            notifier.showToast('⭐ เมนูพิเศษ นี้นอกเวลาขายแล้ว', 'error');
+            notifier.showToast('⭐ เมนูพิเศษนี้นอกเวลาขายแล้ว', 'error');
             FlashSale.render();
             return;
         }
@@ -160,11 +227,16 @@ function isOpenNow(sch) {
     return nowMins >= openMins && nowMins <= closeMins;
 }
 
-function getMinutesUntilClose(sch) {
+function getSecondsUntilClose(sch) {
     if (!sch) return 0;
     const now = new Date();
-    const nowMins = now.getHours() * 60 + now.getMinutes();
-    return parseTimeMinsFS(sch.close) - nowMins;
+    const nowSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const closeSecs = parseTimeMinsFS(sch.close) * 60;
+    return Math.max(closeSecs - nowSecs, 0);
+}
+
+function getMinutesUntilClose(sch) {
+    return Math.ceil(getSecondsUntilClose(sch) / 60);
 }
 
 function parseTimeMinsFS(str) {
@@ -172,6 +244,17 @@ function parseTimeMinsFS(str) {
     const parts = String(str).split(':').map(Number);
     return (parts[0] || 0) * 60 + (parts[1] || 0);
 }
+
+function fmtSecs(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return h > 0
+        ? pad2(h) + ':' + pad2(m) + ':' + pad2(sec)
+        : pad2(m) + ':' + pad2(sec);
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
 
 function escapeHtmlFS(s) {
     if (!s) return '';
