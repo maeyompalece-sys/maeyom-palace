@@ -138,6 +138,7 @@ function handleOrderAction(e) {
 
     switch (action) {
         case 'next-status':   advanceStatus(orderId, btn.dataset.next); break;
+        case 'complete-now':  completeNow(orderId); break;
         case 'cancel':        cancelOrder(orderId); break;
         case 'print':         printOrder(orderId); break;
         case 'delete-order':  deleteOrder(orderId); break;
@@ -344,6 +345,8 @@ function renderOrderCard(order) {
                    '➡️ ' + (ORDER_STATUS[status.next] ? ORDER_STATUS[status.next].label : status.next) + '</button>';
     }
     if (!isDone) {
+        // ปุ่มลัด "เสร็จสิ้น" — ข้ามขั้นตอนกลางทั้งหมด
+        actions += ' <button class="btn btn-complete" data-action="complete-now" data-order-id="' + order.id + '" title="จบออเดอร์นี้ทันที">✅ เสร็จสิ้น</button>';
         actions += ' <button class="btn btn-ghost" data-action="cancel" data-order-id="' + order.id + '">❌ ยกเลิก</button>';
     }
     actions += ' <button class="btn btn-gold" data-action="print" data-order-id="' + order.id + '">🖨️ ปริ้น</button>';
@@ -379,6 +382,19 @@ function renderOrderCard(order) {
 // ============================================================
 // 🔄 Order Actions
 // ============================================================
+async function completeNow(orderId) {
+    if (!confirm('ยืนยันจบออเดอร์นี้เลย?\n(จะเปลี่ยนสถานะเป็น "จัดส่งเสร็จสิ้น" ทันที)')) return;
+    try {
+        await API.updateOrderStatus(orderId, 'completed');
+        const idx = adminState.orders.findIndex(o => o.id === orderId);
+        if (idx !== -1) adminState.orders[idx].status = 'completed';
+        renderOrders();
+        notifier.showToast('✅ จบออเดอร์เรียบร้อย', 'success', 2000);
+    } catch (err) {
+        notifier.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+    }
+}
+
 async function advanceStatus(orderId, nextStatus) {
     if (!orderId || !nextStatus) return;
     try {
