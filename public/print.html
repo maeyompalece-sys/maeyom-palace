@@ -83,10 +83,23 @@
 <script src="js/api.js"></script>
 <script>
   // ต้องอยู่ระดับ global เพื่อให้ renderReceipt เข้าถึงได้
-  let showQR = false;
   let currentOrder = null;
 
+  // ถ้ามี QR อัปโหลดไว้ → เปิด QR อัตโนมัติ (เว้นแต่ผู้ใช้ปิดเองไว้)
+  const hasUploadedQR = !!localStorage.getItem('paymentQR_image');
+  const savedQRPref   = localStorage.getItem('printQR_show');
+  let showQR = hasUploadedQR
+    ? (savedQRPref !== 'false')
+    : (savedQRPref === 'true');
+
 document.addEventListener('DOMContentLoaded', async function() {
+
+  function syncQRButton() {
+    const btn = document.getElementById('btnQR');
+    btn.textContent = showQR ? '✅ QR เปิดอยู่' : '💳 QR จ่ายเงิน';
+    btn.classList.toggle('active', showQR);
+  }
+  syncQRButton();
 
   // Bind buttons
   document.getElementById('btnClose').addEventListener('click', () => window.close());
@@ -96,9 +109,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   document.getElementById('btnPrint').addEventListener('click', () => window.print());
   document.getElementById('btnQR').addEventListener('click', () => {
     showQR = !showQR;
-    const btn = document.getElementById('btnQR');
-    btn.textContent = showQR ? '✅ QR เปิดอยู่' : '💳 QR จ่ายเงิน';
-    btn.classList.toggle('active', showQR);
+    localStorage.setItem('printQR_show', showQR);
+    syncQRButton();
     if (currentOrder) renderReceipt(currentOrder);
   });
 
