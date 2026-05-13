@@ -30,6 +30,9 @@ function bindEvents() {
     const addMenuBtn = document.getElementById('btnAddMenu');
     if (addMenuBtn) addMenuBtn.addEventListener('click', openMenuModal);
 
+    const kitchenBtn = document.getElementById('btnKitchen');
+    if (kitchenBtn) kitchenBtn.addEventListener('click', openKitchenModal);
+
     // Menu modal
     const saveMenuBtn = document.getElementById('btnSaveMenu');
     if (saveMenuBtn) saveMenuBtn.addEventListener('click', saveMenu);
@@ -511,5 +514,316 @@ async function handleImageFile(file, previewId, type) {
         notifier.showToast('✓ อัปโหลดรูปแล้ว', 'success');
     } catch(e) {
         notifier.showToast('อัปโหลดล้มเหลว: ' + e.message, 'error');
+    }
+}
+
+// ============================================================
+// 🔴 Kitchen Close Manager
+// ============================================================
+const KITCHEN_KEY   = 'maeyom_kitchen';      // localStorage key
+let kitchenState = { action:'close', scope:'all', catIds:[], itemIds:[], timerMins:0, reopenAt:0 };
+let kitchenCountdownTimer = null;
+
+// ── เปิด Modal ───────────────────────────────────────────────
+function openKitchenModal() {
+    // โหลดสถานะปัจจุบันจาก localStorage
+    const saved = loadKitchenRecord();
+    kitchenState.action   = 'close';
+    kitchenState.scope    = 'all';
+    kitchenState.catIds   = [];
+    kitchenState.itemIds  = [];
+    kitchenState.timerMins = 0;
+    kitchenState.reopenAt  = 0;
+
+    setKitchenAction('close');
+    setKitchenScope('all');
+    setKTimer(0);
+    renderKCatList();
+    renderKItemList();
+    updateKSummary();
+
+    // ตั้งค่า date ปัจจุบันใน datepicker
+    const today = new Date().toISOString().slice(0,10);
+    const el = document.getElementById('kDateUntil');
+    if (el) el.value = today;
+
+    document.getElementById('kitchenModal').style.display = 'flex';
+}
+function closeKitchenModal() {
+    document.getElementById('kitchenModal').style.display = 'none';
+}
+
+// ── Action / Scope / Timer helpers ───────────────────────────
+function setKitchenAction(act) {
+    kitchenState.action = act;
+    document.getElementById('kActClose').classList.toggle('k-act-active', act==='close');
+    document.getElementById('kActOpen').classList.toggle('k-act-active', act==='open');
+    const applyBtn = document.getElementById('btnApplyKitchen');
+    if (act === 'close') {
+        applyBtn.textContent = '🔴 ปิดขาย';
+        applyBtn.style.background = '#b91c1c';
+        document.getElementById('kTimerSection').style.display = '';
+    } else {
+        applyBtn.textContent = '🟢 เปิดขาย';
+        applyBtn.style.background = '#059669';
+        document.getElementById('kTimerSection').style.display = 'none';
+    }
+    updateKSummary();
+}
+
+function setKitchenScope(scope) {
+    kitchenState.scope = scope;
+    document.querySelectorAll('.k-scope-btn').forEach(b => b.classList.toggle('k-scope-active', b.dataset.scope === scope));
+    document.getElementById('kCatPicker').style.display  = scope === 'category' ? '' : 'none';
+    document.getElementById('kItemPicker').style.display = scope === 'items'    ? '' : 'none';
+    updateKSummary();
+}
+
+function setKTimer(mins) {
+    kitchenState.timerMins = mins;
+    document.querySelectorAll('.k-timer-btn').forEach(b => b.classList.toggle('k-timer-active', parseInt(b.dataset.mins) === mins));
+    const wrap = document.getElementById('kTimeUntilWrap');
+    wrap.style.display = mins === -1 ? 'flex' : 'none';
+    updateKSummary();
+}
+
+// ── Category list ─────────────────────────────────────────────
+function renderKCatList() {
+    const el = document.getElementById('kCatList');
+    if (!el) return;
+    el.innerHTML = menuState.categories.map(c => {
+        const sel = kitchenState.catIds.includes(c.id);
+        return `<button class="k-cat-chip ${sel?'selected':''}" data-cid="${c.id}"
+            onclick="kToggleCat('${c.id}')">${c.icon||''} ${escapeHtml(c.name)}</button>`;
+    }).join('');
+}
+function kToggleCat(id) {
+    const idx = kitchenState.catIds.indexOf(id);
+    idx >= 0 ? kitchenState.catIds.splice(idx, 1) : kitchenState.catIds.push(id);
+    renderKCatList();
+    updateKSummary();
+}
+function kSelectAllCats() { kitchenState.catIds = menuState.categories.map(c => c.id); renderKCatList(); updateKSummary(); }
+function kClearCats()      { kitchenState.catIds = []; renderKCatList(); updateKSummary(); }
+
+// ── Item list ─────────────────────────────────────────────────
+function renderKItemList() {
+    const el = document.getElementById('kItemList');
+    if (!el) return;
+    const q = (document.getElementById('kItemSearch')?.value || '').toLowerCase();
+    const items = menuState.items.filter(i => !q || i.name.toLowerCase().includes(q));
+    el.innerHTML = items.map(i => {
+        const sel = kitchenState.itemIds.includes(i.id);
+        const cat = menuState.categories.find(c => c.id === i.category_id);
+        return `<label class="k-item-row ${sel?'selected':''}">
+            <input type="checkbox" ${sel?'checked':''} onchange="kToggleItem('${i.id}',this.checked)">
+            <span style="flex:1;font-size:13px;font-weight:600;color:var(--color-emerald);">${escapeHtml(i.name)}</span>
+            <span style="font-size:11px;color:var(--color-muted);">${cat?cat.icon+' '+escapeHtml(cat.name):''}</span>
+            <span style="font-size:12px;color:var(--color-gold);font-weight:700;">฿${formatPrice(i.price)}</span>
+            ${!i.is_available ? '<span style="font-size:10px;background:#e5e7eb;color:#6b7280;padding:1px 6px;border-radius:8px;">ปิดอยู่</span>' : ''}
+        </label>`;
+    }).join('') || '<div style="padding:12px;text-align:center;color:var(--color-muted);font-size:13px;">ไม่พบเมนู</div>';
+}
+function kToggleItem(id, checked) {
+    const idx = kitchenState.itemIds.indexOf(id);
+    if (checked && idx < 0) kitchenState.itemIds.push(id);
+    else if (!checked && idx >= 0) kitchenState.itemIds.splice(idx, 1);
+    renderKItemList();
+    updateKSummary();
+}
+function kSelectAllItems() { kitchenState.itemIds = menuState.items.map(i => i.id); renderKItemList(); updateKSummary(); }
+function kClearItems()      { kitchenState.itemIds = []; renderKItemList(); updateKSummary(); }
+
+// ── คำนวณรายการที่จะถูกกระทบ ─────────────────────────────────
+function getTargetItems() {
+    if (kitchenState.scope === 'all') return menuState.items.map(i => i.id);
+    if (kitchenState.scope === 'category') {
+        return menuState.items.filter(i => kitchenState.catIds.includes(i.category_id)).map(i => i.id);
+    }
+    return [...kitchenState.itemIds];
+}
+
+function updateKSummary() {
+    const box = document.getElementById('kSummaryBox');
+    if (!box) return;
+    const ids = getTargetItems();
+    if (!ids.length) { box.style.display = 'none'; return; }
+
+    const action = kitchenState.action === 'close' ? 'ปิดขาย' : 'เปิดขาย';
+    let timerText = '';
+    if (kitchenState.action === 'close') {
+        if (kitchenState.timerMins > 0) {
+            timerText = ` · เปิดอัตโนมัติใน ${kitchenState.timerMins} นาที`;
+        } else if (kitchenState.timerMins === -1) {
+            const t = document.getElementById('kTimeUntil')?.value;
+            const d = document.getElementById('kDateUntil')?.value;
+            timerText = t ? ` · เปิดอัตโนมัติเวลา ${t} น. (${d})` : '';
+        }
+    }
+    box.style.display = '';
+    box.innerHTML = `<strong>${action}</strong> ${ids.length} เมนู${timerText}`;
+}
+
+// ── Apply ─────────────────────────────────────────────────────
+async function applyKitchenAction() {
+    const ids = getTargetItems();
+    if (!ids.length) { notifier.showToast('กรุณาเลือกเมนูที่ต้องการ', 'error'); return; }
+
+    const isClose = kitchenState.action === 'close';
+    const btn = document.getElementById('btnApplyKitchen');
+    btn.disabled = true; btn.textContent = '⏳ กำลังดำเนินการ...';
+
+    try {
+        // เรียก API ทีละรายการ (batch)
+        await Promise.all(ids.map(id => API.toggleAvailable(id, !isClose)));
+        notifier.showToast((isClose ? '🔴 ปิดขาย' : '🟢 เปิดขาย') + ' ' + ids.length + ' เมนูแล้ว', 'success');
+
+        if (isClose) {
+            // คำนวณเวลาเปิดอัตโนมัติ
+            let reopenAt = 0;
+            if (kitchenState.timerMins > 0) {
+                reopenAt = Date.now() + kitchenState.timerMins * 60 * 1000;
+            } else if (kitchenState.timerMins === -1) {
+                const t = document.getElementById('kTimeUntil')?.value;
+                const d = document.getElementById('kDateUntil')?.value;
+                if (t && d) reopenAt = new Date(d + 'T' + t).getTime();
+            }
+            saveKitchenRecord({ closedIds: ids, reopenAt, scope: kitchenState.scope });
+            startKitchenCountdown();
+        } else {
+            clearKitchenRecord();
+            stopKitchenCountdown();
+            updateKitchenBanner();
+        }
+
+        closeKitchenModal();
+        await loadAll();
+    } catch(e) {
+        notifier.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        setKitchenAction(kitchenState.action);
+    }
+}
+
+// ── ยกเลิก / เปิดทั้งหมด (จากแบนเนอร์) ──────────────────────
+async function cancelKitchenClose() {
+    const rec = loadKitchenRecord();
+    if (!rec) { clearKitchenRecord(); updateKitchenBanner(); return; }
+    const ids = rec.closedIds || [];
+    if (!ids.length) { clearKitchenRecord(); updateKitchenBanner(); return; }
+    if (!confirm('เปิดขายเมนูทั้งหมด ' + ids.length + ' รายการ?')) return;
+    try {
+        await Promise.all(ids.map(id => API.toggleAvailable(id, true)));
+        notifier.showToast('🟢 เปิดขายทุกเมนูแล้ว', 'success');
+        clearKitchenRecord();
+        stopKitchenCountdown();
+        updateKitchenBanner();
+        await loadAll();
+    } catch(e) {
+        notifier.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+    }
+}
+
+// ── Banner ────────────────────────────────────────────────────
+function updateKitchenBanner() {
+    const banner = document.getElementById('kitchenBanner');
+    if (!banner) return;
+    const rec = loadKitchenRecord();
+    if (!rec || !rec.closedIds?.length) { banner.style.display = 'none'; return; }
+
+    banner.style.display = 'flex';
+    const title = document.getElementById('kitchenBannerTitle');
+    const sub   = document.getElementById('kitchenBannerSub');
+    const scopeLabel = rec.scope === 'all' ? 'ทั้งหมด' : rec.scope === 'category' ? 'บางหมวดหมู่' : 'เมนูที่เลือก';
+    title.textContent = '🔴 ครัวปิดการขายอยู่ — ' + rec.closedIds.length + ' เมนู (' + scopeLabel + ')';
+    sub.textContent   = rec.reopenAt > 0
+        ? 'จะเปิดอัตโนมัติเวลา ' + new Date(rec.reopenAt).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'})
+        : 'ไม่ได้ตั้งเวลาเปิดอัตโนมัติ — กด "เปิดทั้งหมด" เมื่อพร้อม';
+
+    // ปรับปุ่ม header
+    const hBtn = document.getElementById('btnKitchen');
+    if (hBtn) { hBtn.textContent = '🟢 เปิดครัว'; hBtn.style.borderColor = '#059669'; hBtn.style.color = '#059669'; }
+}
+
+function resetKitchenBtn() {
+    const hBtn = document.getElementById('btnKitchen');
+    if (hBtn) { hBtn.textContent = '🔴 ปิดครัว'; hBtn.style.borderColor = '#dc2626'; hBtn.style.color = '#dc2626'; }
+}
+
+// ── Countdown ─────────────────────────────────────────────────
+function startKitchenCountdown() {
+    stopKitchenCountdown();
+    updateKitchenBanner();
+    kitchenCountdownTimer = setInterval(async () => {
+        const rec = loadKitchenRecord();
+        if (!rec) { stopKitchenCountdown(); updateKitchenBanner(); return; }
+
+        const el = document.getElementById('kitchenCountdown');
+        if (rec.reopenAt > 0) {
+            const left = rec.reopenAt - Date.now();
+            if (left <= 0) {
+                // ถึงเวลาเปิดอัตโนมัติ
+                stopKitchenCountdown();
+                notifier.showToast('⏰ ถึงเวลาเปิดครัวอัตโนมัติ!', 'info');
+                try {
+                    await Promise.all((rec.closedIds||[]).map(id => API.toggleAvailable(id, true)));
+                    notifier.showToast('🟢 เปิดขายอัตโนมัติแล้ว', 'success');
+                } catch(e) { console.error(e); }
+                clearKitchenRecord();
+                updateKitchenBanner();
+                resetKitchenBtn();
+                await loadAll();
+                return;
+            }
+            if (el) el.textContent = fmtMs(left);
+        } else {
+            if (el) el.textContent = '';
+        }
+    }, 1000);
+}
+
+function stopKitchenCountdown() {
+    if (kitchenCountdownTimer) { clearInterval(kitchenCountdownTimer); kitchenCountdownTimer = null; }
+    const el = document.getElementById('kitchenCountdown');
+    if (el) el.textContent = '';
+}
+
+function fmtMs(ms) {
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s%3600)/60), sec = s%60;
+    return h > 0 ? pad2k(h)+':'+pad2k(m)+':'+pad2k(sec) : pad2k(m)+':'+pad2k(sec);
+}
+function pad2k(n) { return String(n).padStart(2,'0'); }
+
+// ── localStorage helpers ──────────────────────────────────────
+function saveKitchenRecord(rec) { localStorage.setItem(KITCHEN_KEY, JSON.stringify(rec)); }
+function loadKitchenRecord()    { try { return JSON.parse(localStorage.getItem(KITCHEN_KEY)||'null'); } catch(e){return null;} }
+function clearKitchenRecord()   { localStorage.removeItem(KITCHEN_KEY); }
+
+// ── init hook (เรียกหลัง loadAll) ────────────────────────────
+const _origLoadAll = loadAll;
+// ขยาย loadAll ให้เช็ค kitchen state ด้วย
+async function loadAll() {
+    try {
+        const data = await API.getBootstrap();
+        menuState.categories = data.categories || [];
+        menuState.items = data.menu || [];
+        renderCatBar();
+        fillCategoryDropdown();
+        renderItems();
+        // หลังโหลดเมนู — ตรวจสอบ kitchen timer
+        const rec = loadKitchenRecord();
+        if (rec && rec.closedIds?.length) {
+            updateKitchenBanner();
+            startKitchenCountdown();
+        } else {
+            clearKitchenRecord();
+            updateKitchenBanner();
+            resetKitchenBtn();
+        }
+    } catch (err) {
+        console.error(err);
+        notifier.showToast('โหลดข้อมูลล้มเหลว: ' + err.message, 'error', 5000);
     }
 }
