@@ -336,6 +336,18 @@ const I18N = {
         });
         document.querySelectorAll('.lang-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.lang === this.current);
+            // re-apply inline active style for pages without styles.css
+            if (btn.style.cssText) {
+                if (btn.dataset.lang === this.current) {
+                    btn.style.background = 'rgba(201,168,97,.35)';
+                    btn.style.borderColor = '#C9A861';
+                    btn.style.color = '#C9A861';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.borderColor = 'rgba(255,255,255,.3)';
+                    btn.style.color = 'rgba(255,255,255,.8)';
+                }
+            }
         });
         document.documentElement.lang = this.current;
         // callback for pages that need to re-render dynamic content
@@ -369,7 +381,10 @@ document.addEventListener('DOMContentLoaded', function() {
         topbarInner.appendChild(I18N.createSwitcher());
     } else {
         var sw = I18N.createSwitcher();
-        sw.className = 'lang-switcher-float';
+        sw.style.cssText = 'position:fixed;top:14px;right:16px;z-index:9999;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:5px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.15);';
+        sw.querySelectorAll('.lang-btn').forEach(function(btn) {
+            btn.style.cssText = 'padding:3px 9px;border-radius:12px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.8);font-size:11px;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif;transition:all .15s;line-height:1.4;';
+        });
         document.body.appendChild(sw);
     }
     I18N.apply();

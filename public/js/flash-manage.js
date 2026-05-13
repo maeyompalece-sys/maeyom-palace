@@ -1,15 +1,17 @@
 // ============================================================
 // ⭐ เมนูพิเศษ Management — ระบบกำหนดการขายรายสัปดาห์
 // ============================================================
+// 🔑 หมายเหตุสำคัญ:
+//   Backend (Google Apps Script) เก็บได้แค่ field ที่กำหนดไว้ในชีต
+//   เราจึงฝังข้อมูลตารางเวลาเข้าไปใน field `description` ด้วย marker
+//   รูปแบบ: [SCHED:days|open|close] เช่น [SCHED:1,2,3,4,5|09:00|21:00]
+//   เมื่อแสดงผลจะตัด marker นี้ออก ลูกค้าจะเห็นแค่คำอธิบายปกติ
+// ============================================================
 
-const DAY_LABELS  = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']; // index = getDay()
-const DAY_FULL    = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
+const DAY_LABELS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+const DAY_FULL   = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
 
-const flashState = {
-    sales: [],
-    editingId: null,
-    selectedDays: new Set()
-};
+const flashState = { sales: [], editingId: null, selectedDays: new Set() };
 
 document.addEventListener('DOMContentLoaded', initFlash);
 
@@ -17,6 +19,30 @@ async function initFlash() {
     if (!checkConfig()) return;
     bindFlashEvents();
     await loadFlashSales();
+}
+
+// ============================================================
+// 🔐 Schedule encoding/decoding (ใน description field)
+// ============================================================
+function packDescription(desc, days, open, close) {
+    const clean = (desc || '').replace(/\s*\[SCHED:[^\]]+\]\s*/g, '').trim();
+    if (days && days.length) {
+        const tag = '[SCHED:' + days.join(',') + '|' + open + '|' + close + ']';
+        return clean ? (clean + '\n' + tag) : tag;
+    }
+    return clean;
+}
+
+function unpackDescription(desc) {
+    if (!desc) return { desc: '', days: [], open: '', close: '' };
+    const m = String(desc).match(/\[SCHED:([0-6,]*)\|(\d{2}:\d{2})\|(\d{2}:\d{2})\]/);
+    if (!m) return { desc: desc, days: [], open: '', close: '' };
+    return {
+        desc: String(desc).replace(/\s*\[SCHED:[^\]]+\]\s*/g, '').trim(),
+        days: m[1] ? m[1].split(',').map(Number).filter(n => !isNaN(n)) : [],
+        open: m[2],
+        close: m[3]
+    };
 }
 
 // ============================================================
@@ -31,9 +57,8 @@ function bindFlashEvents() {
     bindId('btnSaveFlash',   saveFlashSale);
     bindId('btnCancelFlash', closeFlashModal);
     bindId('inpFlashImage',  onFlashImageChange, 'change');
-    setupImageDropzone('flashImgPreview', 'inpFlashImage', onFlashImageChange);
+    setupImageDropzone('flashImgPreview', 'inpFlashImage');
 
-    // Day picker buttons
     const picker = document.getElementById('flashDayPicker');
     if (picker) {
         picker.addEventListener('click', e => {
@@ -78,9 +103,6 @@ function bindId(id, fn, event = 'click') {
     if (el) el.addEventListener(event, fn);
 }
 
-// ============================================================
-// Tab switching
-// ============================================================
 function switchTab(tab) {
     document.querySelectorAll('[data-tab]').forEach(b =>
         b.classList.toggle('active', b.dataset.tab === tab));
@@ -113,16 +135,17 @@ function renderFlashSales() {
     }
 
     grid.innerHTML = flashState.sales.map(f => {
-        const { label: statusLabel, color: statusColor } = getFlashStatus(f);
+        // แกะ schedule ออกจาก description
+        const sch = unpackDescription(f.description);
+        const { label: statusLabel, color: statusColor } = getFlashStatus(f, sch);
 
-        const days = parseScheduleDays(f.schedule_days);
         const dayChipsHtml = DAY_LABELS.map((lbl, i) => {
-            const active = days.includes(i);
+            const active = sch.days.includes(i);
             return '<span class="day-chip ' + (active ? '' : 'off') + '">' + lbl + '</span>';
         }).join('');
 
-        const openTime  = f.schedule_open  || '—';
-        const closeTime = f.schedule_close || '—';
+        const openTime  = sch.open  || '—';
+        const closeTime = sch.close || '—';
 
         const discount = f.original_price > 0
             ? Math.round((1 - f.flash_price / f.original_price) * 100) : 0;
@@ -137,7 +160,7 @@ function renderFlashSales() {
             '</div>' +
             '<div class="body">' +
                 '<div class="name">⚡ ' + esc(f.name) + '</div>' +
-                '<div class="desc">' + esc(f.description || '') + '</div>' +
+                '<div class="desc">' + esc(sch.desc) + '</div>' +
                 '<div style="display:flex;gap:8px;align-items:baseline;margin-bottom:8px;">' +
                     (f.original_price > 0 ? '<span style="font-size:12px;color:#9ca3af;text-decoration:line-through;">฿' + Number(f.original_price).toFixed(0) + '</span>' : '') +
                     '<span class="price" style="color:#dc2626;">฿' + Number(f.flash_price).toFixed(0) + '</span>' +
@@ -159,27 +182,25 @@ function renderFlashSales() {
 // ============================================================
 // Status Logic
 // ============================================================
-function getFlashStatus(f) {
-    if (!f.is_active) {
-        return { label: '⛔ หยุดชั่วคราว', color: '#9ca3af' };
-    }
-    const now       = new Date();
-    const todayDay  = now.getDay();
-    const nowMins   = now.getHours() * 60 + now.getMinutes();
-    const days      = parseScheduleDays(f.schedule_days);
-    const openMins  = parseTimeMins(f.schedule_open  || '00:00');
-    const closeMins = parseTimeMins(f.schedule_close || '23:59');
+function getFlashStatus(f, sch) {
+    if (!f.is_active) return { label: '⛔ หยุดชั่วคราว', color: '#9ca3af' };
 
-    if (days.length > 0 && !days.includes(todayDay)) {
-        const nextDay = getNextSaleDay(days, todayDay);
+    if (!sch.days.length || !sch.open || !sch.close) {
+        return { label: '⚠️ ยังไม่ตั้งกำหนดการ', color: '#f59e0b' };
+    }
+
+    const now      = new Date();
+    const todayDay = now.getDay();
+    const nowMins  = now.getHours() * 60 + now.getMinutes();
+    const openMins = parseTimeMins(sch.open);
+    const closeMins= parseTimeMins(sch.close);
+
+    if (!sch.days.includes(todayDay)) {
+        const nextDay = getNextSaleDay(sch.days, todayDay);
         return { label: 'เปิดวัน' + DAY_FULL[nextDay], color: '#6b7280' };
     }
-    if (nowMins < openMins) {
-        return { label: '⏰ เปิด ' + (f.schedule_open || '') + ' น.', color: '#f59e0b' };
-    }
-    if (nowMins > closeMins) {
-        return { label: '✅ หมดเวลาวันนี้', color: '#9ca3af' };
-    }
+    if (nowMins < openMins)  return { label: '⏰ เปิด ' + sch.open + ' น.', color: '#f59e0b' };
+    if (nowMins > closeMins) return { label: '✅ หมดเวลาวันนี้', color: '#9ca3af' };
     return { label: '🔥 กำลังเปิดขาย!', color: '#dc2626' };
 }
 
@@ -197,11 +218,11 @@ function getNextSaleDay(days, today) {
 function openAddFlashModal() {
     flashState.editingId = null;
     document.getElementById('flashModalTitle').textContent = 'เพิ่ม เมนูพิเศษใหม่';
-    document.getElementById('inpFlashName').value       = '';
-    document.getElementById('inpFlashDesc').value       = '';
-    document.getElementById('inpFlashOrigPrice').value  = '';
-    document.getElementById('inpFlashPrice').value      = '';
-    document.getElementById('inpFlashImageUrl').value   = '';
+    document.getElementById('inpFlashName').value      = '';
+    document.getElementById('inpFlashDesc').value      = '';
+    document.getElementById('inpFlashOrigPrice').value = '';
+    document.getElementById('inpFlashPrice').value     = '';
+    document.getElementById('inpFlashImageUrl').value  = '';
     const prev = document.getElementById('flashImgPreview');
     prev.style.backgroundImage = '';
     prev.innerHTML = '📷 ยังไม่มีรูป<span class="drop-hint">🖱️ คลิกเพื่อเลือก หรือลากไฟล์มาวางได้เลย</span>';
@@ -217,20 +238,22 @@ function openEditFlashModal(id) {
     const f = flashState.sales.find(x => x.id === id);
     if (!f) return;
     flashState.editingId = id;
+    const sch = unpackDescription(f.description);
+
     document.getElementById('flashModalTitle').textContent = 'แก้ไข เมนูพิเศษ';
-    document.getElementById('inpFlashName').value       = f.name || '';
-    document.getElementById('inpFlashDesc').value       = f.description || '';
-    document.getElementById('inpFlashOrigPrice').value  = f.original_price || '';
-    document.getElementById('inpFlashPrice').value      = f.flash_price || '';
-    document.getElementById('inpFlashImageUrl').value   = f.image_url || '';
+    document.getElementById('inpFlashName').value      = f.name || '';
+    document.getElementById('inpFlashDesc').value      = sch.desc;       // ⚡ ใช้ desc ที่ตัด marker ออก
+    document.getElementById('inpFlashOrigPrice').value = f.original_price || '';
+    document.getElementById('inpFlashPrice').value     = f.flash_price || '';
+    document.getElementById('inpFlashImageUrl').value  = f.image_url || '';
     if (f.image_url) {
         const prev = document.getElementById('flashImgPreview');
         prev.style.backgroundImage = 'url(\'' + f.image_url + '\')';
         prev.innerHTML = '<span class="drop-hint">🖱️ คลิกหรือลากมาเพื่อเปลี่ยนรูป</span>';
     }
-    setDays(parseScheduleDays(f.schedule_days));
-    document.getElementById('inpFlashOpenTime').value  = f.schedule_open  || '09:00';
-    document.getElementById('inpFlashCloseTime').value = f.schedule_close || '21:00';
+    setDays(sch.days.length ? sch.days : [1,2,3,4,5,6,0]);
+    document.getElementById('inpFlashOpenTime').value  = sch.open  || '09:00';
+    document.getElementById('inpFlashCloseTime').value = sch.close || '21:00';
     document.getElementById('inpFlashActive').checked  = !!f.is_active;
     updateScheduleSummary();
     document.getElementById('flashModal').style.display = 'flex';
@@ -243,30 +266,31 @@ function closeFlashModal() {
 
 async function saveFlashSale() {
     const name       = document.getElementById('inpFlashName').value.trim();
+    const rawDesc    = document.getElementById('inpFlashDesc').value.trim();
     const flashPrice = parseFloat(document.getElementById('inpFlashPrice').value);
     const origPrice  = parseFloat(document.getElementById('inpFlashOrigPrice').value) || 0;
     const openTime   = document.getElementById('inpFlashOpenTime').value;
     const closeTime  = document.getElementById('inpFlashCloseTime').value;
     const days       = Array.from(flashState.selectedDays).sort((a,b) => a - b);
 
-    if (!name)                      { notifier.showToast('กรุณาใส่ชื่อเมนู', 'error');       return; }
-    if (!flashPrice || flashPrice <= 0) { notifier.showToast('กรุณาใส่ราคา', 'error');       return; }
-    if (days.length === 0)          { notifier.showToast('กรุณาเลือกอย่างน้อย 1 วัน', 'error'); return; }
-    if (!openTime || !closeTime)    { notifier.showToast('กรุณาตั้งเวลาเปิด-ปิด', 'error');  return; }
-    if (openTime >= closeTime)      { notifier.showToast('เวลาปิดต้องมากกว่าเวลาเปิด', 'error'); return; }
+    if (!name)                          { notifier.showToast('กรุณาใส่ชื่อเมนู', 'error'); return; }
+    if (!flashPrice || flashPrice <= 0) { notifier.showToast('กรุณาใส่ราคา', 'error'); return; }
+    if (days.length === 0)              { notifier.showToast('กรุณาเลือกอย่างน้อย 1 วัน', 'error'); return; }
+    if (!openTime || !closeTime)        { notifier.showToast('กรุณาตั้งเวลาเปิด-ปิด', 'error'); return; }
+    if (openTime >= closeTime)          { notifier.showToast('เวลาปิดต้องมากกว่าเวลาเปิด', 'error'); return; }
 
     const btn = document.getElementById('btnSaveFlash');
     btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
+    // ⚡ ฝัง schedule ใน description
+    const packedDesc = packDescription(rawDesc, days, openTime, closeTime);
+
     const payload = {
         name,
-        description:    document.getElementById('inpFlashDesc').value.trim(),
+        description:    packedDesc,
         original_price: origPrice,
         flash_price:    flashPrice,
         image_url:      document.getElementById('inpFlashImageUrl').value.trim(),
-        schedule_days:  days.join(','),
-        schedule_open:  openTime,
-        schedule_close: closeTime,
         start_time:     new Date().toISOString(),
         end_time:       new Date(Date.now() + 365 * 24 * 3600000).toISOString(),
         is_active:      document.getElementById('inpFlashActive').checked
@@ -303,7 +327,11 @@ async function deleteFlashSale(id) {
 
 async function toggleFlashSale(id, newActive) {
     try {
-        await API.updateFlashSale({ id, is_active: newActive });
+        // ⚡ ต้องส่ง description กลับไปด้วย ไม่งั้น Apps Script อาจล้างค่า
+        const f = flashState.sales.find(x => x.id === id);
+        const payload = { id, is_active: newActive };
+        if (f) payload.description = f.description;  // คง schedule marker ไว้
+        await API.updateFlashSale(payload);
         await loadFlashSales();
         notifier.showToast(newActive ? '✅ เปิดขายแล้ว' : '⛔ หยุดชั่วคราวแล้ว', 'success');
     } catch(e) {
@@ -351,7 +379,6 @@ function setupImageDropzone(previewId, inputId) {
     const preview = document.getElementById(previewId);
     const input   = document.getElementById(inputId);
     if (!preview || !input) return;
-
     preview.addEventListener('click', () => input.click());
     ['dragenter','dragover'].forEach(ev => {
         preview.addEventListener(ev, e => { e.preventDefault(); preview.classList.add('dragover'); });
@@ -403,11 +430,6 @@ async function uploadFlashImage(file) {
 // ============================================================
 // Utility
 // ============================================================
-function parseScheduleDays(str) {
-    if (!str) return [];
-    return String(str).split(',').map(Number).filter(n => !isNaN(n) && n >= 0 && n <= 6);
-}
-
 function parseTimeMins(str) {
     if (!str) return 0;
     var parts = String(str).split(':').map(Number);
