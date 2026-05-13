@@ -1,10 +1,14 @@
 // ============================================================
-// ⭐ เมนูพิเศษ Management (Admin)
+// ⭐ เมนูพิเศษ Management — ระบบกำหนดการขายรายสัปดาห์
 // ============================================================
+
+const DAY_LABELS  = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']; // index = getDay()
+const DAY_FULL    = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
 
 const flashState = {
     sales: [],
-    editingId: null
+    editingId: null,
+    selectedDays: new Set()
 };
 
 document.addEventListener('DOMContentLoaded', initFlash);
@@ -15,58 +19,82 @@ async function initFlash() {
     await loadFlashSales();
 }
 
+// ============================================================
+// Events
+// ============================================================
 function bindFlashEvents() {
-    // Tab switching
     document.querySelectorAll('[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
-    // Buttons
-    const addBtn = document.getElementById('btnAddFlash');
-    if (addBtn) addBtn.addEventListener('click', openAddFlashModal);
-    const saveBtn = document.getElementById('btnSaveFlash');
-    if (saveBtn) saveBtn.addEventListener('click', saveFlashSale);
-    const cancelBtn = document.getElementById('btnCancelFlash');
-    if (cancelBtn) cancelBtn.addEventListener('click', closeFlashModal);
-    // Image
-    const imgInp = document.getElementById('inpFlashImage');
-    if (imgInp) imgInp.addEventListener('change', onFlashImageChange);
 
-    // Drag & Drop + คลิกเพื่อเลือก สำหรับเมนูพิเศษ
+    bindId('btnAddFlash',    openAddFlashModal);
+    bindId('btnSaveFlash',   saveFlashSale);
+    bindId('btnCancelFlash', closeFlashModal);
+    bindId('inpFlashImage',  onFlashImageChange, 'change');
     setupImageDropzone('flashImgPreview', 'inpFlashImage', onFlashImageChange);
-    // Quick duration buttons
-    document.querySelectorAll('[data-duration]').forEach(btn => {
-        btn.addEventListener('click', () => setQuickDuration(parseInt(btn.dataset.duration)));
-    });
-    // Grid delegation
+
+    // Day picker buttons
+    const picker = document.getElementById('flashDayPicker');
+    if (picker) {
+        picker.addEventListener('click', e => {
+            const btn = e.target.closest('.day-btn');
+            if (!btn) return;
+            const day = parseInt(btn.dataset.day);
+            if (flashState.selectedDays.has(day)) {
+                flashState.selectedDays.delete(day);
+                btn.classList.remove('selected');
+            } else {
+                flashState.selectedDays.add(day);
+                btn.classList.add('selected');
+            }
+            updateScheduleSummary();
+        });
+    }
+
+    bindId('qdWeekday', () => setDays([1,2,3,4,5]));
+    bindId('qdWeekend', () => setDays([6,0]));
+    bindId('qdAllWeek', () => setDays([0,1,2,3,4,5,6]));
+    bindId('qdClear',   () => setDays([]));
+    bindId('inpFlashOpenTime',  updateScheduleSummary, 'input');
+    bindId('inpFlashCloseTime', updateScheduleSummary, 'input');
+
     const grid = document.getElementById('specialGrid');
     if (grid) {
-        grid.addEventListener('click', (e) => {
+        grid.addEventListener('click', e => {
             const btn = e.target.closest('[data-flash-action]');
             if (!btn) return;
             const id = btn.dataset.flashId;
             switch (btn.dataset.flashAction) {
                 case 'edit':   openEditFlashModal(id); break;
-                case 'delete': deleteFlashSale(id); break;
+                case 'delete': deleteFlashSale(id);    break;
                 case 'toggle': toggleFlashSale(id, btn.dataset.active !== 'true'); break;
             }
         });
     }
 }
 
+function bindId(id, fn, event = 'click') {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(event, fn);
+}
+
+// ============================================================
+// Tab switching
+// ============================================================
 function switchTab(tab) {
-    document.querySelectorAll('[data-tab]').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === tab);
-    });
-    document.querySelectorAll('[data-tab-content]').forEach(c => {
-        c.style.display = c.dataset.tabContent === tab ? '' : 'none';
-    });
-    // Toggle action buttons
-    const menuActions = document.getElementById('menuActions');
+    document.querySelectorAll('[data-tab]').forEach(b =>
+        b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('[data-tab-content]').forEach(c =>
+        c.style.display = c.dataset.tabContent === tab ? '' : 'none');
+    const menuActions  = document.getElementById('menuActions');
     const flashActions = document.getElementById('flashActions');
-    if (menuActions) menuActions.style.display = tab === 'menu' ? '' : 'none';
+    if (menuActions)  menuActions.style.display  = tab === 'menu'  ? '' : 'none';
     if (flashActions) flashActions.style.display = tab === 'flash' ? '' : 'none';
 }
 
+// ============================================================
+// Load & Render
+// ============================================================
 async function loadFlashSales() {
     try {
         flashState.sales = await API.getAllFlashSales();
@@ -80,51 +108,87 @@ function renderFlashSales() {
     const grid = document.getElementById('specialGrid');
     if (!grid) return;
     if (!flashState.sales.length) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="ico">⚡</div><p>ยังไม่มี เมนูพิเศษ</p></div>`;
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="ico">⚡</div><p>ยังไม่มี เมนูพิเศษ</p></div>';
         return;
     }
-    const now = new Date();
+
     grid.innerHTML = flashState.sales.map(f => {
-        const start = new Date(f.start_time);
-        const end   = new Date(f.end_time);
-        let statusLabel, statusColor;
-        if (!f.is_active) { statusLabel = '⛔ ปิดใช้งาน'; statusColor = '#9ca3af'; }
-        else if (now < start) { statusLabel = '⏳ ยังไม่ถึงเวลา'; statusColor = '#f59e0b'; }
-        else if (now > end)   { statusLabel = '✅ หมดเวลาแล้ว'; statusColor = '#9ca3af'; }
-        else                  { statusLabel = '🔥 กำลังเปิดขาย!'; statusColor = '#dc2626'; }
+        const { label: statusLabel, color: statusColor } = getFlashStatus(f);
+
+        const days = parseScheduleDays(f.schedule_days);
+        const dayChipsHtml = DAY_LABELS.map((lbl, i) => {
+            const active = days.includes(i);
+            return '<span class="day-chip ' + (active ? '' : 'off') + '">' + lbl + '</span>';
+        }).join('');
+
+        const openTime  = f.schedule_open  || '—';
+        const closeTime = f.schedule_close || '—';
 
         const discount = f.original_price > 0
             ? Math.round((1 - f.flash_price / f.original_price) * 100) : 0;
 
-        return `
-        <div class="menu-card ${!f.is_active ? 'unavailable' : ''}">
-            <div class="img ${f.image_url ? '' : 'empty'}" style="${f.image_url ? `background-image:url('${f.image_url}')` : ''}">
-                ${!f.image_url ? '⚡' : ''}
-                <div class="badges">
-                    <span class="badge-chip" style="background:${statusColor};">${statusLabel}</span>
-                    ${discount > 0 ? `<span class="badge-chip spicy">-${discount}%</span>` : ''}
-                </div>
-            </div>
-            <div class="body">
-                <div class="name">⚡ ${escFlash(f.name)}</div>
-                <div class="desc">${escFlash(f.description || '')}</div>
-                <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:6px;">
-                    ${f.original_price > 0 ? `<span style="font-size:12px;color:#9ca3af;text-decoration:line-through;">฿${Number(f.original_price).toFixed(0)}</span>` : ''}
-                    <span class="price" style="color:#dc2626;">฿${Number(f.flash_price).toFixed(0)}</span>
-                </div>
-                <div style="font-size:11px;color:var(--color-muted);margin-bottom:8px;">
-                    🕐 ${fmtDatetime(f.start_time)} → ${fmtDatetime(f.end_time)}
-                </div>
-                <div class="row-btns">
-                    <button class="btn btn-ghost" style="font-size:11px;" data-flash-action="toggle" data-flash-id="${f.id}" data-active="${f.is_active}">
-                        ${f.is_active ? '⛔ ปิด' : '✅ เปิด'}
-                    </button>
-                    <button class="btn btn-ghost" style="font-size:11px;" data-flash-action="edit" data-flash-id="${f.id}">✏️ แก้ไข</button>
-                    <button class="btn btn-ghost" style="font-size:11px;color:#c33;" data-flash-action="delete" data-flash-id="${f.id}">🗑️ ลบ</button>
-                </div>
-            </div>
-        </div>`;
+        return '<div class="menu-card ' + (!f.is_active ? 'unavailable' : '') + '">' +
+            '<div class="img ' + (f.image_url ? '' : 'empty') + '" style="' + (f.image_url ? 'background-image:url(\'' + f.image_url + '\')' : '') + '">' +
+                (!f.image_url ? '⚡' : '') +
+                '<div class="badges">' +
+                    '<span class="badge-chip" style="background:' + statusColor + ';">' + statusLabel + '</span>' +
+                    (discount > 0 ? '<span class="badge-chip spicy">-' + discount + '%</span>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div class="body">' +
+                '<div class="name">⚡ ' + esc(f.name) + '</div>' +
+                '<div class="desc">' + esc(f.description || '') + '</div>' +
+                '<div style="display:flex;gap:8px;align-items:baseline;margin-bottom:8px;">' +
+                    (f.original_price > 0 ? '<span style="font-size:12px;color:#9ca3af;text-decoration:line-through;">฿' + Number(f.original_price).toFixed(0) + '</span>' : '') +
+                    '<span class="price" style="color:#dc2626;">฿' + Number(f.flash_price).toFixed(0) + '</span>' +
+                '</div>' +
+                '<div class="day-chips">' + dayChipsHtml + '</div>' +
+                '<div style="font-size:11px;color:var(--color-muted);margin-bottom:8px;">🕐 ' + openTime + ' – ' + closeTime + ' น.</div>' +
+                '<div class="row-btns">' +
+                    '<button class="btn btn-ghost" style="font-size:11px;" data-flash-action="toggle" data-flash-id="' + f.id + '" data-active="' + f.is_active + '">' +
+                        (f.is_active ? '⛔ หยุดชั่วคราว' : '✅ เปิดขาย') +
+                    '</button>' +
+                    '<button class="btn btn-ghost" style="font-size:11px;" data-flash-action="edit" data-flash-id="' + f.id + '">✏️ แก้ไข</button>' +
+                    '<button class="btn btn-ghost" style="font-size:11px;color:#c33;" data-flash-action="delete" data-flash-id="' + f.id + '">🗑️ ลบ</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
     }).join('');
+}
+
+// ============================================================
+// Status Logic
+// ============================================================
+function getFlashStatus(f) {
+    if (!f.is_active) {
+        return { label: '⛔ หยุดชั่วคราว', color: '#9ca3af' };
+    }
+    const now       = new Date();
+    const todayDay  = now.getDay();
+    const nowMins   = now.getHours() * 60 + now.getMinutes();
+    const days      = parseScheduleDays(f.schedule_days);
+    const openMins  = parseTimeMins(f.schedule_open  || '00:00');
+    const closeMins = parseTimeMins(f.schedule_close || '23:59');
+
+    if (days.length > 0 && !days.includes(todayDay)) {
+        const nextDay = getNextSaleDay(days, todayDay);
+        return { label: 'เปิดวัน' + DAY_FULL[nextDay], color: '#6b7280' };
+    }
+    if (nowMins < openMins) {
+        return { label: '⏰ เปิด ' + (f.schedule_open || '') + ' น.', color: '#f59e0b' };
+    }
+    if (nowMins > closeMins) {
+        return { label: '✅ หมดเวลาวันนี้', color: '#9ca3af' };
+    }
+    return { label: '🔥 กำลังเปิดขาย!', color: '#dc2626' };
+}
+
+function getNextSaleDay(days, today) {
+    for (let i = 1; i <= 7; i++) {
+        const d = (today + i) % 7;
+        if (days.includes(d)) return d;
+    }
+    return days[0];
 }
 
 // ============================================================
@@ -133,16 +197,19 @@ function renderFlashSales() {
 function openAddFlashModal() {
     flashState.editingId = null;
     document.getElementById('flashModalTitle').textContent = 'เพิ่ม เมนูพิเศษใหม่';
-    document.getElementById('inpFlashName').value = '';
-    document.getElementById('inpFlashDesc').value = '';
-    document.getElementById('inpFlashOrigPrice').value = '';
-    document.getElementById('inpFlashPrice').value = '';
-    document.getElementById('inpFlashImageUrl').value = '';
-    document.getElementById('flashImgPreview').style.backgroundImage = '';
-    document.getElementById('flashImgPreview').textContent = '📷 ยังไม่มีรูป';
-    // default: เริ่มตอนนี้ สิ้นสุดใน 2 ชม
-    setDefaultTimes(2);
-    document.getElementById('inpFlashActive').checked = true;
+    document.getElementById('inpFlashName').value       = '';
+    document.getElementById('inpFlashDesc').value       = '';
+    document.getElementById('inpFlashOrigPrice').value  = '';
+    document.getElementById('inpFlashPrice').value      = '';
+    document.getElementById('inpFlashImageUrl').value   = '';
+    const prev = document.getElementById('flashImgPreview');
+    prev.style.backgroundImage = '';
+    prev.innerHTML = '📷 ยังไม่มีรูป<span class="drop-hint">🖱️ คลิกเพื่อเลือก หรือลากไฟล์มาวางได้เลย</span>';
+    setDays([1,2,3,4,5,6,0]);
+    document.getElementById('inpFlashOpenTime').value  = '09:00';
+    document.getElementById('inpFlashCloseTime').value = '21:00';
+    document.getElementById('inpFlashActive').checked  = true;
+    updateScheduleSummary();
     document.getElementById('flashModal').style.display = 'flex';
 }
 
@@ -151,19 +218,21 @@ function openEditFlashModal(id) {
     if (!f) return;
     flashState.editingId = id;
     document.getElementById('flashModalTitle').textContent = 'แก้ไข เมนูพิเศษ';
-    document.getElementById('inpFlashName').value = f.name || '';
-    document.getElementById('inpFlashDesc').value = f.description || '';
-    document.getElementById('inpFlashOrigPrice').value = f.original_price || '';
-    document.getElementById('inpFlashPrice').value = f.flash_price || '';
-    document.getElementById('inpFlashImageUrl').value = f.image_url || '';
+    document.getElementById('inpFlashName').value       = f.name || '';
+    document.getElementById('inpFlashDesc').value       = f.description || '';
+    document.getElementById('inpFlashOrigPrice').value  = f.original_price || '';
+    document.getElementById('inpFlashPrice').value      = f.flash_price || '';
+    document.getElementById('inpFlashImageUrl').value   = f.image_url || '';
     if (f.image_url) {
-        document.getElementById('flashImgPreview').style.backgroundImage = `url('${f.image_url}')`;
-        document.getElementById('flashImgPreview').textContent = '';
+        const prev = document.getElementById('flashImgPreview');
+        prev.style.backgroundImage = 'url(\'' + f.image_url + '\')';
+        prev.innerHTML = '<span class="drop-hint">🖱️ คลิกหรือลากมาเพื่อเปลี่ยนรูป</span>';
     }
-    // แปลง ISO → datetime-local value
-    document.getElementById('inpFlashStart').value = isoToLocal(f.start_time);
-    document.getElementById('inpFlashEnd').value = isoToLocal(f.end_time);
-    document.getElementById('inpFlashActive').checked = !!f.is_active;
+    setDays(parseScheduleDays(f.schedule_days));
+    document.getElementById('inpFlashOpenTime').value  = f.schedule_open  || '09:00';
+    document.getElementById('inpFlashCloseTime').value = f.schedule_close || '21:00';
+    document.getElementById('inpFlashActive').checked  = !!f.is_active;
+    updateScheduleSummary();
     document.getElementById('flashModal').style.display = 'flex';
 }
 
@@ -172,63 +241,35 @@ function closeFlashModal() {
     flashState.editingId = null;
 }
 
-function setDefaultTimes(hours) {
-    const start = new Date();
-    const end   = new Date(start.getTime() + hours * 3600000);
-    document.getElementById('inpFlashStart').value = isoToLocal(start.toISOString());
-    document.getElementById('inpFlashEnd').value   = isoToLocal(end.toISOString());
-}
-
-function setQuickDuration(hours) {
-    const startVal = document.getElementById('inpFlashStart').value;
-    const start = startVal ? new Date(startVal) : new Date();
-    const end = new Date(start.getTime() + hours * 3600000);
-    document.getElementById('inpFlashEnd').value = isoToLocal(end.toISOString());
-}
-
-async function onFlashImageChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-        notifier.showToast('ไฟล์ใหญ่เกิน 5MB', 'error');
-        return;
-    }
-    notifier.showToast('กำลังอัปโหลดรูป...', 'info', 3000);
-    try {
-        const result = await API.uploadImage(file);
-        document.getElementById('inpFlashImageUrl').value = result.url;
-        document.getElementById('flashImgPreview').style.backgroundImage = `url('${result.url}')`;
-        document.getElementById('flashImgPreview').textContent = '';
-        notifier.showToast('✓ อัปโหลดรูปแล้ว', 'success');
-    } catch(e) {
-        notifier.showToast('อัปโหลดรูปล้มเหลว: ' + e.message, 'error');
-    }
-}
-
 async function saveFlashSale() {
-    const name = document.getElementById('inpFlashName').value.trim();
+    const name       = document.getElementById('inpFlashName').value.trim();
     const flashPrice = parseFloat(document.getElementById('inpFlashPrice').value);
-    const origPrice = parseFloat(document.getElementById('inpFlashOrigPrice').value) || 0;
-    const startVal = document.getElementById('inpFlashStart').value;
-    const endVal   = document.getElementById('inpFlashEnd').value;
+    const origPrice  = parseFloat(document.getElementById('inpFlashOrigPrice').value) || 0;
+    const openTime   = document.getElementById('inpFlashOpenTime').value;
+    const closeTime  = document.getElementById('inpFlashCloseTime').value;
+    const days       = Array.from(flashState.selectedDays).sort((a,b) => a - b);
 
-    if (!name) { notifier.showToast('กรุณาใส่ชื่อเมนู', 'error'); return; }
-    if (!flashPrice || flashPrice <= 0) { notifier.showToast('กรุณาใส่ราคา เมนูพิเศษ', 'error'); return; }
-    if (!startVal || !endVal) { notifier.showToast('กรุณาตั้งเวลาเริ่มและสิ้นสุด', 'error'); return; }
-    if (new Date(startVal) >= new Date(endVal)) { notifier.showToast('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม', 'error'); return; }
+    if (!name)                      { notifier.showToast('กรุณาใส่ชื่อเมนู', 'error');       return; }
+    if (!flashPrice || flashPrice <= 0) { notifier.showToast('กรุณาใส่ราคา', 'error');       return; }
+    if (days.length === 0)          { notifier.showToast('กรุณาเลือกอย่างน้อย 1 วัน', 'error'); return; }
+    if (!openTime || !closeTime)    { notifier.showToast('กรุณาตั้งเวลาเปิด-ปิด', 'error');  return; }
+    if (openTime >= closeTime)      { notifier.showToast('เวลาปิดต้องมากกว่าเวลาเปิด', 'error'); return; }
 
     const btn = document.getElementById('btnSaveFlash');
     btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
     const payload = {
         name,
-        description: document.getElementById('inpFlashDesc').value.trim(),
+        description:    document.getElementById('inpFlashDesc').value.trim(),
         original_price: origPrice,
-        flash_price: flashPrice,
-        image_url: document.getElementById('inpFlashImageUrl').value.trim(),
-        start_time: new Date(startVal).toISOString(),
-        end_time:   new Date(endVal).toISOString(),
-        is_active: document.getElementById('inpFlashActive').checked
+        flash_price:    flashPrice,
+        image_url:      document.getElementById('inpFlashImageUrl').value.trim(),
+        schedule_days:  days.join(','),
+        schedule_open:  openTime,
+        schedule_close: closeTime,
+        start_time:     new Date().toISOString(),
+        end_time:       new Date(Date.now() + 365 * 24 * 3600000).toISOString(),
+        is_active:      document.getElementById('inpFlashActive').checked
     };
 
     try {
@@ -244,7 +285,7 @@ async function saveFlashSale() {
     } catch(e) {
         notifier.showToast('บันทึกล้มเหลว: ' + e.message, 'error');
     } finally {
-        btn.disabled = false; btn.textContent = 'บันทึก';
+        btn.disabled = false; btn.textContent = '⭐ บันทึกเมนูพิเศษ';
     }
 }
 
@@ -264,79 +305,72 @@ async function toggleFlashSale(id, newActive) {
     try {
         await API.updateFlashSale({ id, is_active: newActive });
         await loadFlashSales();
+        notifier.showToast(newActive ? '✅ เปิดขายแล้ว' : '⛔ หยุดชั่วคราวแล้ว', 'success');
     } catch(e) {
         notifier.showToast('เปลี่ยนสถานะล้มเหลว: ' + e.message, 'error');
     }
 }
 
-// Helpers
-function isoToLocal(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    const pad = n => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-function fmtDatetime(iso) {
-    if (!iso) return '-';
-    const d = new Date(iso);
-    const pad = n => String(n).padStart(2,'0');
-    return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-function escFlash(s) {
-    if (!s) return '';
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function fileToBase64(file) {
-    return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(',')[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
+// ============================================================
+// Day Picker Helpers
+// ============================================================
+function setDays(dayArr) {
+    flashState.selectedDays = new Set(dayArr);
+    document.querySelectorAll('#flashDayPicker .day-btn').forEach(btn => {
+        const d = parseInt(btn.dataset.day);
+        btn.classList.toggle('selected', flashState.selectedDays.has(d));
     });
+    updateScheduleSummary();
+}
+
+function updateScheduleSummary() {
+    const el = document.getElementById('scheduleSummary');
+    if (!el) return;
+    const days      = Array.from(flashState.selectedDays).sort((a,b) => a - b);
+    const openTime  = document.getElementById('inpFlashOpenTime')  ? document.getElementById('inpFlashOpenTime').value  : '—';
+    const closeTime = document.getElementById('inpFlashCloseTime') ? document.getElementById('inpFlashCloseTime').value : '—';
+    if (days.length === 0) {
+        el.textContent = '⚠️ ยังไม่ได้เลือกวันขาย';
+        el.style.color = '#dc2626';
+        return;
+    }
+    const dayNames = days.map(d => DAY_LABELS[d]).join('  ');
+    el.innerHTML = '📅 <strong>' + dayNames + '</strong> &nbsp;🕐 <strong>' + openTime + ' – ' + closeTime + ' น.</strong>';
+    el.style.color = '';
 }
 
 // ============================================================
-// 🖼️ Drag & Drop Image Upload (เมนูพิเศษ)
+// Image Upload
 // ============================================================
-function setupImageDropzone(previewId, inputId, onChangeFn) {
+async function onFlashImageChange(e) {
+    const file = (e.target.files || [])[0];
+    if (file) uploadFlashImage(file);
+}
+
+function setupImageDropzone(previewId, inputId) {
     const preview = document.getElementById(previewId);
     const input   = document.getElementById(inputId);
     if (!preview || !input) return;
 
-    preview.style.cursor = 'pointer';
     preview.addEventListener('click', () => input.click());
-
     ['dragenter','dragover'].forEach(ev => {
-        preview.addEventListener(ev, (e) => {
-            e.preventDefault();
-            preview.classList.add('dragover');
-        });
+        preview.addEventListener(ev, e => { e.preventDefault(); preview.classList.add('dragover'); });
     });
     ['dragleave','dragend'].forEach(ev => {
         preview.addEventListener(ev, () => preview.classList.remove('dragover'));
     });
-    preview.addEventListener('drop', (e) => {
+    preview.addEventListener('drop', e => {
         e.preventDefault();
         preview.classList.remove('dragover');
         const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            uploadFlashImage(file);
-        } else if (file) {
-            notifier.showToast('กรุณาเลือกไฟล์รูปภาพ (jpg, png ฯลฯ)', 'error');
-        }
+        if (file && file.type.startsWith('image/')) uploadFlashImage(file);
+        else if (file) notifier.showToast('กรุณาเลือกไฟล์รูปภาพ', 'error');
     });
-
-    // paste Ctrl+V
-    document.addEventListener('paste', (e) => {
+    document.addEventListener('paste', e => {
         const modal = document.getElementById('flashModal');
         if (!modal || modal.style.display === 'none') return;
-        const items = e.clipboardData && e.clipboardData.items;
-        if (!items) return;
-        for (const item of items) {
-            if (item.type.startsWith('image/')) {
-                uploadFlashImage(item.getAsFile());
-                break;
-            }
+        for (const item of (e.clipboardData ? e.clipboardData.items : [])) {
+            if (item.type.startsWith('image/')) { uploadFlashImage(item.getAsFile()); break; }
         }
     });
 }
@@ -346,17 +380,15 @@ async function uploadFlashImage(file) {
         notifier.showToast('ไฟล์ใหญ่เกิน 5MB', 'error');
         return;
     }
-    // preview ก่อน
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = ev => {
         const prev = document.getElementById('flashImgPreview');
         if (prev) {
-            prev.style.backgroundImage = `url('${ev.target.result}')`;
+            prev.style.backgroundImage = 'url(\'' + ev.target.result + '\')';
             prev.innerHTML = '<span class="drop-hint">🖱️ คลิกหรือลากมาเพื่อเปลี่ยนรูป</span>';
         }
     };
     reader.readAsDataURL(file);
-
     notifier.showToast('กำลังอัปโหลด...', 'info', 3000);
     try {
         const result = await API.uploadImage(file);
@@ -366,4 +398,25 @@ async function uploadFlashImage(file) {
     } catch(e) {
         notifier.showToast('อัปโหลดล้มเหลว: ' + e.message, 'error');
     }
+}
+
+// ============================================================
+// Utility
+// ============================================================
+function parseScheduleDays(str) {
+    if (!str) return [];
+    return String(str).split(',').map(Number).filter(n => !isNaN(n) && n >= 0 && n <= 6);
+}
+
+function parseTimeMins(str) {
+    if (!str) return 0;
+    var parts = String(str).split(':').map(Number);
+    return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
 }
