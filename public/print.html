@@ -50,6 +50,14 @@
   #loading { text-align:center; padding:40px; color:#666; }
   #error { text-align:center; padding:40px; color:#c33; }
 
+  /* QR Payment */
+  .qr-section { text-align:center; margin:8px 0 4px; }
+  .qr-section img { width:140px; height:140px; display:block; margin:6px auto; border:1px solid #ddd; border-radius:6px; }
+  .qr-label { font-size:.85em; color:#444; margin-top:4px; }
+  .qr-amount { font-size:1.1em; font-weight:700; color:#000; margin-top:2px; }
+  .btn-qr { background:#1a56a0; color:#fff; }
+  .btn-qr.active { background:#15803d; }
+
   @media print {
     body { background:#fff; padding:0; }
     .toolbar { display:none !important; }
@@ -63,6 +71,7 @@
 <div class="toolbar">
   <button class="btn-back" id="btnClose">ปิด</button>
   <button class="btn-58" id="btnSize">ขนาด 58/80mm</button>
+  <button class="btn-qr" id="btnQR">💳 QR จ่ายเงิน</button>
   <button class="btn-print" id="btnPrint">🖨️ ปริ้น</button>
 </div>
 
@@ -74,12 +83,22 @@
 <script src="js/api.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
+  let showQR = false;
+  let currentOrder = null;
+
   // Bind buttons
   document.getElementById('btnClose').addEventListener('click', () => window.close());
   document.getElementById('btnSize').addEventListener('click', () => {
     document.getElementById('receipt').classList.toggle('w58');
   });
   document.getElementById('btnPrint').addEventListener('click', () => window.print());
+  document.getElementById('btnQR').addEventListener('click', () => {
+    showQR = !showQR;
+    const btn = document.getElementById('btnQR');
+    btn.textContent = showQR ? '✅ QR เปิดอยู่' : '💳 QR จ่ายเงิน';
+    btn.classList.toggle('active', showQR);
+    if (currentOrder) renderReceipt(currentOrder);
+  });
 
   if (!checkConfig()) return;
 
@@ -94,6 +113,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   try {
     const order = await API.getOrder(orderId);
+    currentOrder = order;
     renderReceipt(order);
     if (autoPrint) {
       setTimeout(() => { window.print(); }, 500);
@@ -176,6 +196,22 @@ function renderReceipt(order) {
     ` : ''}
 
     <div class="hr2"></div>
+
+    ${showQR && CONFIG.PROMPTPAY_ID ? `
+    <div class="qr-section">
+      <div class="bold" style="font-size:.9em;">📲 ชำระเงินผ่านพร้อมเพย์</div>
+      <img src="https://promptpay.io/${encodeURIComponent(CONFIG.PROMPTPAY_ID)}/${total}.png"
+           alt="QR พร้อมเพย์" onerror="this.src='';this.alt='ไม่สามารถโหลด QR ได้';" />
+      <div class="qr-label">สแกนจ่ายผ่านแอปธนาคาร</div>
+      <div class="qr-amount">฿${total}</div>
+    </div>
+    <div class="hr2"></div>
+    ` : (showQR && !CONFIG.PROMPTPAY_ID ? `
+    <div class="qr-section" style="color:#c33;font-size:.85em;padding:8px;">
+      ⚠️ กรุณาตั้งค่า PROMPTPAY_ID ใน config.js ก่อน
+    </div>
+    <div class="hr2"></div>
+    ` : '')}
 
     <div class="center muted" style="margin-top:6px;">
       ขอบคุณที่ใช้บริการ<br>
