@@ -195,3 +195,29 @@ const I18N = {
         return wrap;
     }
 };
+
+// ============================================================
+// 🚀 Auto-init: ฉีด switcher เข้า topbar ทุกหน้าอัตโนมัติ
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // ถ้าหน้านี้มี #langSwitcherHero อยู่แล้ว (menu.html / customer.js จัดการเอง)
+    if (document.getElementById('langSwitcherHero')) {
+        I18N.apply();
+        return;
+    }
+
+    var topbarInner = document.querySelector('.topbar-inner');
+    if (topbarInner) {
+        // มี topbar — แทรก switcher ต่อท้าย
+        var sw = I18N.createSwitcher();
+        topbarInner.appendChild(sw);
+    } else {
+        // ไม่มี topbar (เช่น index.html) — สร้าง floating switcher มุมขวาบน
+        var sw = I18N.createSwitcher();
+        sw.className = 'lang-switcher-float';
+        // อัปเดต lang-btn ของ floating ให้ใช้ style float
+        document.body.appendChild(sw);
+    }
+
+    I18N.apply();
+});
