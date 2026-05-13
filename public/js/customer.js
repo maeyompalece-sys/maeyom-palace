@@ -132,7 +132,7 @@ async function loadMenu() {
     showLoading(true);
     try {
         const data = await API.getBootstrap();
-        state.menu = (data.menu || []).filter(m => m.is_available !== false);
+        state.menu = data.menu || [];
         state.categories = data.categories || [];
         renderCategories();
         renderMenu();
@@ -305,28 +305,40 @@ function renderMenu() {
         return;
     }
 
-    grid.innerHTML = items.map(item => `
-        <div class="menu-item" data-item-id="${item.id}">
+    grid.innerHTML = items.map(item => {
+        const unavailable = item.is_available === false;
+        return `
+        <div class="menu-item${unavailable ? ' menu-item--unavailable' : ''}" data-item-id="${item.id}">
             <div class="menu-item-img" ${item.image_url ? `style="background-image:url('${item.image_url}')"` : ''}>
                 ${item.image_url ? '' : '🍽️'}
                 <div class="menu-item-badges">
-                    ${item.is_recommended ? '<span class="badge-rec">⭐</span>' : ''}
+                    ${item.is_recommended && !unavailable ? '<span class="badge-rec">⭐</span>' : ''}
                     ${item.is_spicy ? '<span class="badge-spicy">🌶️</span>' : ''}
                 </div>
+                ${unavailable ? `
+                <div class="menu-unavailable-overlay">
+                    <div class="menu-unavailable-inner">
+                        <span class="menu-unavailable-icon">🌙</span>
+                        <span class="menu-unavailable-title">หยุดพักชั่วคราว</span>
+                        <span class="menu-unavailable-sub">จะกลับมาให้บริการเร็วๆ นี้</span>
+                    </div>
+                </div>` : ''}
             </div>
             <div class="menu-item-body">
                 <div class="menu-item-name">${escapeHtml(item.name)}</div>
                 <div class="menu-item-desc">${escapeHtml(item.description || '\u00A0')}</div>
                 <div class="menu-item-row">
-                    <span class="menu-item-price">฿${formatPrice(item.price)}</span>
-                    <button class="btn-add" data-item-id="${item.id}">+</button>
+                    <span class="menu-item-price${unavailable ? ' menu-item-price--unavailable' : ''}">฿${formatPrice(item.price)}</span>
+                    ${unavailable
+                        ? '<span class="btn-add btn-add--unavailable">–</span>'
+                        : `<button class="btn-add" data-item-id="${item.id}">+</button>`}
                 </div>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 
-    // Bind add buttons
-    grid.querySelectorAll('.btn-add, .menu-item').forEach(el => {
+    // Bind add buttons (only available items)
+    grid.querySelectorAll('.btn-add:not(.btn-add--unavailable), .menu-item:not(.menu-item--unavailable)').forEach(el => {
         el.addEventListener('click', (e) => {
             e.stopPropagation();
             const id = el.dataset.itemId;
@@ -341,6 +353,7 @@ function renderMenu() {
 function openItemModal(itemId) {
     const item = state.menu.find(i => i.id === itemId);
     if (!item) return;
+    if (item.is_available === false) return; // ปิดรับออเดอร์ชั่วคราว
 
     let modal = document.getElementById('itemModal');
     if (!modal) {
