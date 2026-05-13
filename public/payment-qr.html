@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#651713">
+<link rel="manifest" href="manifest.json">
+<title>QR จ่ายเงิน | โรงแรม แม่ยมพาเลส</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+
+<style>
+  .page-wrap { max-width: 860px; margin: 0 auto; padding: 32px 16px 80px; }
+
+  h1 { font-family:'Cormorant Garamond',serif; color:var(--color-emerald); font-size:30px; margin:0 0 6px; }
+  .subtitle { color:var(--color-muted); font-size:14px; margin-bottom:28px; }
+
+  /* ─── Layout ─── */
+  .qr-layout { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media(max-width:640px){ .qr-layout { grid-template-columns:1fr; } }
+
+  /* ─── Card ─── */
+  .card {
+    background:#fff;
+    border-radius:16px;
+    padding:24px;
+    box-shadow:0 4px 16px rgba(0,0,0,.06);
+  }
+  .card-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:20px;
+    font-weight:700;
+    color:var(--color-emerald);
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  /* ─── Upload zone ─── */
+  .upload-zone {
+    border: 2px dashed var(--color-gold);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: #fdf8ef;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color:var(--color-emerald); background:#f0f7f0; }
+  .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:40px; margin-bottom:8px; }
+  .upload-text { font-size:14px; color:var(--color-muted); }
+  .upload-hint { font-size:12px; color:#aaa; margin-top:4px; }
+
+  /* ─── Preview ─── */
+  .preview-wrap {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+  .qr-preview-img {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    background: #fff;
+    padding: 8px;
+  }
+  .qr-empty {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #aaa;
+    font-size: 13px;
+  }
+  .qr-empty-icon { font-size: 36px; }
+
+  /* ─── Badge ─── */
+  .badge-active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .badge-none {
+    background: #f3f4f6;
+    color: #9ca3af;
+    border: 1px solid #e5e7eb;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ─── Buttons ─── */
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-save { background:var(--color-emerald); color:#fff; }
+  .btn-save:hover { background:#4A0E0E; }
+  .btn-save:disabled { background:#aaa; cursor:not-allowed; }
+  .btn-delete { background:#fee2e2; color:#b91c1c; }
+  .btn-delete:hover { background:#fca5a5; }
+  .btn-outline { background:#fff; color:var(--color-emerald); border:1.5px solid var(--color-emerald); }
+  .btn-outline:hover { background:var(--color-emerald); color:#fff; }
+
+  /* ─── Name input ─── */
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:13px; font-weight:600; color:var(--color-emerald); margin-bottom:6px; display:block; }
+  .form-input {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1.5px solid var(--color-line);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--color-emerald);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .form-input:focus { border-color: var(--color-gold); }
+
+  /* ─── Info box ─── */
+  .info-box {
+    background: #fef9ec;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #92400e;
+    line-height: 1.7;
+    margin-top: 16px;
+  }
+  .info-box strong { color: var(--color-emerald); }
+
+  /* ─── Toast ─── */
+  #toast {
+    position: fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+    background:#1a1a1a; color:#fff; padding:12px 24px; border-radius:30px;
+    font-size:14px; font-weight:600; z-index:999;
+    transition:transform .3s ease, opacity .3s ease; opacity:0;
+    white-space:nowrap;
+  }
+  #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+  /* ─── Receipt mock ─── */
+  .receipt-mock {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 12px;
+    font-family: 'Sarabun', sans-serif;
+    color: #333;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .receipt-mock .mock-qr {
+    width:100px; height:100px;
+    margin:10px auto;
+    border-radius:8px;
+    object-fit:contain;
+    border:1px solid #eee;
+  }
+  .receipt-mock .mock-qr-empty {
+    width:100px; height:100px;
+    margin:10px auto;
+    border:2px dashed #ddd;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    color:#aaa; font-size:11px;
+  }
+  .receipt-mock hr { border:none; border-top:1px dashed #aaa; margin:8px 0; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="admin.html" class="brand-link" title="กลับหน้าแรก">
+      <img src="images/logo-white.png" class="brand-logo-img" alt="Logo">
+    </a>
+    <nav class="topbar-nav">
+      <a href="index.html">🏠 หน้าแรก</a>
+      <a href="admin.html">ออเดอร์</a>
+      <a href="tables.html">โต๊ะ</a>
+      <a href="menu-manage.html">เมนู</a>
+      <a href="report.html">📊 รายงาน</a>
+      <a href="payment-qr.html" class="active">💳 QR จ่าย</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <h1>💳 QR จ่ายเงิน</h1>
+  <p class="subtitle">อัปโหลด QR code ธนาคารของคุณ — ระบบจะแสดงบนสลิปปริ้นทุกออเดอร์อัตโนมัติ</p>
+
+  <div class="qr-layout">
+
+    <!-- LEFT: Upload & Settings -->
+    <div class="card">
+      <div class="card-title">⬆️ อัปโหลด QR Code</div>
+
+      <div class="form-group">
+        <label class="form-label">ชื่อ / คำอธิบาย (แสดงบนสลิป)</label>
+        <input type="text" id="qrLabel" class="form-input" placeholder="เช่น ธนาคารกสิกรไทย • พร้อมเพย์" maxlength="60">
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">คลิกหรือลากไฟล์ภาพมาวางที่นี่</div>
+        <div class="upload-hint">รองรับ JPG, PNG, WEBP (แนะนำ: ภาพ QR จากธนาคารหรือพร้อมเพย์)</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-save" id="btnSave" disabled>💾 บันทึก</button>
+        <button class="btn btn-delete" id="btnDelete" style="display:none">🗑️ ลบ QR</button>
+      </div>
+
+      <div class="info-box">
+        💡 <strong>วิธีใช้:</strong><br>
+        1. อัปโหลดภาพ QR จากแอปธนาคารของคุณ<br>
+        2. กด <strong>บันทึก</strong><br>
+        3. กด <strong>💳 QR จ่ายเงิน</strong> ในหน้าปริ้นออเดอร์<br>
+        4. QR จะปรากฏบนสลิปให้ลูกค้าสแกนได้เลย<br><br>
+        🔒 ภาพถูกเก็บในเบราว์เซอร์นี้เท่านั้น (localStorage)
+      </div>
+    </div>
+
+    <!-- RIGHT: Preview -->
+    <div class="card">
+      <div class="card-title">👁️ ตัวอย่างสลิป</div>
+
+      <div class="preview-wrap">
+        <div id="statusBadge" class="badge-none">ยังไม่มี QR</div>
+
+        <!-- Receipt mock -->
+        <div class="receipt-mock" style="width:100%;max-width:220px;">
+          <div style="font-size:10px;color:#666;">━━━ ตัวอย่างสลิป ━━━</div>
+          <div style="font-size:11px;margin:4px 0;">ยอดชำระ <strong>฿XXX</strong></div>
+          <hr>
+          <div style="font-size:11px;font-weight:700;">📲 ชำระเงิน</div>
+          <div id="mockLabel" style="font-size:10px;color:#666;margin:2px 0;">—</div>
+          <div id="mockQrWrap">
+            <div class="mock-qr-empty">ไม่มี QR</div>
+          </div>
+          <div style="font-size:10px;color:#666;margin-top:4px;">สแกนจ่ายผ่านแอปธนาคาร</div>
+          <hr>
+          <div style="font-size:10px;">ขอบคุณที่ใช้บริการ ✨</div>
+        </div>
+
+        <!-- Full preview -->
+        <div id="fullPreview" class="qr-empty">
+          <div class="qr-empty-icon">🖼️</div>
+          <div>ยังไม่มีภาพ QR</div>
+        </div>
+        <div id="previewFilename" style="font-size:12px;color:#aaa;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const STORAGE_KEY_IMG   = 'paymentQR_image';
+const STORAGE_KEY_LABEL = 'paymentQR_label';
+
+let pendingDataURL = null;
+
+// ── Load saved ──────────────────────────────────────────────
+function loadSaved() {
+  const saved = localStorage.getItem(STORAGE_KEY_IMG);
+  const label = localStorage.getItem(STORAGE_KEY_LABEL) || '';
+  document.getElementById('qrLabel').value = label;
+
+  if (saved) {
+    showPreview(saved, label, false);
+    document.getElementById('btnDelete').style.display = '';
+    document.getElementById('btnSave').disabled = false;
+  }
+}
+
+// ── Preview helper ───────────────────────────────────────────
+function showPreview(dataURL, label, isPending) {
+  // Full preview
+  const fp = document.getElementById('fullPreview');
+  fp.outerHTML; // just reference
+  const container = document.getElementById('fullPreview').parentElement || document.querySelector('.preview-wrap');
+
+  // Replace qr-empty or img
+  let imgEl = document.querySelector('.qr-preview-img');
+  const emptyEl = document.getElementById('fullPreview');
+
+  if (emptyEl && emptyEl.classList.contains('qr-empty')) {
+    const img = document.createElement('img');
+    img.className = 'qr-preview-img';
+    img.id = 'fullPreview';
+    img.src = dataURL;
+    img.alt = 'QR จ่ายเงิน';
+    emptyEl.replaceWith(img);
+  } else if (imgEl) {
+    imgEl.src = dataURL;
+  }
+
+  // Mock receipt
+  document.getElementById('mockLabel').textContent = label || 'สแกนจ่ายเงิน';
+  const mockWrap = document.getElementById('mockQrWrap');
+  mockWrap.innerHTML = `<img src="${dataURL}" class="mock-qr" alt="QR">`;
+
+  // Badge
+  const badge = document.getElementById('statusBadge');
+  if (isPending) {
+    badge.className = 'badge-none';
+    badge.textContent = '⏳ รอบันทึก';
+  } else {
+    badge.className = 'badge-active';
+    badge.textContent = '✅ ใช้งานอยู่';
+  }
+}
+
+// ── File input ───────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  handleFile(file);
+});
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleFile(file);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    pendingDataURL = ev.target.result;
+    const label = document.getElementById('qrLabel').value;
+    showPreview(pendingDataURL, label, true);
+    document.getElementById('btnSave').disabled = false;
+    document.getElementById('previewFilename').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Update mock label live
+document.getElementById('qrLabel').addEventListener('input', function() {
+  const cur = document.getElementById('mockLabel');
+  if (cur) cur.textContent = this.value || 'สแกนจ่ายเงิน';
+});
+
+// ── Save ─────────────────────────────────────────────────────
+document.getElementById('btnSave').addEventListener('click', function() {
+  const label = document.getElementById('qrLabel').value.trim();
+  const img = pendingDataURL || localStorage.getItem(STORAGE_KEY_IMG);
+  if (!img) { showToast('⚠️ กรุณาเลือกภาพ QR ก่อน'); return; }
+
+  try {
+    localStorage.setItem(STORAGE_KEY_IMG, img);
+    localStorage.setItem(STORAGE_KEY_LABEL, label);
+    pendingDataURL = null;
+    showPreview(img, label, false);
+    document.getElementById('btnDelete').style.display = '';
+    showToast('✅ บันทึก QR เรียบร้อยแล้ว');
+  } catch(e) {
+    showToast('❌ บันทึกไม่ได้ — ภาพอาจใหญ่เกินไป');
+  }
+});
+
+// ── Delete ───────────────────────────────────────────────────
+document.getElementById('btnDelete').addEventListener('click', function() {
+  if (!confirm('ลบ QR จ่ายเงินออก?\nสลิปจะไม่แสดง QR อีกต่อไป')) return;
+  localStorage.removeItem(STORAGE_KEY_IMG);
+  localStorage.removeItem(STORAGE_KEY_LABEL);
+  pendingDataURL = null;
+
+  // Reset preview
+  const imgEl = document.querySelector('.qr-preview-img');
+  if (imgEl) {
+    const empty = document.createElement('div');
+    empty.className = 'qr-empty';
+    empty.id = 'fullPreview';
+    empty.innerHTML = '<div class="qr-empty-icon">🖼️</div><div>ยังไม่มีภาพ QR</div>';
+    imgEl.replaceWith(empty);
+  }
+  document.getElementById('mockQrWrap').innerHTML = '<div class="mock-qr-empty">ไม่มี QR</div>';
+  document.getElementById('mockLabel').textContent = '—';
+  document.getElementById('statusBadge').className = 'badge-none';
+  document.getElementById('statusBadge').textContent = 'ยังไม่มี QR';
+  document.getElementById('btnDelete').style.display = 'none';
+  document.getElementById('btnSave').disabled = true;
+  document.getElementById('qrLabel').value = '';
+  document.getElementById('previewFilename').textContent = '';
+  showToast('🗑️ ลบ QR เรียบร้อยแล้ว');
+});
+
+// ── Toast ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Init ─────────────────────────────────────────────────────
+loadSaved();
+</script>
+
+</body>
+</html>

@@ -82,9 +82,11 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async function() {
+  // ต้องอยู่ระดับ global เพื่อให้ renderReceipt เข้าถึงได้
   let showQR = false;
   let currentOrder = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
 
   // Bind buttons
   document.getElementById('btnClose').addEventListener('click', () => window.close());
@@ -197,21 +199,7 @@ function renderReceipt(order) {
 
     <div class="hr2"></div>
 
-    ${showQR && CONFIG.PROMPTPAY_ID ? `
-    <div class="qr-section">
-      <div class="bold" style="font-size:.9em;">📲 ชำระเงินผ่านพร้อมเพย์</div>
-      <img src="https://promptpay.io/${encodeURIComponent(CONFIG.PROMPTPAY_ID)}/${total}.png"
-           alt="QR พร้อมเพย์" onerror="this.src='';this.alt='ไม่สามารถโหลด QR ได้';" />
-      <div class="qr-label">สแกนจ่ายผ่านแอปธนาคาร</div>
-      <div class="qr-amount">฿${total}</div>
-    </div>
-    <div class="hr2"></div>
-    ` : (showQR && !CONFIG.PROMPTPAY_ID ? `
-    <div class="qr-section" style="color:#c33;font-size:.85em;padding:8px;">
-      ⚠️ กรุณาตั้งค่า PROMPTPAY_ID ใน config.js ก่อน
-    </div>
-    <div class="hr2"></div>
-    ` : '')}
+    ${showQR ? renderQRSection(total) : ''}
 
     <div class="center muted" style="margin-top:6px;">
       ขอบคุณที่ใช้บริการ<br>
@@ -224,6 +212,42 @@ function renderReceipt(order) {
   `;
 
   document.getElementById('receipt').innerHTML = html;
+}
+
+function renderQRSection(total) {
+  // ลำดับ: 1) QR อัปโหลดแล้ว  2) PromptPay API
+  const uploadedImg   = localStorage.getItem('paymentQR_image');
+  const uploadedLabel = localStorage.getItem('paymentQR_label') || 'สแกนจ่ายผ่านแอปธนาคาร';
+
+  if (uploadedImg) {
+    return `
+    <div class="qr-section">
+      <div class="bold" style="font-size:.9em;">📲 ชำระเงิน</div>
+      <img src="${uploadedImg}" alt="QR จ่ายเงิน" />
+      <div class="qr-label">${escapeHtml(uploadedLabel)}</div>
+      <div class="qr-amount">฿${total}</div>
+    </div>
+    <div class="hr2"></div>`;
+  }
+
+  if (CONFIG.PROMPTPAY_ID) {
+    return `
+    <div class="qr-section">
+      <div class="bold" style="font-size:.9em;">📲 ชำระเงินผ่านพร้อมเพย์</div>
+      <img src="https://promptpay.io/${encodeURIComponent(CONFIG.PROMPTPAY_ID)}/${total}.png"
+           alt="QR พร้อมเพย์" onerror="this.src='';this.alt='ไม่สามารถโหลด QR ได้';" />
+      <div class="qr-label">สแกนจ่ายผ่านแอปธนาคาร</div>
+      <div class="qr-amount">฿${total}</div>
+    </div>
+    <div class="hr2"></div>`;
+  }
+
+  return `
+    <div class="qr-section" style="color:#c33;font-size:.85em;padding:8px;">
+      ⚠️ ยังไม่ได้ตั้งค่า QR จ่ายเงิน<br>
+      <small>ไปที่ <a href="payment-qr.html">หน้า QR จ่าย</a> เพื่ออัปโหลด</small>
+    </div>
+    <div class="hr2"></div>`;
 }
 
 function escapeHtml(s) {
