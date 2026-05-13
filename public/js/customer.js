@@ -514,15 +514,33 @@ async function submitOrder() {
     try {
         let result;
         if (state.addToOrderId) {
-            // สั่งเพิ่มในออเดอร์เดิม
-            result = await API.addItemsToOrder({
-                order_id: state.addToOrderId,
-                items: state.cart
+            // สั่งเพิ่ม → สร้างเป็นออเดอร์ใหม่แยกออกไปเลย
+            const newOrder = await API.createOrder({
+                customer_name: state.customerName,
+                customer_phone: state.customerPhone,
+                table_number: state.tableNumber,
+                order_type: state.orderType,
+                items: state.cart,
+                notes: notes
             });
-            notifier.showToast('✓ ส่งรายการเพิ่มแล้ว', 'success', 2000);
+
+            // เก็บ id ออเดอร์ใหม่ใน localStorage
+            try {
+                const my = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
+                my.unshift({ id: newOrder.id, order_number: newOrder.order_number, created_at: newOrder.created_at });
+                localStorage.setItem('maeyom_my_orders', JSON.stringify(my.slice(0, 20)));
+            } catch (e) {}
+
+            // 🔔 ผูก push กับออเดอร์ใหม่
+            try {
+                await Push.askPermission();
+                await Push.linkOrder(newOrder.id);
+            } catch(e) {}
+
+            notifier.showToast('✓ ส่งออเดอร์เพิ่มเรียบร้อย', 'success', 2000);
             notifier.playSuccessSound();
             setTimeout(() => {
-                window.location.href = 'status.html?id=' + state.addToOrderId;
+                window.location.href = 'status.html?id=' + newOrder.id;
             }, 800);
         } else {
             // สร้างออเดอร์ใหม่
