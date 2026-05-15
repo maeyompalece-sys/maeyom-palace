@@ -233,7 +233,7 @@ async function pollUpdates() {
                     // ปริ้นอัตโนมัติ
                     if (adminState.autoPrint) {
                         setTimeout(() => {
-                            window.open('print.html?id=' + order.id + '&auto=1', '_blank', 'width=420,height=720');
+                            autoPrintOrder(order.id);
                         }, 800);
                     }
                 }
@@ -448,6 +448,26 @@ async function deleteOrder(orderId) {
 
 function printOrder(orderId) {
     window.open('print.html?id=' + orderId, '_blank', 'width=420,height=720');
+}
+
+function autoPrintOrder(orderId) {
+    // ใช้ iframe แทน window.open เพื่อหลีกเลี่ยง popup block
+    let iframe = document.getElementById('auto-print-frame');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'auto-print-frame';
+        iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:420px;height:720px;border:none;';
+        document.body.appendChild(iframe);
+    }
+    iframe.src = 'print.html?id=' + orderId + '&auto=1';
+    iframe.onload = function() {
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        } catch(e) {
+            window.open('print.html?id=' + orderId + '&auto=1', '_blank', 'width=420,height=720');
+        }
+    };
 }
 
 // ============================================================
