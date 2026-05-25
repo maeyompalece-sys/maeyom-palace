@@ -397,6 +397,60 @@
       </div>
     </div>
 
+    <!-- ===== ส่วนใหม่: กำหนดตารางเวลาเปิด-ปิดครัวอัตโนมัติ ===== -->
+    <div id="kScheduleSection" style="margin-top:18px;padding:14px;background:#fafaf6;border-radius:10px;border:1px solid var(--color-line);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <label style="font-size:13px;font-weight:700;color:var(--color-emerald);">📅 กำหนดตารางเวลาเปิด-ปิดอัตโนมัติ</label>
+        <label class="k-sched-toggle">
+          <input type="checkbox" id="kScheduleEnabled" onchange="toggleKSchedule(this.checked)">
+          <span class="k-sched-slider"></span>
+        </label>
+      </div>
+      <div id="kScheduleBody" style="display:none;margin-top:14px;">
+        <!-- วันที่เปิดขาย -->
+        <div>
+          <label style="font-size:12px;color:var(--color-muted);font-weight:600;display:block;margin-bottom:8px;">📆 วันที่เปิดขาย</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="kDayBtns">
+            <button class="k-day-btn" data-day="1" onclick="kToggleDay(1)">จ</button>
+            <button class="k-day-btn" data-day="2" onclick="kToggleDay(2)">อ</button>
+            <button class="k-day-btn" data-day="3" onclick="kToggleDay(3)">พ</button>
+            <button class="k-day-btn" data-day="4" onclick="kToggleDay(4)">พฤ</button>
+            <button class="k-day-btn" data-day="5" onclick="kToggleDay(5)">ศ</button>
+            <button class="k-day-btn" data-day="6" onclick="kToggleDay(6)">ส</button>
+            <button class="k-day-btn" data-day="0" onclick="kToggleDay(0)">อา</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <button class="k-quick" onclick="kSetDays([1,2,3,4,5])">จ–ศ</button>
+            <button class="k-quick" onclick="kSetDays([6,0])">ส–อา</button>
+            <button class="k-quick" onclick="kSetDays([0,1,2,3,4,5,6])">ทุกวัน</button>
+            <button class="k-quick" onclick="kSetDays([])">ล้าง</button>
+          </div>
+        </div>
+        <!-- เวลาเริ่ม / ปิด -->
+        <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;">
+            <label style="font-size:12px;color:var(--color-muted);font-weight:600;display:block;margin-bottom:6px;">⏰ เวลาเริ่มขาย</label>
+            <input type="time" id="kOpenTime" value="09:00" oninput="updateKScheduleSummary()"
+              style="width:100%;padding:7px 10px;border:1.5px solid var(--color-line);border-radius:8px;font-size:14px;box-sizing:border-box;font-family:inherit;">
+          </div>
+          <div style="flex:1;min-width:120px;">
+            <label style="font-size:12px;color:var(--color-muted);font-weight:600;display:block;margin-bottom:6px;">⏰ เวลาปิดขาย</label>
+            <input type="time" id="kCloseTime" value="22:00" oninput="updateKScheduleSummary()"
+              style="width:100%;padding:7px 10px;border:1.5px solid var(--color-line);border-radius:8px;font-size:14px;box-sizing:border-box;font-family:inherit;">
+          </div>
+        </div>
+        <!-- Preview -->
+        <div id="kScheduleSummaryBox" style="display:none;margin-top:10px;padding:8px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:12px;color:#065f46;"></div>
+        <!-- ปุ่มบันทึก -->
+        <button onclick="saveKitchenSchedule()"
+          style="margin-top:12px;width:100%;padding:9px;background:var(--color-emerald);color:#fff;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">⭐ บันทึกตารางเวลา</button>
+        <button onclick="clearKitchenSchedule()"
+          style="margin-top:6px;width:100%;padding:7px;background:transparent;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;">🗑️ ลบตารางเวลา</button>
+      </div>
+    </div>
+    <!-- ===== จบส่วนใหม่ ===== -->
+
     <!-- Summary -->
     <div id="kSummaryBox" style="margin-top:14px;padding:10px 14px;background:#fff8ee;border-radius:8px;border:1px solid #fde68a;font-size:13px;color:#92400e;display:none;"></div>
 
@@ -422,6 +476,16 @@
 .k-item-row:hover{background:#fff8ee;}
 .k-item-row.selected{background:#f0fdf4;}
 .k-item-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--color-emerald);}
+/* ── Schedule: toggle switch ── */
+.k-sched-toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;}
+.k-sched-toggle input{opacity:0;width:0;height:0;}
+.k-sched-slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:24px;transition:.2s;}
+.k-sched-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.k-sched-toggle input:checked + .k-sched-slider{background:var(--color-emerald);}
+.k-sched-toggle input:checked + .k-sched-slider:before{transform:translateX(20px);}
+/* ── Schedule: day buttons ── */
+.k-day-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-line);background:#fff;color:var(--color-muted);font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.k-day-btn.k-day-active{background:var(--color-emerald);color:#fff;border-color:var(--color-emerald);}
 </style>
 
 <script src="js/config.js"></script>
