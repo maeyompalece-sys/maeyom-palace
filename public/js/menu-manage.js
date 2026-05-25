@@ -17,6 +17,8 @@ async function init() {
     if (!checkConfig()) return;
     bindEvents();
     await loadAll();
+    // เริ่มตรวจสอบตารางเวลาเปิด-ปิดครัว
+    initKitchenScheduleChecker();
 }
 
 // ============================================================
@@ -826,4 +828,173 @@ async function loadAll() {
         console.error(err);
         notifier.showToast('โหลดข้อมูลล้มเหลว: ' + err.message, 'error', 5000);
     }
+}
+
+// ============================================================
+// 📅 Kitchen Schedule Manager (วัน/เวลา เปิด-ปิดครัวอัตโนมัติ)
+// ============================================================
+const KITCHEN_SCHEDULE_KEY = 'maeyom_kitchen_schedule';
+let kitchenScheduleInterval = null;
+
+// state ในหน้าต่าง modal
+let kSchedDays = [];       // array ของตัวเลขวัน 0=อา,1=จ,...,6=ส
+
+// ── โหลด / บันทึก schedule จาก localStorage ─────────────────
+function loadKitchenSchedule() {
+    try { return JSON.parse(localStorage.getItem(KITCHEN_SCHEDULE_KEY)) || null; }
+    catch { return null; }
+}
+function saveKitchenScheduleRecord(rec) {
+    localStorage.setItem(KITCHEN_SCHEDULE_KEY, JSON.stringify(rec));
+}
+function removeKitchenScheduleRecord() {
+    localStorage.removeItem(KITCHEN_SCHEDULE_KEY);
+}
+
+// ── เมื่อเปิด modal โหลด schedule เดิมมาแสดง ─────────────────
+// (เรียกต่อท้าย openKitchenModal เดิม)
+const _origOpenKitchenModal = openKitchenModal;
+openKitchenModal = function() {
+    _origOpenKitchenModal();
+    renderKScheduleUI();
+};
+
+function renderKScheduleUI() {
+    const sched = loadKitchenSchedule();
+    const enabled = !!(sched && sched.enabled);
+    const days    = sched ? (sched.days || []) : [];
+    const openT   = sched ? (sched.openTime  || '09:00') : '09:00';
+    const closeT  = sched ? (sched.closeTime || '22:00') : '22:00';
+
+    const chk = document.getElementById('kScheduleEnabled');
+    if (chk) chk.checked = enabled;
+
+    kSchedDays = [...days];
+    renderKDayBtns();
+
+    const ot = document.getElementById('kOpenTime');
+    const ct = document.getElementById('kCloseTime');
+    if (ot) ot.value = openT;
+    if (ct) ct.value = closeT;
+
+    const body = document.getElementById('kScheduleBody');
+    if (body) body.style.display = enabled ? '' : 'none';
+
+    updateKScheduleSummary();
+}
+
+// ── Toggle แสดง/ซ่อน schedule body ──────────────────────────
+function toggleKSchedule(enabled) {
+    const body = document.getElementById('kScheduleBody');
+    if (body) body.style.display = enabled ? '' : 'none';
+    updateKScheduleSummary();
+}
+
+// ── วันในสัปดาห์ ─────────────────────────────────────────────
+function kToggleDay(day) {
+    const idx = kSchedDays.indexOf(day);
+    idx >= 0 ? kSchedDays.splice(idx, 1) : kSchedDays.push(day);
+    renderKDayBtns();
+    updateKScheduleSummary();
+}
+function kSetDays(days) {
+    kSchedDays = [...days];
+    renderKDayBtns();
+    updateKScheduleSummary();
+}
+function renderKDayBtns() {
+    document.querySelectorAll('.k-day-btn').forEach(btn => {
+        const d = parseInt(btn.dataset.day);
+        btn.classList.toggle('k-day-active', kSchedDays.includes(d));
+    });
+}
+
+// ── Summary preview ───────────────────────────────────────────
+const K_DAY_LABEL = { 0:'อา', 1:'จ', 2:'อ', 3:'พ', 4:'พฤ', 5:'ศ', 6:'ส' };
+function updateKScheduleSummary() {
+    const box = document.getElementById('kScheduleSummaryBox');
+    if (!box) return;
+    const enabled = document.getElementById('kScheduleEnabled')?.checked;
+    if (!enabled || !kSchedDays.length) { box.style.display = 'none'; return; }
+    const ot = document.getElementById('kOpenTime')?.value || '';
+    const ct = document.getElementById('kCloseTime')?.value || '';
+    const orderedDays = [1,2,3,4,5,6,0].filter(d => kSchedDays.includes(d));
+    const dayStr = orderedDays.map(d => K_DAY_LABEL[d]).join(', ');
+    box.style.display = '';
+    box.innerHTML = `📆 <strong>${dayStr}</strong> &nbsp;⏰ <strong>${ot}</strong> – <strong>${ct}</strong> น.<br>
+        <span style="color:#065f46;font-size:11px;">ระบบจะเปิดครัวอัตโนมัติเวลา ${ot} น. และปิดเวลา ${ct} น. ในวันที่กำหนด</span>`;
+}
+
+// ── บันทึกตารางเวลา ───────────────────────────────────────────
+function saveKitchenSchedule() {
+    const enabled = document.getElementById('kScheduleEnabled')?.checked;
+    const ot = document.getElementById('kOpenTime')?.value;
+    const ct = document.getElementById('kCloseTime')?.value;
+    if (!ot || !ct) { notifier.showToast('กรุณาระบุเวลาเริ่มและปิดขาย', 'error'); return; }
+    if (enabled && !kSchedDays.length) { notifier.showToast('กรุณาเลือกอย่างน้อย 1 วัน', 'error'); return; }
+    if (ot >= ct) { notifier.showToast('เวลาเริ่มขายต้องก่อนเวลาปิดขาย', 'error'); return; }
+    const rec = { enabled: !!enabled, days: [...kSchedDays], openTime: ot, closeTime: ct };
+    saveKitchenScheduleRecord(rec);
+    notifier.showToast('⭐ บันทึกตารางเวลาแล้ว', 'success');
+    updateKScheduleSummary();
+    // ตรวจสอบทันทีว่าควรเปิด/ปิดตอนนี้หรือไม่
+    checkAndApplyKitchenSchedule();
+}
+
+// ── ลบตารางเวลา ──────────────────────────────────────────────
+function clearKitchenSchedule() {
+    if (!confirm('ลบตารางเวลาเปิด-ปิดครัวอัตโนมัติ?')) return;
+    removeKitchenScheduleRecord();
+    kSchedDays = [];
+    renderKDayBtns();
+    const chk = document.getElementById('kScheduleEnabled');
+    if (chk) chk.checked = false;
+    const body = document.getElementById('kScheduleBody');
+    if (body) body.style.display = 'none';
+    const box = document.getElementById('kScheduleSummaryBox');
+    if (box) box.style.display = 'none';
+    notifier.showToast('🗑️ ลบตารางเวลาแล้ว', 'info');
+}
+
+// ── ตรวจสอบและ apply ตารางเวลา ───────────────────────────────
+async function checkAndApplyKitchenSchedule() {
+    const sched = loadKitchenSchedule();
+    if (!sched || !sched.enabled || !sched.days?.length) return;
+
+    const now    = new Date();
+    const today  = now.getDay();                                   // 0=อา...6=ส
+    const nowHHMM = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+    const shouldBeOpen = sched.days.includes(today)
+        && nowHHMM >= sched.openTime
+        && nowHHMM <  sched.closeTime;
+
+    // อ่านสถานะเมนูปัจจุบัน (จาก menuState)
+    if (!menuState || !menuState.items?.length) return;
+
+    const allIds = menuState.items.map(i => i.id);
+    const allOpen  = menuState.items.every(i => i.is_available);
+    const allClosed = menuState.items.every(i => !i.is_available);
+
+    // หลีกเลี่ยง call API ซ้ำถ้าสถานะตรงแล้ว
+    if (shouldBeOpen && allOpen) return;
+    if (!shouldBeOpen && allClosed) return;
+
+    try {
+        await Promise.all(allIds.map(id => API.toggleAvailable(id, shouldBeOpen)));
+        const msg = shouldBeOpen ? '🟢 เปิดครัวอัตโนมัติตามตาราง' : '🔴 ปิดครัวอัตโนมัติตามตาราง';
+        notifier.showToast(msg, 'info');
+        await loadAll();
+    } catch (e) {
+        console.error('[KitchenSchedule] error:', e);
+    }
+}
+
+// ── เริ่ม checker (ทุก 1 นาที) ───────────────────────────────
+function initKitchenScheduleChecker() {
+    // ตรวจสอบทันทีตอน init
+    checkAndApplyKitchenSchedule();
+    // ตรวจซ้ำทุก 60 วินาที
+    if (kitchenScheduleInterval) clearInterval(kitchenScheduleInterval);
+    kitchenScheduleInterval = setInterval(checkAndApplyKitchenSchedule, 60 * 1000);
 }
