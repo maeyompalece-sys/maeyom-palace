@@ -933,7 +933,16 @@ function saveKitchenSchedule() {
     if (!ot || !ct) { notifier.showToast('กรุณาระบุเวลาเริ่มและปิดขาย', 'error'); return; }
     if (enabled && !kSchedDays.length) { notifier.showToast('กรุณาเลือกอย่างน้อย 1 วัน', 'error'); return; }
     if (ot >= ct) { notifier.showToast('เวลาเริ่มขายต้องก่อนเวลาปิดขาย', 'error'); return; }
-    const rec = { enabled: !!enabled, days: [...kSchedDays], openTime: ot, closeTime: ct };
+    // บันทึก scope ที่เลือกไว้ใน modal ด้วย (all / category / items)
+    const rec = {
+        enabled:   !!enabled,
+        days:      [...kSchedDays],
+        openTime:  ot,
+        closeTime: ct,
+        scope:     kitchenState.scope   || 'all',
+        catIds:    [...(kitchenState.catIds  || [])],
+        itemIds:   [...(kitchenState.itemIds || [])]
+    };
     saveKitchenScheduleRecord(rec);
     notifier.showToast('⭐ บันทึกตารางเวลาแล้ว', 'success');
     updateKScheduleSummary();
@@ -972,17 +981,33 @@ async function checkAndApplyKitchenSchedule() {
     // อ่านสถานะเมนูปัจจุบัน (จาก menuState)
     if (!menuState || !menuState.items?.length) return;
 
-    const allIds = menuState.items.map(i => i.id);
-    const allOpen  = menuState.items.every(i => i.is_available);
-    const allClosed = menuState.items.every(i => !i.is_available);
+    // ─── คำนวณ targetIds ตาม scope ที่บันทึกไว้ ───────────────
+    let targetIds;
+    if (sched.scope === 'category' && sched.catIds?.length) {
+        targetIds = menuState.items
+            .filter(i => sched.catIds.includes(i.category_id))
+            .map(i => i.id);
+    } else if (sched.scope === 'items' && sched.itemIds?.length) {
+        targetIds = sched.itemIds.filter(id => menuState.items.find(i => i.id === id));
+    } else {
+        targetIds = menuState.items.map(i => i.id);
+    }
 
-    // หลีกเลี่ยง call API ซ้ำถ้าสถานะตรงแล้ว
-    if (shouldBeOpen && allOpen) return;
-    if (!shouldBeOpen && allClosed) return;
+    if (!targetIds.length) return;
+
+    // หลีกเลี่ยง call API ซ้ำถ้าทุกรายการใน scope อยู่ในสถานะถูกต้องแล้ว
+    const targetItems = menuState.items.filter(i => targetIds.includes(i.id));
+    const alreadyRight = targetItems.every(i => !!i.is_available === shouldBeOpen);
+    if (alreadyRight) return;
 
     try {
-        await Promise.all(allIds.map(id => API.toggleAvailable(id, shouldBeOpen)));
-        const msg = shouldBeOpen ? '🟢 เปิดครัวอัตโนมัติตามตาราง' : '🔴 ปิดครัวอัตโนมัติตามตาราง';
+        await Promise.all(targetIds.map(id => API.toggleAvailable(id, shouldBeOpen)));
+        const scopeLabel = sched.scope === 'category' ? ' (หมวดที่กำหนด)'
+                         : sched.scope === 'items'    ? ' (เมนูที่กำหนด)'
+                         : '';
+        const msg = shouldBeOpen
+            ? `🟢 เปิดครัวอัตโนมัติตามตาราง${scopeLabel}`
+            : `🔴 ปิดครัวอัตโนมัติตามตาราง${scopeLabel}`;
         notifier.showToast(msg, 'info');
         await loadAll();
     } catch (e) {
