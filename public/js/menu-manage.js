@@ -944,9 +944,13 @@ function saveKitchenSchedule() {
         itemIds:   [...(kitchenState.itemIds || [])]
     };
     saveKitchenScheduleRecord(rec);
-    notifier.showToast('⭐ บันทึกตารางเวลาแล้ว', 'success');
+    // ── sync ขึ้น GAS เพื่อให้ time trigger ทำงานได้แม้ปิด browser ──
+    API.saveKitchenSchedule(rec)
+        .then(() => notifier.showToast('⭐ บันทึกตารางเวลาแล้ว (ซิงค์ GAS แล้ว)', 'success'))
+        .catch(e => {
+            notifier.showToast('⭐ บันทึกในเครื่องแล้ว (GAS sync ล้มเหลว: ' + e.message + ')', 'warning');
+        });
     updateKScheduleSummary();
-    // ตรวจสอบทันทีว่าควรเปิด/ปิดตอนนี้หรือไม่
     checkAndApplyKitchenSchedule();
 }
 
@@ -954,6 +958,8 @@ function saveKitchenSchedule() {
 function clearKitchenSchedule() {
     if (!confirm('ลบตารางเวลาเปิด-ปิดครัวอัตโนมัติ?')) return;
     removeKitchenScheduleRecord();
+    // ── ลบจาก GAS ด้วย ──
+    API.deleteKitchenSchedule().catch(e => console.warn('[KitchenSchedule] GAS delete failed:', e.message));
     kSchedDays = [];
     renderKDayBtns();
     const chk = document.getElementById('kScheduleEnabled');

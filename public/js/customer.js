@@ -174,6 +174,7 @@ function showStep(step) {
     }
     if (step === 'menu') {
         updateCartBar();
+        startMenuPolling(); // เริ่ม auto-refresh เมื่อเข้าหน้าเมนู
     }
     window.scrollTo(0, 0);
 }
@@ -849,3 +850,57 @@ function escHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 window.openOrderHistory = openOrderHistory;
+
+// ============================================================
+// 🔄 Silent Menu Polling — อัปเดตสถานะเมนูเงียบๆ
+// ============================================================
+let _menuPollTimer = null;
+
+function startMenuPolling() {
+    // ป้องกัน duplicate interval
+    if (_menuPollTimer) return;
+    const interval = (typeof CONFIG !== 'undefined' && CONFIG.CUSTOMER_POLL_INTERVAL)
+        ? CONFIG.CUSTOMER_POLL_INTERVAL
+        : 5000;
+    _menuPollTimer = setInterval(pollMenuAvailability, interval);
+}
+
+function stopMenuPolling() {
+    if (_menuPollTimer) {
+        clearInterval(_menuPollTimer);
+        _menuPollTimer = null;
+    }
+}
+
+async function pollMenuAvailability() {
+    // poll เฉพาะตอนอยู่หน้าเมนู
+    if (state.step !== 'menu') return;
+    try {
+        const data = await API.getBootstrap();
+        const newMenu = data.menu || [];
+
+        // เช็คว่ามีการเปลี่ยน is_available หรือไม่
+        let changed = newMenu.length !== state.menu.length;
+        if (!changed) {
+            for (const newItem of newMenu) {
+                const old = state.menu.find(i => i.id === newItem.id);
+                if (!old || !!old.is_available !== !!newItem.is_available) {
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        if (!changed) return; // ไม่มีอะไรเปลี่ยน → ไม่ต้อง render ใหม่
+
+        // อัปเดต state แล้ว re-render เงียบๆ (ไม่มี loading spinner)
+        state.menu       = newMenu;
+        state.categories = data.categories || [];
+        renderCategories();
+        renderMenu();
+
+    } catch (e) {
+        // เงียบๆ ถ้า poll ไม่สำเร็จ (network ชั่วคราว)
+        console.warn('[MenuPoll]', e.message);
+    }
+}

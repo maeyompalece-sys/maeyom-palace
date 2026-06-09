@@ -101,6 +101,11 @@ const API = {
 
     // ===== LINE =====
     lineNotify(message)   { return this.call('lineNotify', { message: message }); },
+
+    // ===== Kitchen Schedule (GAS Time Trigger) =====
+    saveKitchenSchedule(s)  { return this.call('saveKitchenSchedule',   { schedule: s }); },
+    getKitchenSchedule()    { return this.call('getKitchenSchedule'); },
+    deleteKitchenSchedule() { return this.call('deleteKitchenSchedule'); },
 };
 
 // แปลงไฟล์เป็น base64 (ตัด prefix `data:image/...;base64,` ออก)
