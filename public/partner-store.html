@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#651713">
+<title>ร้านพาร์ทเนอร์ | แม่ยมพาเลส</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{padding-bottom:90px;background:#F8F4EC}
+
+/* Hero */
+.hero{
+  background:linear-gradient(135deg,#4A0E0E 0%,#651713 55%,#8B2020 100%);
+  padding:20px 16px 28px;text-align:center;color:#fff;position:relative;
+}
+.btn-back{
+  position:absolute;top:14px;left:14px;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  color:#fff;padding:6px 14px;border-radius:20px;
+  font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:#E0C892;margin-bottom:4px}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.7)}
+
+/* Search */
+.search-wrap{padding:14px 14px 0}
+.search-bar{position:relative}
+.search-bar input{
+  width:100%;padding:12px 14px 12px 42px;
+  border:1.5px solid #E8E2D6;border-radius:12px;
+  font-size:14px;background:#fff;outline:none;
+  font-family:'Sarabun',sans-serif;transition:border-color .2s;
+}
+.search-bar input:focus{border-color:#C9A861}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px}
+
+/* Grid */
+.store-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;padding:14px;
+}
+@media(max-width:360px){.store-grid{grid-template-columns:1fr 1fr}}
+
+/* Store card */
+.store-card{
+  background:#fff;border-radius:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,.07);
+  overflow:hidden;text-decoration:none;display:block;
+  border:1px solid #E8E2D6;transition:transform .2s,box-shadow .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.store-card:active{transform:scale(.97)}
+
+.store-banner{
+  width:100%;height:90px;
+  background:linear-gradient(135deg,#4A0E0E,#651713);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  font-size:36px;background-size:cover;background-position:center;overflow:hidden;
+}
+.store-badge{
+  position:absolute;top:7px;right:7px;
+  font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;
+  background:#D1FAE5;color:#065F46;
+}
+.store-logo{
+  position:absolute;bottom:-18px;left:12px;
+  width:44px;height:44px;border-radius:10px;
+  background:#fff;border:2.5px solid #fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;overflow:hidden;flex-shrink:0;
+}
+.store-logo img{width:100%;height:100%;object-fit:cover;border-radius:7px}
+
+.store-body{padding:24px 12px 12px}
+.store-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:16px;font-weight:600;color:#651713;
+  margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.store-meta{font-size:11px;color:#6B6B6B;line-height:1.5}
+.store-meta-row{display:flex;align-items:flex-start;gap:4px;margin-bottom:2px}
+
+/* CTA */
+.cta-box{
+  margin:4px 14px 14px;
+  background:linear-gradient(135deg,#fff8ed,#fff3e0);
+  border:1.5px solid #F4D79A;border-radius:16px;
+  padding:18px 16px;text-align:center;
+}
+.cta-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:#5C3700;margin-bottom:5px}
+.cta-sub{font-size:13px;color:#7C4F00;margin-bottom:14px;line-height:1.5}
+.btn-reg{
+  display:inline-block;padding:12px 24px;
+  background:linear-gradient(135deg,#651713,#4A0E0E);
+  color:#E0C892;border-radius:12px;
+  font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;
+  text-decoration:none;border:none;cursor:pointer;
+}
+
+/* Spinner */
+.spinner-wrap{display:flex;align-items:center;justify-content:center;padding:60px}
+.spinner{width:36px;height:36px;border:3px solid #EDE5D3;border-top-color:#651713;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{text-align:center;padding:48px 24px;color:#ADADAD}
+.empty .ico{font-size:52px;margin-bottom:10px}
+.empty p{font-size:14px;color:#6B6B6B}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a href="index.html" class="btn-back">← กลับ</a>
+  <div class="hero-title">🏪 ร้านพาร์ทเนอร์</div>
+  <div class="hero-sub">ร้านค้าในโรงแรม — สั่งได้ทันที</div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="ค้นหาร้าน...">
+  </div>
+</div>
+
+<div id="storeList"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+
+<div class="cta-box">
+  <div class="cta-title">🤝 อยากเป็นพาร์ทเนอร์?</div>
+  <div class="cta-sub">สมัครง่าย ขายได้เลย<br>รับออเดอร์จากลูกค้าโรงแรมโดยตรง</div>
+  <a href="partner-register.html" class="btn-reg">+ สมัครเป็นพาร์ทเนอร์</a>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+let allPartners = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadPartners();
+  document.getElementById('searchInput').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    renderStores(q ? allPartners.filter(p =>
+      p.partnerName.toLowerCase().includes(q) ||
+      (p.description||'').toLowerCase().includes(q) ||
+      (p.location||'').toLowerCase().includes(q)
+    ) : allPartners);
+  });
+});
+
+async function loadPartners() {
+  try {
+    const data = await API.call('getPartners', {});
+    allPartners = (data.partners || []).filter(p => p.isActive && p.isApproved);
+    renderStores(allPartners);
+  } catch(err) {
+    document.getElementById('storeList').innerHTML =
+      `<div class="empty"><div class="ico">⚠️</div><p>โหลดไม่สำเร็จ: ${esc(err.message)}</p></div>`;
+  }
+}
+
+function renderStores(partners) {
+  const el = document.getElementById('storeList');
+  if (!partners.length) {
+    el.innerHTML = `<div class="empty"><div class="ico">🏪</div><p>ยังไม่มีร้านพาร์ทเนอร์<br>เป็นคนแรกได้เลย!</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="store-grid">${partners.map(card).join('')}</div>`;
+}
+
+function card(p) {
+  const bannerStyle = p.bannerUrl
+    ? `background-image:url('${p.bannerUrl}');background-size:cover;background-position:center;`
+    : '';
+  const logo = p.logoUrl
+    ? `<img src="${p.logoUrl}" alt="">`
+    : (p.icon || '🏪');
+  return `
+  <a class="store-card" href="menu.html?partner=${p.partnerId}&type=dine_in">
+    <div class="store-banner" style="${bannerStyle}">
+      ${p.bannerUrl ? '' : (p.icon || '🏪')}
+      <span class="store-badge">🟢 เปิด</span>
+      <div class="store-logo">${p.logoUrl ? `<img src="${p.logoUrl}">` : (p.icon||'🏪')}</div>
+    </div>
+    <div class="store-body">
+      <div class="store-name">${esc(p.partnerName)}</div>
+      <div class="store-meta">
+        ${p.location ? `<div class="store-meta-row">📍 ${esc(p.location)}</div>` : ''}
+        ${p.category ? `<div class="store-meta-row">🏷️ ${esc(p.category)}</div>` : ''}
+      </div>
+    </div>
+  </a>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>อนุมัติพาร์ทเนอร์ | Admin แม่ยมพาเลส</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+body { padding-bottom: 40px; }
+.page-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.page-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--color-emerald); font-weight: 600; }
+
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--color-line); margin-bottom: 20px; }
+.tab-btn { padding: 10px 20px; border: none; background: none; font-family: 'Sarabun', sans-serif; font-size: 15px; font-weight: 600; color: var(--color-muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .15s; }
+.tab-btn.active { color: var(--color-emerald); border-bottom-color: var(--color-gold); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.partner-card {
+  background: #fff; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 16px;
+  border: 1px solid var(--color-line);
+}
+.partner-card-head {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px; border-bottom: 1px solid var(--color-line);
+}
+.partner-logo {
+  width: 56px; height: 56px; border-radius: 12px;
+  background: var(--color-cream); display: flex; align-items: center; justify-content: center;
+  font-size: 28px; flex-shrink: 0; overflow: hidden;
+}
+.partner-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
+.partner-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--color-emerald); font-weight: 600; }
+.partner-id { font-size: 12px; color: var(--color-muted); margin-top: 2px; }
+.partner-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-left: auto; }
+.badge-pending  { background: #FEF3C7; color: #92400E; }
+.badge-approved { background: #D1FAE5; color: #065F46; }
+.badge-rejected { background: #FEE2E2; color: #991B1B; }
+
+.partner-details { padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.detail-row { font-size: 13px; }
+.detail-label { color: var(--color-stone); font-weight: 600; }
+.detail-val { color: var(--color-charcoal); }
+
+.partner-banner-preview {
+  width: 100%; height: 80px;
+  background: linear-gradient(135deg, var(--color-emerald-dark), var(--color-emerald));
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; color: rgba(255,255,255,.5);
+}
+
+.partner-actions { display: flex; gap: 8px; padding: 12px 16px; background: var(--color-cream); }
+.btn-approve {
+  flex: 1; padding: 11px; background: #10B981; color: #fff;
+  border: none; border-radius: 10px; font-family: 'Sarabun', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.btn-approve:hover { background: #059669; }
+.btn-reject {
+  padding: 11px 18px; background: #FEE2E2; color: #991B1B;
+  border: none; border-radius: 10px; font-family: 'Sarabun', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.btn-reject:hover { background: #FCA5A5; }
+.btn-revoke {
+  padding: 11px 18px; background: #FEF3C7; color: #92400E;
+  border: none; border-radius: 10px; font-family: 'Sarabun', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--color-muted); }
+.empty-state .ico { font-size: 56px; margin-bottom: 12px; }
+
+.spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 60px; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--color-cream-dark); border-top-color: var(--color-emerald); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--color-emerald-dark); color: #fff; padding: 12px 24px;
+  border-radius: 12px; font-size: 14px; font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 999;
+  animation: toastIn .3s ease; display: none; white-space: nowrap;
+}
+@keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="admin.html" class="brand-link" title="กลับหน้าแรก">
+      <img src="images/logo-white.png" class="brand-logo-img" alt="Logo">
+    </a>
+    <nav class="topbar-nav">
+      <a href="index.html">🏠 หน้าแรก</a>
+      <a href="admin.html">ออเดอร์</a>
+      <a href="menu-manage.html">เมนู</a>
+      <a href="partner-admin-approve.html" class="active">🤝 พาร์ทเนอร์</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <div class="page-head">
+    <div class="page-title">🤝 จัดการพาร์ทเนอร์</div>
+    <button onclick="loadAll()" style="padding:8px 16px;border:1.5px solid var(--color-line);border-radius:8px;background:#fff;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">🔄 รีเฟรช</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('pending')">⏳ รออนุมัติ <span id="count-pending"></span></button>
+    <button class="tab-btn" onclick="switchTab('approved')">✅ อนุมัติแล้ว <span id="count-approved"></span></button>
+    <button class="tab-btn" onclick="switchTab('all')">📋 ทั้งหมด</button>
+  </div>
+
+  <div class="tab-content active" id="tab-pending">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+  <div class="tab-content" id="tab-approved">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+  <div class="tab-content" id="tab-all">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin-pin.js"></script>
+<script>
+let allPartners = [];
+let activeTab = 'pending';
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!checkConfig()) return;
+  loadAll();
+});
+
+async function loadAll() {
+  try {
+    const data = await API.call('getPartners', {});
+    allPartners = data.partners || [];
+    renderTab('pending');
+    renderTab('approved');
+    renderTab('all');
+    updateCounts();
+  } catch (err) {
+    showToast('โหลดล้มเหลว: ' + err.message, 'error');
+  }
+}
+
+function updateCounts() {
+  const pending  = allPartners.filter(p => p.isActive && !p.isApproved).length;
+  const approved = allPartners.filter(p => p.isActive && p.isApproved).length;
+  document.getElementById('count-pending').textContent  = pending  ? `(${pending})`  : '';
+  document.getElementById('count-approved').textContent = approved ? `(${approved})` : '';
+}
+
+function renderTab(tab) {
+  let partners;
+  if (tab === 'pending')  partners = allPartners.filter(p => p.isActive && !p.isApproved);
+  if (tab === 'approved') partners = allPartners.filter(p => p.isActive && p.isApproved);
+  if (tab === 'all')      partners = allPartners;
+
+  const el = document.getElementById('tab-' + tab);
+  if (partners.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="ico">${tab === 'pending' ? '🎉' : '🏪'}</div><p>${tab === 'pending' ? 'ไม่มีพาร์ทเนอร์รออนุมัติ' : 'ยังไม่มีพาร์ทเนอร์'}</p></div>`;
+    return;
+  }
+  el.innerHTML = partners.map(partnerCard).join('');
+}
+
+function partnerCard(p) {
+  const isPending  = p.isActive && !p.isApproved;
+  const isApproved = p.isActive && p.isApproved;
+  const badge = isPending  ? '<span class="partner-badge badge-pending">⏳ รออนุมัติ</span>'
+              : isApproved ? '<span class="partner-badge badge-approved">✅ อนุมัติแล้ว</span>'
+              : '<span class="partner-badge badge-rejected">❌ ปิดใช้งาน</span>';
+
+  return `
+  <div class="partner-card">
+    ${p.bannerUrl ? `<div class="partner-banner-preview" style="background-image:url('${p.bannerUrl}');background-size:cover;background-position:center;"></div>` : ''}
+    <div class="partner-card-head">
+      <div class="partner-logo">
+        ${p.logoUrl ? `<img src="${p.logoUrl}">` : '🏪'}
+      </div>
+      <div>
+        <div class="partner-name">${esc(p.partnerName)}</div>
+        <div class="partner-id">ID: ${esc(p.partnerId)} · ${esc(p.category || '')}</div>
+      </div>
+      ${badge}
+    </div>
+    <div class="partner-details">
+      <div class="detail-row"><span class="detail-label">📞 เบอร์: </span><span class="detail-val">${esc(p.phone || '-')}</span></div>
+      <div class="detail-row"><span class="detail-label">📍 ที่ตั้ง: </span><span class="detail-val">${esc(p.location || '-')}</span></div>
+      ${p.description ? `<div class="detail-row" style="grid-column:1/-1"><span class="detail-label">📝 รายละเอียด: </span><span class="detail-val">${esc(p.description)}</span></div>` : ''}
+      <div class="detail-row"><span class="detail-label">🕐 สมัครเมื่อ: </span><span class="detail-val">${p.createdAt ? new Date(p.createdAt).toLocaleDateString('th-TH') : '-'}</span></div>
+    </div>
+    <div class="partner-actions">
+      ${isPending ? `
+        <button class="btn-approve" onclick="approvePartner('${p.partnerId}', '${esc(p.partnerName)}')">✅ อนุมัติ — แสดงบนเว็บทันที</button>
+        <button class="btn-reject" onclick="rejectPartner('${p.partnerId}')">❌ ปฏิเสธ</button>
+      ` : isApproved ? `
+        <span style="flex:1;font-size:13px;color:#065F46;font-weight:600;">✅ แสดงบนเว็บแล้ว</span>
+        <button class="btn-revoke" onclick="rejectPartner('${p.partnerId}')">⏸️ ระงับ</button>
+      ` : `
+        <button class="btn-approve" onclick="approvePartner('${p.partnerId}', '${esc(p.partnerName)}')">🔄 เปิดใช้งานอีกครั้ง</button>
+      `}
+    </div>
+  </div>`;
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['pending','approved','all'][i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+async function approvePartner(partnerId, name) {
+  if (!confirm(`อนุมัติ "${name}" ?\nร้านจะแสดงบนหน้าเว็บทันที`)) return;
+  try {
+    await API.call('approvePartner', { partnerId, approvedBy: 'admin' });
+    const p = allPartners.find(x => x.partnerId === partnerId);
+    if (p) p.isApproved = true;
+    renderTab('pending'); renderTab('approved'); renderTab('all');
+    updateCounts();
+    showToast('✅ อนุมัติแล้ว — ' + name + ' จะแสดงบนเว็บทันที');
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+async function rejectPartner(partnerId) {
+  if (!confirm('ปฏิเสธ / ระงับพาร์ทเนอร์นี้?')) return;
+  try {
+    await API.call('rejectPartner', { partnerId });
+    const p = allPartners.find(x => x.partnerId === partnerId);
+    if (p) { p.isApproved = false; p.isActive = false; }
+    renderTab('pending'); renderTab('approved'); renderTab('all');
+    updateCounts();
+    showToast('ระงับพาร์ทเนอร์แล้ว', 'info');
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.background = type === 'error' ? '#991B1B' : type === 'info' ? '#651713' : '#10B981';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function esc(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])
+  );
+}
+</script>
+</body>
+</html>
