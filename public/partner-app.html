@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#651713">
+<title>Partner App — แม่ยมพาเลส</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Partner App — Design System (เดียวกับเว็บหลัก)
+   ============================================================ */
+:root {
+  --gold: #C9A861;
+  --gold-light: #E0C892;
+  --gold-dark: #A88840;
+  --emerald: #651713;
+  --emerald-light: #8B2020;
+  --emerald-dark: #4A0E0E;
+  --cream: #F8F4EC;
+  --cream-dark: #EDE5D3;
+  --charcoal: #1A1A1A;
+  --stone: #6B6B6B;
+  --mist: #ADADAD;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: var(--cream);
+  color: var(--charcoal);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ===== LOGIN SCREEN ===== */
+#screen-login {
+  background: linear-gradient(160deg, var(--emerald-dark) 0%, var(--emerald) 60%, var(--emerald-light) 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-box {
+  background: rgba(255,255,255,0.97);
+  border-radius: 20px;
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--emerald), var(--emerald-dark));
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.login-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--emerald);
+  font-weight: 600;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: var(--stone);
+  margin-top: 4px;
+}
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--stone);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid #DDD;
+  border-radius: var(--radius-sm);
+  font-family: 'Sarabun', sans-serif;
+  font-size: 16px;
+  color: var(--charcoal);
+  background: #fff;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.form-group input:focus { border-color: var(--emerald); }
+.form-group input.error { border-color: #EF4444; }
+
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--emerald) 0%, var(--emerald-dark) 100%);
+  color: var(--gold-light);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Sarabun', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+.btn-login:active { transform: translateY(1px); opacity: 0.9; }
+.btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.login-err {
+  display: none;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* ===== APP SCREEN ===== */
+#screen-app {
+  flex-direction: column;
+}
+
+.app-header {
+  background: linear-gradient(135deg, var(--emerald-dark) 0%, var(--emerald) 100%);
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--shadow-md);
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-shop-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--gold-light);
+  line-height: 1.2;
+}
+.header-shop-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  margin-top: 1px;
+}
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6B7280;
+  transition: background 0.3s;
+}
+.status-dot.online { background: #34D399; }
+
+.btn-logout {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  transition: background 0.2s;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid var(--cream-dark);
+  position: sticky;
+  top: 60px;
+  z-index: 40;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--stone);
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+  position: relative;
+}
+.tab.active {
+  color: var(--emerald);
+  border-bottom-color: var(--emerald);
+  background: rgba(101,23,19,0.03);
+}
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #EF4444;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ===== ORDER LIST ===== */
+.orders-pane { display: none; flex: 1; overflow-y: auto; }
+.orders-pane.active { display: flex; flex-direction: column; }
+
+.orders-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 24px;
+  color: var(--mist);
+}
+.empty-state-icon { font-size: 52px; }
+.empty-state-title { font-size: 17px; font-weight: 600; color: var(--stone); }
+.empty-state-sub { font-size: 14px; text-align: center; line-height: 1.5; }
+
+/* ===== ORDER CARD ===== */
+.order-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border-left: 4px solid var(--mist);
+  transition: box-shadow 0.2s;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.order-card.status-pending   { border-left-color: #FCD34D; }
+.order-card.status-accepted  { border-left-color: #60A5FA; }
+.order-card.status-cooking   { border-left-color: #FB923C; }
+.order-card.status-ready     { border-left-color: #34D399; }
+.order-card.status-completed { border-left-color: #10B981; }
+.order-card.status-cancelled { border-left-color: #EF4444; opacity: 0.6; }
+
+.order-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 14px 10px;
+  gap: 8px;
+}
+
+.order-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--emerald);
+}
+
+.order-time {
+  font-size: 12px;
+  color: var(--mist);
+  margin-top: 2px;
+}
+
+.order-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.badge-pending   { background: #FEF3C7; color: #92400E; }
+.badge-accepted  { background: #DBEAFE; color: #1E40AF; }
+.badge-cooking   { background: #FEF0E7; color: #9A3412; }
+.badge-ready     { background: #D1FAE5; color: #065F46; }
+.badge-completed { background: #D1FAE5; color: #065F46; }
+.badge-cancelled { background: #FEE2E2; color: #991B1B; }
+
+.order-customer {
+  padding: 0 14px 10px;
+  font-size: 14px;
+  color: var(--stone);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-items {
+  padding: 0 14px 10px;
+  border-top: 1px solid var(--cream-dark);
+  margin-top: 2px;
+  padding-top: 10px;
+}
+
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+  font-size: 14px;
+}
+.order-item-name { color: var(--charcoal); flex: 1; }
+.order-item-note { font-size: 12px; color: var(--stone); margin-left: 4px; }
+.order-item-price { color: var(--stone); font-size: 13px; white-space: nowrap; }
+
+.order-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 700;
+  padding-top: 8px;
+  border-top: 1px dashed var(--cream-dark);
+  margin-top: 6px;
+  color: var(--emerald);
+}
+
+.order-notes {
+  padding: 0 14px 10px;
+  font-size: 13px;
+  color: var(--stone);
+  background: #FFFBF0;
+  margin: 0 10px 10px;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  border-left: 3px solid var(--gold);
+}
+
+.order-actions {
+  padding: 10px 14px 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 11px 8px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.btn-action:active { transform: scale(0.97); }
+.btn-action:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-accept  { background: #DBEAFE; color: #1E40AF; }
+.btn-cook    { background: #FEF0E7; color: #9A3412; }
+.btn-ready   { background: #D1FAE5; color: #065F46; }
+.btn-deliver { background: #EDE9FE; color: #4C1D95; }
+.btn-done    { background: linear-gradient(135deg, var(--emerald), var(--emerald-dark)); color: var(--gold-light); }
+.btn-cancel  { background: #FEE2E2; color: #991B1B; }
+
+/* ===== PULL TO REFRESH ===== */
+.pull-hint {
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+  color: var(--mist);
+}
+
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 380px;
+}
+
+.toast {
+  background: var(--charcoal);
+  color: #fff;
+  padding: 13px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.success { background: #065F46; }
+.toast.error   { background: #991B1B; }
+.toast.info    { background: var(--emerald-dark); }
+
+@keyframes toastIn  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; } }
+
+/* ===== LOADING ===== */
+.global-loading {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(248,244,236,0.85);
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  flex-direction: column;
+  gap: 12px;
+}
+.global-loading.show { display: flex; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--cream-dark);
+  border-top-color: var(--emerald);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== HISTORY TAB ===== */
+.history-filter {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  background: #fff;
+  border-bottom: 1px solid var(--cream-dark);
+}
+.filter-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--cream-dark);
+  background: #fff;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--stone);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-chip.active {
+  background: var(--emerald);
+  color: var(--gold-light);
+  border-color: var(--emerald);
+}
+
+/* ===== NEW ORDER RING ===== */
+@keyframes ring {
+  0%,100% { transform: scale(1); }
+  25%      { transform: scale(1.12); }
+  50%      { transform: scale(0.96); }
+  75%      { transform: scale(1.08); }
+}
+.new-order-alert {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--emerald), var(--emerald-dark));
+  color: var(--gold-light);
+  padding: 14px 24px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(101,23,19,0.4);
+  z-index: 200;
+  cursor: pointer;
+  animation: ring 0.6s ease 3;
+  white-space: nowrap;
+}
+.new-order-alert.show { display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ========== SCREEN: LOGIN ========== -->
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-badge">🏪</div>
+      <div class="login-title">Partner App</div>
+      <div class="login-sub">แม่ยมพาเลส — ระบบรับออเดอร์ร้านพาร์ทเนอร์</div>
+    </div>
+
+    <div class="form-group">
+      <label>รหัสร้านค้า (Partner ID)</label>
+      <input type="text" id="inp-partner-id" placeholder="เช่น SHOP001" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>รหัสผ่าน</label>
+      <input type="password" id="inp-partner-pass" placeholder="••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-login" id="btn-login">เข้าสู่ระบบ</button>
+    <div class="login-err" id="login-err">รหัสร้านค้าหรือรหัสผ่านไม่ถูกต้อง</div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: APP ========== -->
+<div id="screen-app" class="screen">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-left">
+      <div>
+        <div class="header-shop-name" id="hdr-shop-name">ร้านพาร์ทเนอร์</div>
+        <div class="header-shop-sub">Partner App — แม่ยมพาเลส</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="status-dot" title="สถานะการเชื่อมต่อ"></div>
+      <button class="btn-logout" id="btn-logout">ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="new">
+      🔔 ออเดอร์ใหม่
+      <span class="tab-badge" id="badge-new" style="display:none">0</span>
+    </div>
+    <div class="tab" data-tab="active">
+      👨‍🍳 กำลังทำ
+      <span class="tab-badge" id="badge-active" style="display:none">0</span>
+    </div>
+    <div class="tab" data-tab="history">
+      📋 ประวัติ
+    </div>
+  </div>
+
+  <!-- Pane: new orders -->
+  <div class="orders-pane active" id="pane-new">
+    <div class="pull-hint">⟳ ระบบ refresh อัตโนมัติทุก 5 วินาที</div>
+    <div class="orders-list" id="list-new"></div>
+  </div>
+
+  <!-- Pane: active orders -->
+  <div class="orders-pane" id="pane-active">
+    <div class="orders-list" id="list-active"></div>
+  </div>
+
+  <!-- Pane: history -->
+  <div class="orders-pane" id="pane-history">
+    <div class="history-filter">
+      <div class="filter-chip active" data-filter="today">วันนี้</div>
+      <div class="filter-chip" data-filter="week">7 วัน</div>
+      <div class="filter-chip" data-filter="all">ทั้งหมด</div>
+    </div>
+    <div class="orders-list" id="list-history"></div>
+  </div>
+
+</div><!-- /screen-app -->
+
+<!-- New order alert -->
+<div class="new-order-alert" id="new-order-alert">🔔 มีออเดอร์ใหม่!</div>
+
+<!-- Loading -->
+<div class="global-loading" id="global-loading">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:var(--stone);">กำลังโหลด...</div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/partner-app.js"></script>
+</body>
+</html>
