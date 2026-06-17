@@ -306,9 +306,12 @@ function renderMenu() {
     renderPartnerBanner();
 
     let items = state.menu;
-    // ✅ ถ้ามาจาก banner ร้านพาร์ทเนอร์ → แสดงเฉพาะเมนูร้านนั้น
     if (state.activePartner) {
+        // ✅ โหมดร้านพาร์ทเนอร์ → แสดงเฉพาะเมนูร้านนั้น
         items = items.filter(i => i.partnerId && String(i.partnerId).toUpperCase() === String(state.activePartner).toUpperCase());
+    } else {
+        // ✅ โหมดเมนูหลัก → ซ่อนเมนูพาร์ทเนอร์ออกจากกริด (แสดงแค่ใน banner)
+        items = items.filter(i => !i.is_partner);
     }
     if (state.activeCategory !== 'all') {
         items = items.filter(i => i.category_id === state.activeCategory);
