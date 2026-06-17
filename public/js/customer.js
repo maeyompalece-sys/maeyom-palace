@@ -953,9 +953,13 @@ async function renderPartnerBanner() {
             + '<div style="height:1px;background:#EDE5D3;margin-top:8px;"></div>'
             + '</div>';
 
+        // ✅ แสดง element (CSS ซ่อนไว้ด้วย display:none)
+        el.style.display = 'block';
+
     } catch(e) {
         console.warn('[PartnerBanner]', e.message);
         el.innerHTML = '';
+        el.style.display = 'none';
     }
 }
 
