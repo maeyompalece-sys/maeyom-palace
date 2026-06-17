@@ -198,7 +198,7 @@
 <body>
 
 <div class="page-hero" style="position:relative;">
-  <a class="btn-back" href="index.html">
+  <a class="btn-back" id="btnBack" href="index.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     <span data-i18n="back">ย้อนกลับ</span>
   </a>
@@ -346,6 +346,17 @@
 .loc-chip.active { background:#651713;color:#C9A861;border-color:#651713; }
 </style>
 
+<script>
+// ✅ ปุ่ม Back dynamic — ถ้ามาจากร้านพาร์ทเนอร์ให้กลับหน้าเมนูหลัก
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('partner')) {
+        var btn = document.getElementById('btnBack');
+        var type = params.get('type') || 'dine_in';
+        if (btn) btn.href = 'menu.html?type=' + type;
+    }
+})();
+</script>
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/notifications.js"></script>
