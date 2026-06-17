@@ -175,6 +175,8 @@ function showStep(step) {
     if (step === 'menu') {
         updateCartBar();
         startMenuPolling(); // เริ่ม auto-refresh เมื่อเข้าหน้าเมนู
+        // ✅ เรียก renderPartnerBanner หลัง step menu แสดงแล้ว
+        renderPartnerBanner();
     }
     window.scrollTo(0, 0);
 }
