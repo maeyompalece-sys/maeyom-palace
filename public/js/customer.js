@@ -318,7 +318,7 @@ function renderMenu() {
                 + '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4A0E0E,#651713);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;">'
                 + logoHtml + '</div>'
                 + '<div>'
-                + '<div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#651713;">' + esc(partnerInfo.partnerName || '') + '</div>'
+                + '<div style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:#651713;">' + esc(partnerInfo.partnerName || '') + '</div>'
                 + '<div style="font-size:12px;color:#6B6B6B;margin-top:2px;">' + esc(partnerInfo.category || '') + '</div>'
                 + '</div></div>';
             specialEl.style.display = 'block';
