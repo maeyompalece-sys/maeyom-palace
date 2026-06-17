@@ -138,6 +138,8 @@ async function loadMenu() {
         renderMenu();
         // โหลด เมนูพิเศษ
         FlashSale.load();
+        // ✅ โหลด partner banner หลังจาก step menu แสดงแล้ว
+        renderPartnerBanner();
 
         // ถ้ามี table_number ลองหาชื่อโต๊ะ
         if (state.tableNumber) {
