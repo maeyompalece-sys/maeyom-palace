@@ -227,6 +227,12 @@ body{background:#F8F4EC;padding-bottom:32px}
     <div class="sec-title">🏪 ข้อมูลร้านค้า</div>
 
     <div class="fg">
+      <label>รหัสร้านค้า (Partner ID) *</label>
+      <input type="text" id="inp-id" placeholder="เช่น SHOP001, SOMTUM01" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+      <div class="fg-hint">⚠️ ใช้ตัวอักษรภาษาอังกฤษและตัวเลขเท่านั้น เช่น SHOP001 — ใช้ Login Partner App</div>
+    </div>
+
+    <div class="fg">
       <label>ชื่อร้าน *</label>
       <input type="text" id="inp-name" placeholder="เช่น ร้านส้มตำป้าแดง">
     </div>
@@ -409,8 +415,11 @@ function updateStepBar() {
 
 function validate(s) {
   if (s === 1) {
+    const id   = v('inp-id');
     const name = v('inp-name'), phone = v('inp-phone'), loc = v('inp-location');
     const pass = v('inp-pass'), pass2 = v('inp-pass2');
+    if (!id)          { alert('กรุณาใส่รหัสร้านค้า (Partner ID)'); return false; }
+    if (id.length < 4){ alert('Partner ID ต้องมีอย่างน้อย 4 ตัวอักษร'); return false; }
     if (!name)        { alert('กรุณาใส่ชื่อร้าน'); return false; }
     if (!phone)       { alert('กรุณาใส่เบอร์โทร'); return false; }
     if (!loc)         { alert('กรุณาใส่สถานที่ตั้ง'); return false; }
@@ -424,6 +433,7 @@ function validate(s) {
 
 function buildConfirm() {
   const rows = [
+    ['Partner ID', v('inp-id').toUpperCase()],
     ['ชื่อร้าน', v('inp-name')],
     ['ประเภท', document.getElementById('inp-cat').value],
     ['เบอร์โทร', v('inp-phone')],
@@ -442,7 +452,7 @@ async function doRegister() {
   const btn = document.getElementById('btn-submit');
   btn.disabled = true; btn.textContent = '⏳ กำลังสมัคร...';
   try {
-    const partnerId = 'P' + Date.now().toString(36).toUpperCase();
+    const partnerId = v('inp-id').toUpperCase();
     let logoUrl = '', bannerUrl = '';
     if (logoFile) { try { logoUrl = (await API.uploadImage(logoFile)).url || ''; } catch(e){} }
     if (bannerFile) { try { bannerUrl = (await API.uploadImage(bannerFile)).url || ''; } catch(e){} }
