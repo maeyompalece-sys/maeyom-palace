@@ -448,7 +448,9 @@ function addToCart(item, qty, note) {
         name: item.name,
         price: parseFloat(item.price),
         quantity: qty,
-        note: note || ''
+        note: note || '',
+        // ✅ ส่ง partnerId ไปด้วยเพื่อให้ GAS แยก PartnerOrder
+        partnerId: item.partnerId || null,
     });
     updateCartBar();
     notifier.showToast('เพิ่ม "' + item.name + '" ลงตะกร้าแล้ว', 'success', 1500);
