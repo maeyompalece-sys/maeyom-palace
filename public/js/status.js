@@ -3,11 +3,13 @@
 // ============================================================
 
 const statusState = {
-    orderId: null,
-    order: null,
+    orderId:   null,
+    order:     null,
     lastStatus: null,
-    poller: null,
-    source: null,  // 'walkin' | null
+    poller:    null,
+    source:    null,
+    isPartner: false,   // ✅ เป็น partner order ไหม
+    partnerId: null,    // ✅ partnerId สำหรับดึงสถานะ
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -16,8 +18,10 @@ async function init() {
     if (!checkConfig()) return;
 
     const params = new URLSearchParams(window.location.search);
-    statusState.orderId = params.get('id');
-    statusState.source  = params.get('source') || null;
+    statusState.orderId   = params.get('id');
+    statusState.source    = params.get('source') || null;
+    statusState.isPartner = params.get('type') === 'partner';
+    statusState.partnerId = params.get('partnerId') || null;
 
     if (!statusState.orderId) {
         showError('ไม่พบ Order ID');
@@ -73,7 +77,29 @@ function bindEvents() {
 
 async function loadOrder() {
     try {
-        const order = await API.getOrder(statusState.orderId);
+        let order;
+        if (statusState.isPartner && statusState.partnerId) {
+            // ✅ ดึง partner order สถานะ
+            const data = await API.call('getPartnerOrders', { partnerId: statusState.partnerId, token: '' });
+            const found = (data.orders || []).find(function(o) { return o.id === statusState.orderId; });
+            if (!found) throw new Error('ไม่พบออเดอร์');
+            // แปลง partner order ให้เหมือน hotel order
+            order = {
+                id:            found.id,
+                order_number:  found.order_number,
+                status:        found.status,
+                customer_name: found.customer_name,
+                customer_phone: found.customer_phone,
+                order_type:    found.order_type,
+                table_number:  found.table_number,
+                total_amount:  found.total_amount,
+                notes:         found.notes,
+                items:         found.items || [],
+                created_at:    found.created_at,
+            };
+        } else {
+            order = await API.getOrder(statusState.orderId);
+        }
         const prevStatus = statusState.lastStatus;
         statusState.order = order;
         statusState.lastStatus = order.status;
@@ -245,5 +271,3 @@ function updateStickyBar(order) {
         bar.style.opacity = '1';
     }
 }
-
-
