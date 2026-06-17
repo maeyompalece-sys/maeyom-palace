@@ -57,7 +57,10 @@ async function init() {
     await loadMenu();
 
     // ตัดสินใจว่าจะแสดง step ไหน
-    if (state.addToOrderId) {
+    if (state.activePartner) {
+        // ✅ มาจาก banner ร้านพาร์ทเนอร์ → ข้ามไป menu เลย
+        state.step = 'menu';
+    } else if (state.addToOrderId) {
         state.step = 'menu';
     } else if (!state.orderType) {
         state.step = 'type';
@@ -77,6 +80,10 @@ async function init() {
     }
     showReturningCustomer();
     showStep(state.step);
+    // ✅ เรียก renderPartnerBanner หลัง showStep เพื่อให้ element แสดงอยู่แล้ว
+    if (state.step === 'menu') {
+        renderPartnerBanner();
+    }
 }
 
 // ============================================================
