@@ -305,10 +305,27 @@ function renderMenu() {
     let items = state.menu;
     if (state.activePartner) {
         // ✅ โหมดร้านพาร์ทเนอร์ → แสดงเฉพาะเมนูร้านนั้น
-        items = items.filter(i => i.partnerId && String(i.partnerId).toUpperCase() === String(state.activePartner).toUpperCase());
+        items = items.filter(function(i) { return i.partnerId && String(i.partnerId).toUpperCase() === String(state.activePartner).toUpperCase(); });
+
+        // แสดง header ร้านพาร์ทเนอร์
+        var partnerInfo = items[0] || null;
+        var specialEl = document.getElementById('specialMenuSection');
+        if (specialEl && partnerInfo) {
+            var logoHtml = partnerInfo.partnerLogoUrl
+                ? '<img src="' + partnerInfo.partnerLogoUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+                : '🏪';
+            specialEl.innerHTML = '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:16px;border:1px solid #EDE5D3;">'
+                + '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4A0E0E,#651713);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;">'
+                + logoHtml + '</div>'
+                + '<div>'
+                + '<div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#651713;">' + esc(partnerInfo.partnerName || '') + '</div>'
+                + '<div style="font-size:12px;color:#6B6B6B;margin-top:2px;">' + esc(partnerInfo.category || '') + '</div>'
+                + '</div></div>';
+            specialEl.style.display = 'block';
+        }
     } else {
         // ✅ โหมดเมนูหลัก → ซ่อนเมนูพาร์ทเนอร์ออกจากกริด (แสดงแค่ใน banner)
-        items = items.filter(i => !i.is_partner);
+        items = items.filter(function(i) { return !i.is_partner; });
     }
     if (state.activeCategory !== 'all') {
         items = items.filter(i => i.category_id === state.activeCategory);
