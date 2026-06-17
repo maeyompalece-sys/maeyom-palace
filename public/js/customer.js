@@ -918,6 +918,8 @@ async function pollMenuAvailability() {
         state.categories = data.categories || [];
         renderCategories();
         renderMenu();
+        // ✅ re-render partner banner ด้วยเพื่อไม่ให้หายหลัง poll
+        renderPartnerBanner();
 
     } catch (e) {
         // เงียบๆ ถ้า poll ไม่สำเร็จ (network ชั่วคราว)
@@ -935,7 +937,7 @@ async function renderPartnerBanner() {
     try {
         const data = await API.call('getPartners', {});
         const partners = (data.partners || []).filter(function(p) { return p.isActive && p.isApproved; });
-        if (!partners.length) { el.innerHTML = ''; return; }
+        if (!partners.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
 
         const orderType = new URLSearchParams(location.search).get('type') || 'dine_in';
 
