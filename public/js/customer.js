@@ -302,9 +302,6 @@ function renderMenu() {
     const grid = document.getElementById('menuGrid');
     if (!grid) return;
 
-    // แสดง banner ร้านพาร์ทเนอร์
-    renderPartnerBanner();
-
     let items = state.menu;
     if (state.activePartner) {
         // ✅ โหมดร้านพาร์ทเนอร์ → แสดงเฉพาะเมนูร้านนั้น
