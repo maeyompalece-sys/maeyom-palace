@@ -14,6 +14,7 @@ const state = {
     activeCategory: 'all',
     searchQuery: '',
     addToOrderId: null,     // ถ้าเป็นการสั่งเพิ่มในออเดอร์เดิม
+    activePartner: null,    // ถ้าเปิดจาก banner ร้านพาร์ทเนอร์
 };
 
 // ============================================================
@@ -40,6 +41,7 @@ async function init() {
     if (params.get('source')) state.source = params.get('source');
     if (params.get('location')) state.locationNote = params.get('location'); // walk-in location
     if (params.get('note')) state.preNote = params.get('note'); // walk-in pre-note
+    if (params.get('partner')) state.activePartner = params.get('partner'); // filter เมนูพาร์ทเนอร์
 
     // ดึงข้อมูลลูกค้าเก่าจาก localStorage
     try {
@@ -297,6 +299,10 @@ function renderMenu() {
     renderPartnerBanner();
 
     let items = state.menu;
+    // ✅ ถ้ามาจาก banner ร้านพาร์ทเนอร์ → แสดงเฉพาะเมนูร้านนั้น
+    if (state.activePartner) {
+        items = items.filter(i => i.partnerId && String(i.partnerId).toUpperCase() === String(state.activePartner).toUpperCase());
+    }
     if (state.activeCategory !== 'all') {
         items = items.filter(i => i.category_id === state.activeCategory);
     }
