@@ -79,18 +79,19 @@ async function loadOrder() {
     try {
         let order;
         if (statusState.isPartner && statusState.partnerId) {
-            // ✅ ดึง partner order สถานะ
-            const data = await API.call('getPartnerOrders', { partnerId: statusState.partnerId, token: '' });
-            const found = (data.orders || []).find(function(o) { return o.id === statusState.orderId; });
+            // ✅ ดึง partner order สถานะ (ไม่ต้องใช้ token)
+            const found = await API.call('getPartnerOrderStatus', {
+                orderId: statusState.orderId,
+                partnerId: statusState.partnerId
+            });
             if (!found) throw new Error('ไม่พบออเดอร์');
-            // แปลง partner order ให้เหมือน hotel order
             order = {
                 id:            found.id,
                 order_number:  found.order_number,
                 status:        found.status,
                 customer_name: found.customer_name,
                 customer_phone: found.customer_phone,
-                order_type:    found.order_type,
+                order_type:    found.order_type || 'dine_in',
                 table_number:  found.table_number,
                 total_amount:  found.total_amount,
                 notes:         found.notes,
