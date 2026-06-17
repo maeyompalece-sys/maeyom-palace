@@ -289,6 +289,9 @@ function renderMenu() {
     const grid = document.getElementById('menuGrid');
     if (!grid) return;
 
+    // แสดง banner ร้านพาร์ทเนอร์
+    renderPartnerBanner();
+
     let items = state.menu;
     if (state.activeCategory !== 'all') {
         items = items.filter(i => i.category_id === state.activeCategory);
@@ -903,4 +906,49 @@ async function pollMenuAvailability() {
         // เงียบๆ ถ้า poll ไม่สำเร็จ (network ชั่วคราว)
         console.warn('[MenuPoll]', e.message);
     }
+}
+
+// ============================================================
+// 🏪 Partner Banner — แสดงร้านพาร์ทเนอร์ในหน้าเมนู
+// ============================================================
+async function renderPartnerBanner() {
+    const el = document.getElementById('specialMenuSection');
+    if (!el) return;
+
+    try {
+        const data = await API.call('getPartners', {});
+        const partners = (data.partners || []).filter(p => p.isActive && p.isApproved);
+        if (!partners.length) { el.innerHTML = ''; return; }
+
+        el.innerHTML = `
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#651713;">🏪 ร้านพาร์ทเนอร์</div>
+                <a href="partner-store.html" style="font-size:13px;color:#C9A861;font-weight:600;text-decoration:none;">ดูทั้งหมด →</a>
+            </div>
+            <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;">
+                ${partners.map(p => `
+                <a href="menu.html?partner=${p.partnerId}&type=${new URLSearchParams(location.search).get('type')||'dine_in'}"
+                   style="flex-shrink:0;width:140px;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;text-decoration:none;border:1px solid #EDE5D3;display:block;">
+                    <div style="height:72px;background:linear-gradient(135deg,#4A0E0E,#651713);${p.bannerUrl?`background-image:url('${p.bannerUrl}');background-size:cover;background-position:center;`:''}display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;">
+                        ${p.bannerUrl ? '' : (p.icon || '🏪')}
+                        <div style="position:absolute;bottom:-14px;left:10px;width:32px;height:32px;border-radius:8px;background:#fff;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:16px;overflow:hidden;">
+                            ${p.logoUrl ? `<img src="${p.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` : (p.icon || '🏪')}
+                        </div>
+                    </div>
+                    <div style="padding:20px 10px 10px;">
+                        <div style="font-weight:700;color:#651713;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.partnerName)}</div>
+                        <div style="font-size:11px;color:#6B6B6B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.category||'')}</div>
+                    </div>
+                </a>`).join('')}
+            </div>
+            <div style="height:1px;background:#EDE5D3;margin-top:8px;"></div>
+        </div>`;
+    } catch(e) {
+        el.innerHTML = '';
+    }
+}
+
+function esc(s) {
+    return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
