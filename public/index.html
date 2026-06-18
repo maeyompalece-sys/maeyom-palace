@@ -47,6 +47,9 @@
                 </div>
             </div>
 
+            <!-- Returning Customer Banner -->
+            <div id="returningBanner" style="display:none;margin-bottom:12px;"></div>
+
             <!-- ถ้ายังไม่เคยสั่ง: เมนูอาหาร + แอดมิน -->
             <div id="heroNoOrders" class="hero-actions">
                 <a href="#" id="btn-customer-new" class="btn btn-primary btn-xl"><span>🍽️</span> <span data-i18n="idx_btn_menu">เมนูอาหาร</span></a>
@@ -203,6 +206,9 @@
     </style>
     
     <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/push.js"></script>
     <script>
         // ตรวจสอบว่ามี table param ไหม (มาจากการสแกน QR)
         const params = new URLSearchParams(window.location.search);
@@ -468,6 +474,19 @@
         if (e.key === 'Escape') closeOrderModal();
     });
     </script>
+<script src="js/customer.js"></script>
 <script src="js/i18n.js"></script>
+<script>
+// ✅ แสดง "ออเดอร์ของฉัน" บนหน้าแรก
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('maeyom_customer') || '{}');
+        const myOrders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
+        if (saved.name || myOrders.length) {
+            showReturningCustomer();
+        }
+    } catch(e) {}
+});
+</script>
 </body>
 </html>
