@@ -307,6 +307,7 @@
             const dayOrders = grouped[dateKey];
             const cardsHtml = dayOrders.map(saved => {
                 const o = orderData[saved.id];
+                if (!o && !saved.partnerId) return ''; // ซ่อนออเดอร์ที่โหลดไม่ได้
                 const sl = statusLabel(); const st = o ? (sl[o.status] || o.status) : '⚠️ โหลดไม่ได้';
                 const sc = o ? (statusColor[o.status] || '#999') : '#ef4444';
                 const tableInfo = o && o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o && o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
