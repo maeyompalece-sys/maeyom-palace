@@ -309,7 +309,7 @@ function renderMenu() {
 
         // แสดง header ร้านพาร์ทเนอร์
         var partnerInfo = items[0] || null;
-        var specialEl = document.getElementById('specialMenuSection');
+        var specialEl = document.getElementById('partnerBannerSection');
         if (specialEl && partnerInfo) {
             var logoHtml = partnerInfo.partnerLogoUrl
                 ? '<img src="' + partnerInfo.partnerLogoUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
@@ -953,7 +953,7 @@ async function pollMenuAvailability() {
 // 🏪 Partner Banner — แสดงร้านพาร์ทเนอร์ในหน้าเมนู
 // ============================================================
 async function renderPartnerBanner() {
-    const el = document.getElementById('specialMenuSection');
+    const el = document.getElementById('partnerBannerSection');
     if (!el) return;
 
     try {
