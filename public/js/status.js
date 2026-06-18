@@ -1,21 +1,7 @@
 // ============================================================
 // 📊 Status JS - หน้าสถานะออเดอร์ของลูกค้า
 // ============================================================
-
-const ORDER_STATUS = {
-    pending:    { label: 'รอยืนยัน',      icon: '⏳', color: '#6b7280' },
-    accepted:   { label: 'รับออเดอร์แล้ว', icon: '✅', color: '#10b981' },
-    cooking:    { label: 'กำลังทำ',        icon: '👨‍🍳', color: '#f59e0b' },
-    ready:      { label: 'พร้อมแล้ว',      icon: '🍽️', color: '#C9A861' },
-    delivering: { label: 'กำลังส่ง',       icon: '🚶', color: '#6366f1' },
-    completed:  { label: 'เสร็จสิ้น',      icon: '✨', color: '#651713' },
-    cancelled:  { label: 'ยกเลิก',         icon: '❌', color: '#ef4444' },
-};
-
-const ORDER_TYPE = {
-    dine_in:  { label: 'กินที่นี่',  icon: '🍽️' },
-    takeaway: { label: 'กลับบ้าน',  icon: '🥡' },
-};
+// หมายเหตุ: ORDER_STATUS และ ORDER_TYPE define ไว้ใน config.js แล้ว
 
 const statusState = {
     orderId:    null,
