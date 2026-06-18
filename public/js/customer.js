@@ -145,10 +145,16 @@ async function loadMenu() {
         state.categories = data.categories || [];
         renderCategories();
         renderMenu();
-        // โหลด เมนูพิเศษ
-        FlashSale.load();
-        // ✅ โหลด partner banner หลังจาก step menu แสดงแล้ว
-        renderPartnerBanner();
+        if (state.activePartner) {
+            // ✅ โหมดร้านพาร์ทเนอร์ — ซ่อน Flash Sale, โหลดหมวดพาร์ทเนอร์
+            var flashEl = document.getElementById('specialMenuSection');
+            if (flashEl) { flashEl.innerHTML = ''; flashEl.style.display = 'none'; }
+            loadPartnerCategoriesForCustomer(state.activePartner);
+        } else {
+            // ✅ โหมดปกติ — โหลด Flash Sale และ partner banner
+            FlashSale.load();
+            renderPartnerBanner();
+        }
 
         // ถ้ามี table_number ลองหาชื่อโต๊ะ
         if (state.tableNumber) {
@@ -1001,6 +1007,49 @@ async function renderPartnerBanner() {
         console.warn('[PartnerBanner]', e.message);
         el.innerHTML = '';
         el.style.display = 'none';
+    }
+}
+
+// ============================================================
+// 🏷️ โหลดหมวดหมู่พาร์ทเนอร์สำหรับหน้าลูกค้า
+// ============================================================
+async function loadPartnerCategoriesForCustomer(partnerId) {
+    const catBar = document.getElementById('categoriesBar');
+    if (!catBar) return;
+
+    try {
+        const data = await API.call('getPartnerCategories', { partnerId });
+        const cats = data.categories || [];
+
+        if (cats.length === 0) {
+            // ไม่มีหมวด → ซ่อน catBar
+            catBar.style.display = 'none';
+            return;
+        }
+
+        // แสดง catBar พร้อมหมวดของร้านนี้
+        catBar.style.display = '';
+        let html = '<button class="cat-chip active" data-cat-id="all">📋 ทั้งหมด</button>';
+        html += cats.map(cat =>
+            '<button class="cat-chip" data-cat-id="' + cat.id + '">' +
+            (cat.icon || '🍽️') + ' ' + escapeHtml(cat.name) + '</button>'
+        ).join('');
+        catBar.innerHTML = html;
+
+        // Bind chip clicks
+        catBar.querySelectorAll('.cat-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                catBar.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                state.activeCategory = chip.dataset.catId;
+                renderMenu();
+            });
+        });
+
+    } catch (e) {
+        // ถ้าโหลดไม่ได้ → ซ่อน catBar
+        catBar.style.display = 'none';
+        console.warn('[PartnerCat]', e.message);
     }
 }
 
