@@ -625,9 +625,17 @@ async function submitOrder() {
             }
 
             const sourceParam = state.source ? '&source=' + state.source : '';
-            // ✅ ถ้าเป็นออเดอร์พาร์ทเนอร์ล้วน ให้ redirect ด้วย type=partner
-            const isPartnerOnly = state.cart.every(function(i) { return !!i.partnerId; });
-            const partnerParam = isPartnerOnly ? '&type=partner&partnerId=' + (state.cart[0].partnerId || '') : '';
+            // ✅ ถ้าเป็น partner order — ใช้ partnerId จาก GAS response
+            let partnerParam = '';
+            if (order.isPartnerOrder && order.partnerId) {
+                partnerParam = '&type=partner&partnerId=' + encodeURIComponent(order.partnerId);
+            } else {
+                // fallback: ตรวจจาก cart
+                const isPartnerOnly = state.cart.every(function(i) { return !!i.partnerId; });
+                if (isPartnerOnly && state.cart[0].partnerId) {
+                    partnerParam = '&type=partner&partnerId=' + encodeURIComponent(state.cart[0].partnerId);
+                }
+            }
             setTimeout(() => {
                 window.location.href = 'status.html?id=' + order.id + sourceParam + partnerParam;
             }, 800);
