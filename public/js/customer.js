@@ -602,7 +602,12 @@ async function submitOrder() {
             // เก็บ id ออเดอร์ใน localStorage
             try {
                 const my = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
-                my.unshift({ id: order.id, order_number: order.order_number, created_at: order.created_at });
+                my.unshift({
+                    id: order.id,
+                    order_number: order.order_number,
+                    created_at: order.created_at,
+                    partnerId: order.partnerId || null,  // ✅ เก็บ partnerId ด้วย
+                });
                 localStorage.setItem('maeyom_my_orders', JSON.stringify(my.slice(0, 20)));
             } catch (e) {}
 
@@ -832,6 +837,34 @@ async function openOrderHistory() {
             savedIds.has(String(o.id)) || savedNums.has(String(o.order_number))
         );
 
+        // ✅ ดึง partner orders เพิ่มเติม (เก็บ partnerId ไว้ใน localStorage)
+        const savedWithPartner = myOrders.filter(o => o.partnerId);
+        for (const saved of savedWithPartner) {
+            if (foundOrders.some(o => o.id === saved.id)) continue; // มีแล้ว
+            try {
+                const pOrder = await API.call('getPartnerOrderStatus', {
+                    orderId: saved.id,
+                    partnerId: saved.partnerId,
+                });
+                if (pOrder) {
+                    foundOrders.push({
+                        id: pOrder.id,
+                        order_number: pOrder.order_number,
+                        status: pOrder.status,
+                        customer_name: pOrder.customer_name,
+                        customer_phone: pOrder.customer_phone,
+                        order_type: pOrder.order_type || 'dine_in',
+                        table_number: pOrder.table_number,
+                        total_amount: pOrder.total_amount,
+                        items: pOrder.items || [],
+                        created_at: pOrder.created_at,
+                        isPartnerOrder: true,
+                        partnerId: saved.partnerId,
+                    });
+                }
+            } catch(e) {}
+        }
+
         // สร้าง map: order_number → order data
         const orderMap = {};
         // เติม found orders ก่อน
@@ -878,7 +911,7 @@ async function openOrderHistory() {
             const moreItems = (o.items || []).length > 3 ? ` +${o.items.length - 3} รายการ` : '';
             const tableInfo = o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
             return `
-                <div class="history-card" data-order-id="${o.id}" style="cursor:pointer;">
+                <div class="history-card" data-order-id="${o.id}" data-partner-id="${o.isPartnerOrder ? (o.partnerId||'') : ''}" style="cursor:pointer;">
                     <div class="history-head">
                         <span class="history-num" style="white-space:nowrap;">#${escHtml(o.order_number || '')}</span>
                         <span class="history-date">${dateStr}</span>
@@ -887,13 +920,18 @@ async function openOrderHistory() {
                     ${tableInfo ? `<div style="font-size:12px;color:var(--color-muted);margin-bottom:4px;font-weight:600;">${tableInfo}</div>` : ''}
                     <div class="history-items">${escHtml(items + moreItems)}</div>
                     <div class="history-total">฿${Number(o.total_amount || 0).toFixed(0)} → <span style="color:var(--color-gold);font-weight:600;">ดูสถานะ →</span></div>
+                    ${o.isPartnerOrder ? '<div style="font-size:11px;color:#92400E;background:#FEF3C7;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:4px;">🏪 ร้านพาร์ทเนอร์</div>' : ''}
                 </div>`;
         }).join('');
 
         // คลิกไปหน้าสถานะ (เฉพาะที่โหลดได้)
         list.querySelectorAll('.history-card[data-order-id]').forEach(card => {
             card.addEventListener('click', () => {
-                window.location.href = 'status.html?id=' + card.dataset.orderId;
+                const pid = card.dataset.partnerId;
+                const url = pid
+                    ? 'status.html?id=' + card.dataset.orderId + '&type=partner&partnerId=' + encodeURIComponent(pid)
+                    : 'status.html?id=' + card.dataset.orderId;
+                window.location.href = url;
             });
         });
     } catch(e) {
