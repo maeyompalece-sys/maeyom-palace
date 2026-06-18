@@ -504,6 +504,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function openOrderHistoryIndex() {
+    // ✅ Auto-fix order_number สำหรับ partner orders เก่าที่บันทึกผิด
+    try {
+        const orders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
+        let changed = false;
+        orders.forEach(o => {
+            if (o.partnerId && o.order_number && !o.order_number.startsWith('P')) {
+                // order_number เก่าไม่มี prefix P → แก้จาก id
+                const ts = String(o.id).replace('PO', '');
+                const d = new Date(parseInt(ts));
+                if (!isNaN(d)) {
+                    const yy = String(d.getFullYear()).slice(2);
+                    const mm = String(d.getMonth()+1).padStart(2,'0');
+                    const dd = String(d.getDate()).padStart(2,'0');
+                    o.order_number = 'P' + yy + mm + dd + o.order_number;
+                    changed = true;
+                }
+            }
+        });
+        if (changed) localStorage.setItem('maeyom_my_orders', JSON.stringify(orders));
+    } catch(e) {}
     const myOrders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
     if (!myOrders.length) return;
 
@@ -532,7 +552,10 @@ async function openOrderHistoryIndex() {
         try { allOrders = await API.getOrders({ status: 'all', limit: 200 }); } catch(e) {}
 
         const savedIds = new Set(myOrders.map(o => String(o.id)));
-        const foundOrders = allOrders.filter(o => savedIds.has(String(o.id)));
+        const savedNums = new Set(myOrders.map(o => String(o.order_number||'')).filter(Boolean));
+        const foundOrders = allOrders.filter(o =>
+            savedIds.has(String(o.id)) || savedNums.has(String(o.order_number))
+        );
 
         // โหลด partner orders
         for (const saved of myOrders.filter(o => o.partnerId)) {
@@ -546,15 +569,13 @@ async function openOrderHistoryIndex() {
         const statusMap = { pending:'⏳ รอ', accepted:'✅ รับแล้ว', cooking:'👨‍🍳 ทำอยู่', ready:'🍽️ พร้อม', delivering:'🚶 ส่ง', completed:'✨ เสร็จ', cancelled:'❌ ยกเลิก' };
 
         if (!foundOrders.length) {
-            list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">ยังไม่มีออเดอร์</div>';
+            list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">📭 ยังไม่มีออเดอร์ที่โหลดได้<br><small>ออเดอร์เก่าอาจหมดอายุแล้ว</small></div>';
             return;
         }
 
         list.innerHTML = myOrders.slice(0,10).map(saved => {
-            const o = foundOrders.find(x => x.id === saved.id);
-            if (!o) return '<div style="padding:12px;border-radius:10px;background:#fef2f2;margin-bottom:8px;opacity:.6;">'
-                + '<strong>#' + (saved.order_number || saved.id.slice(-6)) + '</strong>'
-                + '<span style="float:right;color:#ef4444;font-size:12px;">⚠️ โหลดไม่ได้</span></div>';
+            const o = foundOrders.find(x => x.id === saved.id || x.order_number === saved.order_number);
+            if (!o) return ''; // ซ่อนออเดอร์ที่โหลดไม่ได้ ไม่แสดง error ให้ลูกค้าสับสน
 
             const statusLabel = statusMap[o.status] || o.status;
             const url = o.isPartnerOrder
