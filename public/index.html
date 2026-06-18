@@ -47,9 +47,6 @@
                 </div>
             </div>
 
-            <!-- Returning Customer Banner -->
-            <div id="returningBanner" style="display:none;margin-bottom:12px;"></div>
-
             <!-- ถ้ายังไม่เคยสั่ง: เมนูอาหาร + แอดมิน -->
             <div id="heroNoOrders" class="hero-actions">
                 <a href="#" id="btn-customer-new" class="btn btn-primary btn-xl"><span>🍽️</span> <span data-i18n="idx_btn_menu">เมนูอาหาร</span></a>
@@ -206,10 +203,6 @@
     </style>
     
     <script src="js/config.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/notifications.js"></script>
-    <script src="js/push.js"></script>
-    <script src="js/flashsale.js"></script>
     <script>
         // ตรวจสอบว่ามี table param ไหม (มาจากการสแกน QR)
         const params = new URLSearchParams(window.location.search);
@@ -267,6 +260,7 @@
         let orderData = {};
         if (SCRIPT_URL) {
             try {
+                // โหลด hotel orders
                 const res = await fetch(SCRIPT_URL, {
                     method: 'POST', redirect: 'follow',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -277,6 +271,23 @@
                     data.data.forEach(o => { orderData[o.id] = o; });
                 }
             } catch(e) {}
+
+            // ✅ โหลด partner orders เพิ่มเติม
+            for (const saved of orders) {
+                if (!saved.partnerId) continue;
+                if (orderData[saved.id]) continue;
+                try {
+                    const res2 = await fetch(SCRIPT_URL, {
+                        method: 'POST', redirect: 'follow',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'getPartnerOrderStatus', orderId: saved.id, partnerId: saved.partnerId })
+                    });
+                    const data2 = await res2.json();
+                    if (data2.ok && data2.data) {
+                        orderData[saved.id] = { ...data2.data, isPartnerOrder: true, partnerId: saved.partnerId };
+                    }
+                } catch(e) {}
+            }
         }
 
         // จัดกลุ่มตามวันที่
@@ -307,8 +318,8 @@
             const dayOrders = grouped[dateKey];
             const cardsHtml = dayOrders.map(saved => {
                 const o = orderData[saved.id];
-                if (!o && !saved.partnerId) return ''; // ซ่อนออเดอร์ที่โหลดไม่ได้
-                const sl = statusLabel(); const st = o ? (sl[o.status] || o.status) : '⚠️ โหลดไม่ได้';
+                if (!o) return ''; // ซ่อนออเดอร์ที่โหลดไม่ได้
+                const sl = statusLabel(); const st = sl[o.status] || o.status;
                 const sc = o ? (statusColor[o.status] || '#999') : '#ef4444';
                 const tableInfo = o && o.table_number ? `🪑 โต๊ะ ${o.table_number}` : (o && o.order_type === 'takeaway' ? '🥡 กลับบ้าน' : '');
                 const num = o ? o.order_number : (saved.order_number || '?');
@@ -316,7 +327,10 @@
                 const items = o && o.items ? o.items.slice(0,2).map(i => `${i.quantity}× ${i.name}`).join(', ') : '';
                 const total = o ? `฿${Number(o.total_amount||0).toFixed(0)}` : '';
 
-                return `<div onclick="${o ? `window.location.href='status.html?id=${o.id}'` : ''}"
+                const statusUrl = o ? (o.isPartnerOrder
+                    ? `status.html?id=${o.id}&type=partner&partnerId=${encodeURIComponent(o.partnerId)}`
+                    : `status.html?id=${o.id}`) : '';
+                return `<div onclick="${o ? `window.location.href='${statusUrl}'` : ''}"
                     style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1.5px solid #f0ebe0;cursor:${o?'pointer':'default'};transition:all .15s;"
                     onmouseover="${o?`this.style.borderColor='#C9A861'`:''}"
                     onmouseout="${o?`this.style.borderColor='#f0ebe0'`:''}">
@@ -328,6 +342,7 @@
                         </div>
                     </div>
                     ${tableInfo ? `<div style="font-size:12px;color:#666;font-weight:600;margin-bottom:3px;">${tableInfo}</div>` : ''}
+                    ${o.isPartnerOrder ? '<div style="font-size:11px;color:#92400E;background:#FEF3C7;padding:1px 6px;border-radius:8px;display:inline-block;margin-bottom:3px;">🏪 ร้านพาร์ทเนอร์</div>' : ''}
                     ${items ? `<div style="font-size:12px;color:#999;margin-bottom:3px;">${items}</div>` : ''}
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         ${total ? `<span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#C9A861;">${total}</span>` : '<span></span>'}
@@ -477,125 +492,5 @@
     });
     </script>
 <script src="js/i18n.js"></script>
-<script>
-// ✅ แสดงปุ่ม "ออเดอร์ของฉัน" บนหน้าแรก (ไม่โหลด customer.js ทั้งหมด)
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const myOrders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
-        const saved = JSON.parse(localStorage.getItem('maeyom_customer') || '{}');
-        const banner = document.getElementById('returningBanner');
-        if (!banner) return;
-        if (!saved.name && !myOrders.length) return;
-
-        const name = saved.name || '';
-        banner.innerHTML = [
-            '<div class="returning-card">',
-            '<div class="returning-left">',
-            name ? '<div class="returning-avatar">' + (name.trim().charAt(0).toUpperCase() || '👤') + '</div>' : '',
-            '<div>',
-            name ? '<div class="returning-name">ยินดีต้อนรับ <strong>' + name + '</strong>!</div>' : '',
-            '<div class="returning-sub">ข้อมูลของคุณถูกจำไว้แล้ว</div>',
-            '</div></div>',
-            '<div class="returning-actions">',
-            myOrders.length ? '<button onclick="openOrderHistoryIndex()" class="btn-order-history">📋 ออเดอร์ของฉัน (' + myOrders.length + ')</button>' : '',
-            '</div></div>'
-        ].join('');
-        banner.style.display = 'block';
-    } catch(e) {}
-});
-
-async function openOrderHistoryIndex() {
-    // ✅ Auto-fix order_number สำหรับ partner orders เก่าที่บันทึกผิด
-    try {
-        const orders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
-        let changed = false;
-        orders.forEach(o => {
-            if (o.partnerId && o.order_number && !o.order_number.startsWith('P')) {
-                // order_number เก่าไม่มี prefix P → แก้จาก id
-                const ts = String(o.id).replace('PO', '');
-                const d = new Date(parseInt(ts));
-                if (!isNaN(d)) {
-                    const yy = String(d.getFullYear()).slice(2);
-                    const mm = String(d.getMonth()+1).padStart(2,'0');
-                    const dd = String(d.getDate()).padStart(2,'0');
-                    o.order_number = 'P' + yy + mm + dd + o.order_number;
-                    changed = true;
-                }
-            }
-        });
-        if (changed) localStorage.setItem('maeyom_my_orders', JSON.stringify(orders));
-    } catch(e) {}
-    const myOrders = JSON.parse(localStorage.getItem('maeyom_my_orders') || '[]');
-    if (!myOrders.length) return;
-
-    let modal = document.getElementById('orderHistoryModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'orderHistoryModal';
-        modal.className = 'modal-bg';
-        modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:9999;';
-        document.body.appendChild(modal);
-    }
-    modal.style.display = 'flex';
-    modal.innerHTML = '<div style="background:#fff;border-radius:20px;width:90%;max-width:520px;max-height:80vh;overflow-y:auto;padding:20px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-        + '<h2 style="font-family:Cormorant Garamond,serif;color:#651713;margin:0;font-size:24px;">📋 ออเดอร์ของฉัน</h2>'
-        + '<button onclick="document.getElementById('orderHistoryModal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;">✕</button>'
-        + '</div>'
-        + '<div id="historyListIndex"><div style="text-align:center;padding:20px;">⏳ กำลังโหลด...</div></div>'
-        + '</div>';
-    modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-
-    const list = document.getElementById('historyListIndex');
-    try {
-        // โหลด hotel orders
-        let allOrders = [];
-        try { allOrders = await API.getOrders({ status: 'all', limit: 200 }); } catch(e) {}
-
-        const savedIds = new Set(myOrders.map(o => String(o.id)));
-        const savedNums = new Set(myOrders.map(o => String(o.order_number||'')).filter(Boolean));
-        const foundOrders = allOrders.filter(o =>
-            savedIds.has(String(o.id)) || savedNums.has(String(o.order_number))
-        );
-
-        // โหลด partner orders
-        for (const saved of myOrders.filter(o => o.partnerId)) {
-            if (foundOrders.some(o => o.id === saved.id)) continue;
-            try {
-                const pOrder = await API.call('getPartnerOrderStatus', { orderId: saved.id, partnerId: saved.partnerId });
-                if (pOrder) foundOrders.push({ ...pOrder, isPartnerOrder: true, partnerId: saved.partnerId });
-            } catch(e) {}
-        }
-
-        const statusMap = { pending:'⏳ รอ', accepted:'✅ รับแล้ว', cooking:'👨‍🍳 ทำอยู่', ready:'🍽️ พร้อม', delivering:'🚶 ส่ง', completed:'✨ เสร็จ', cancelled:'❌ ยกเลิก' };
-
-        if (!foundOrders.length) {
-            list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">📭 ยังไม่มีออเดอร์ที่โหลดได้<br><small>ออเดอร์เก่าอาจหมดอายุแล้ว</small></div>';
-            return;
-        }
-
-        list.innerHTML = myOrders.slice(0,10).map(saved => {
-            const o = foundOrders.find(x => x.id === saved.id || x.order_number === saved.order_number);
-            if (!o) return ''; // ซ่อนออเดอร์ที่โหลดไม่ได้ ไม่แสดง error ให้ลูกค้าสับสน
-
-            const statusLabel = statusMap[o.status] || o.status;
-            const url = o.isPartnerOrder
-                ? 'status.html?id=' + o.id + '&type=partner&partnerId=' + encodeURIComponent(o.partnerId)
-                : 'status.html?id=' + o.id;
-
-            return '<div onclick="location.href='' + url + ''" style="padding:12px;border-radius:10px;background:#f9f5ec;margin-bottom:8px;cursor:pointer;border-left:4px solid #C9A861;">'
-                + '<div style="display:flex;justify-content:space-between;">'
-                + '<strong style="color:#651713;">#' + (o.order_number || '') + '</strong>'
-                + '<span style="font-size:12px;">' + statusLabel + '</span>'
-                + '</div>'
-                + (o.isPartnerOrder ? '<div style="font-size:11px;color:#92400E;background:#FEF3C7;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:4px;">🏪 ร้านพาร์ทเนอร์</div>' : '')
-                + '<div style="font-size:12px;color:#666;margin-top:4px;">฿' + Number(o.total_amount||0).toFixed(0) + ' → <span style="color:#C9A861;">ดูสถานะ →</span></div>'
-                + '</div>';
-        }).join('');
-    } catch(e) {
-        list.innerHTML = '<div style="color:red;padding:20px;">โหลดล้มเหลว: ' + e.message + '</div>';
-    }
-}
-</script>
 </body>
 </html>
