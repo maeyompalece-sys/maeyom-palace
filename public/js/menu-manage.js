@@ -102,7 +102,9 @@ async function loadAll() {
     try {
         const data = await API.getBootstrap();
         menuState.categories = data.categories || [];
-        menuState.items = data.menu || [];
+        // ✅ กรองเมนูพาร์ทเนอร์ออก — หน้านี้จัดการเฉพาะเมนูของโรงแรมเท่านั้น
+        // (เมนูพาร์ทเนอร์จัดการแยกที่ Partner App ของแต่ละร้าน)
+        menuState.items = (data.menu || []).filter(item => !item.is_partner);
         renderCatBar();
         fillCategoryDropdown();
         renderItems();
@@ -810,7 +812,9 @@ async function loadAll() {
     try {
         const data = await API.getBootstrap();
         menuState.categories = data.categories || [];
-        menuState.items = data.menu || [];
+        // ✅ กรองเมนูพาร์ทเนอร์ออก — หน้านี้จัดการเฉพาะเมนูของโรงแรมเท่านั้น
+        // (เมนูพาร์ทเนอร์จัดการแยกที่ Partner App ของแต่ละร้าน)
+        menuState.items = (data.menu || []).filter(item => !item.is_partner);
         renderCatBar();
         fillCategoryDropdown();
         renderItems();
