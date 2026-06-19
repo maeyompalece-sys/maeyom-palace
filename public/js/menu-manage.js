@@ -11,6 +11,18 @@ const menuState = {
     currentImageUrl: null,
 };
 
+// ✅ ตรวจสอบว่ารายการนี้เป็นเมนูพาร์ทเนอร์หรือไม่ — รองรับทุกรูปแบบค่า
+// (boolean true, string "true"/"TRUE"/"1", number 1 ฯลฯ ที่อาจมาจาก Google Sheets)
+function isPartnerItem(item) {
+    const v = item && item.is_partner;
+    if (v === true || v === 1) return true;
+    if (typeof v === 'string') {
+        const s = v.trim().toLowerCase();
+        return s === 'true' || s === '1';
+    }
+    return false;
+}
+
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
@@ -104,7 +116,7 @@ async function loadAll() {
         menuState.categories = data.categories || [];
         // ✅ กรองเมนูพาร์ทเนอร์ออก — หน้านี้จัดการเฉพาะเมนูของโรงแรมเท่านั้น
         // (เมนูพาร์ทเนอร์จัดการแยกที่ Partner App ของแต่ละร้าน)
-        menuState.items = (data.menu || []).filter(item => !item.is_partner);
+        menuState.items = (data.menu || []).filter(item => !isPartnerItem(item));
         renderCatBar();
         fillCategoryDropdown();
         renderItems();
@@ -814,7 +826,7 @@ async function loadAll() {
         menuState.categories = data.categories || [];
         // ✅ กรองเมนูพาร์ทเนอร์ออก — หน้านี้จัดการเฉพาะเมนูของโรงแรมเท่านั้น
         // (เมนูพาร์ทเนอร์จัดการแยกที่ Partner App ของแต่ละร้าน)
-        menuState.items = (data.menu || []).filter(item => !item.is_partner);
+        menuState.items = (data.menu || []).filter(item => !isPartnerItem(item));
         renderCatBar();
         fillCategoryDropdown();
         renderItems();
